@@ -1,0 +1,14 @@
+[package]
+name = "glacier"
+version = "0.1.0"
+
+[[app]]
+name = "Main"
+main = "src/Main.lf"
+target = "Python"
+platform = "Native"
+
+[app.properties]
+fast = false
+
+[dependencies]
