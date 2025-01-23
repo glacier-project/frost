@@ -1,0 +1,54 @@
+name: "Quality" # name of the machine
+machine_category: "unknown" # category of the machine
+machine_type: "unknown" # type of the machine
+machine_model: "unknown" # model of the machine
+description: "Checks Lego on the Conveyor Belt" # description of the machine
+root:
+  !!FolderNode
+  name: foCell5"
+  description: "OPCUA"
+  children:
+    - !!MethodNode
+      name: "do_quality_control"
+      description: "Checks quality"
+      measure_unit: "LengthUnits.Meter"
+      value: 20
+      children:
+        - !!VariableNode
+          name: "quality"
+          description: "Quality of the Lego"
+          measure_unit: "QualityUnits.Percentage"
+          value: 0
+          children:
+    - !!FolderNode
+      name: "Status"
+      description: "Variables"
+      children:
+        - !!VariableNode
+          name: "detectedShape[0]"
+          description: "Image of the Lego"
+          measure_unit: "Byte"
+          value: 0
+        - !!VariableNode
+          name: "detectedShape[0]"
+          description: "Image of the Lego"
+          measure_unit: "Byte"
+          value: 0
+        - !!VariableNode
+          name: "detectedShape[0]"
+          description: "Image of the Lego"
+          measure_unit: "Byte"
+          value: 0
+        - !!BooleanVariableNode
+          name: "validShape[0]"
+          description: "Image of the Lego"
+          value: True
+        - !!BooleanVariableNode
+          name: "validShape[1]"
+          description: "Image of the Lego"
+          value: True
+        - !!BooleanVariableNode
+          name: "validShape[2]"
+          description: "Image of the Lego"
+          value: True
+    
