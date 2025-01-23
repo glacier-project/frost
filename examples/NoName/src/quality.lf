@@ -1,0 +1,7 @@
+target Python 
+
+import Machine from "../../../glacier/src/machine.lf"
+
+reactor Quality extends Machine{
+    state quality_model
+}

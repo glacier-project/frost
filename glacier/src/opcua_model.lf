@@ -1,0 +1,9 @@
+target Python
+
+reactor OPCUA_Model(name = "GenericOPCUA", path = "glacier/src/") {
+    state data_model
+    state message
+
+    input IN 
+    output OUT
+}
