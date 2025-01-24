@@ -11,6 +11,7 @@ bin/
 build/
 src-gen/
 fed-gen/
+include/
 
 # Distribution / packaging
 .Python

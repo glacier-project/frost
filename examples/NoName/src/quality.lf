@@ -2,6 +2,26 @@ target Python
 
 import Machine from "../../../glacier/src/machine.lf"
 
+preamble{=
+    from machine_data_model.builder.data_model_builder import DataModelBuilder
+=}
+
 reactor Quality extends Machine{
+    state builder
+    state path
     state quality_model
+
+    method Check(Unknown1, Unknown2){=
+        print("Quality control is done", Unknown1, Unknown2)
+    =}
+
+    reaction(startup){=
+        self.path = "models/quality.yml"
+        self.builder = DataModelBuilder()
+        self.quality_model = self.builder.get_data_model(self.path)
+        method_node = self.quality_model._get_node_from_path("Cell5/do_quality_control")
+        method_node._callback = self.Check
+        method_node(1,2)
+    =}
 }
+

@@ -5,50 +5,98 @@ machine_model: "unknown" # model of the machine
 description: "Checks Lego on the Conveyor Belt" # description of the machine
 root:
   !!FolderNode
-  name: foCell5"
+  name: "Cell5"
   description: "OPCUA"
   children:
     - !!MethodNode
       name: "do_quality_control"
       description: "Checks quality"
-      measure_unit: "LengthUnits.Meter"
       value: 20
-      children:
-        - !!VariableNode
+      parameters:
+        - !!NumericalVariableNode
+          name: "Unknown1"
+          description: "Quality of the Lego"
+          measure_unit: "NoneMeasureUnits.NONE"
+          value: 0
+        - !!NumericalVariableNode
+          name: "Unknown2"
+          description: "Lego image"
+          measure_unit: "NoneMeasureUnits.NONE"
+          value: 0
+      returns:
+        - !!BooleanVariableNode
           name: "quality"
           description: "Quality of the Lego"
-          measure_unit: "QualityUnits.Percentage"
           value: 0
-          children:
     - !!FolderNode
       name: "Status"
       description: "Variables"
       children:
-        - !!VariableNode
+        - !!NumericalVariableNode
           name: "detectedShape[0]"
-          description: "Image of the Lego"
-          measure_unit: "Byte"
+          description: "Lego image"
+          measure_unit: "LengthUnits.Meter"
           value: 0
-        - !!VariableNode
+        - !!NumericalVariableNode
           name: "detectedShape[0]"
-          description: "Image of the Lego"
-          measure_unit: "Byte"
+          description: "Lego image"
+          measure_unit: "LengthUnits.Meter"
           value: 0
-        - !!VariableNode
+        - !!NumericalVariableNode
           name: "detectedShape[0]"
-          description: "Image of the Lego"
-          measure_unit: "Byte"
+          description: "Lego image"
+          measure_unit: "LengthUnits.Meter"
           value: 0
         - !!BooleanVariableNode
           name: "validShape[0]"
-          description: "Image of the Lego"
+          description: ""
           value: True
         - !!BooleanVariableNode
           name: "validShape[1]"
-          description: "Image of the Lego"
+          description: ""
           value: True
         - !!BooleanVariableNode
           name: "validShape[2]"
-          description: "Image of the Lego"
+          description: ""
           value: True
+    - !!FolderNode
+      name: "Statistics"
+      description: "Contains statistics of the Lego analyzed"
+      children:
+        - !!NumericalVariableNode
+          name: "controlCount"
+          description: "Number of controls"
+          measure_unit: "NoneMeasureUnits.NONE"
+          value: 0
+        - !!NumericalVariableNode
+          name: "2x2Counter"
+          description: "Count of 2x2 Legos"
+          measure_unit: "NoneMeasureUnits.NONE"
+          value: 0
+        - !!NumericalVariableNode
+          name: "2x4Counter"
+          description: "Count of 2x4 Legos"
+          measure_unit: "NoneMeasureUnits.NONE"
+          value: 0
+        - !!NumericalVariableNode
+          name: "2x6Counter"
+          description: "Count of 2x6 Legos"
+          measure_unit: "NoneMeasureUnits.NONE"
+          value: 0
+        - !!NumericalVariableNode
+          name: "2x8Counter"
+          description: "Count of 2x8 Legos"
+          measure_unit: "NoneMeasureUnits.NONE"
+          value: 0
+        - !!NumericalVariableNode
+          name: "CorrectPartsCounter"
+          description: "Number of correct parts"
+          measure_unit: "NoneMeasureUnits.NONE"
+          value: 0
+        - !!NumericalVariableNode
+          name: "FaultsCounter"
+          description: "Number of faults"
+          measure_unit: "NoneMeasureUnits.NONE"
+          value: 0
+        
     
