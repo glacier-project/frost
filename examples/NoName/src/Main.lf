@@ -1,7 +1,0 @@
-target Python
-
-import Quality from "quality.lf" 
-
-main reactor{
-    s = new Quality()
-}

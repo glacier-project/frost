@@ -1,0 +1,26 @@
+target Python
+
+import Quality from "quality.lf" 
+
+main reactor{
+    preamble{=
+        from machine_data_model.protocols.glacier_v1.glacier_message import GlacierMessage
+        from machine_data_model.protocols.glacier_v1.glacier_header import GlacierHeader, MsgNamespace, MsgType, MethodMsgName
+        from machine_data_model.protocols.glacier_v1.glacier_payload import MethodPayload
+    =}
+    s = new Quality(model_path = "models/quality.yml")
+    logical action delay
+    reaction(startup)-> delay{=
+        delay.schedule(SEC(1))
+   =}
+
+    reaction(delay) -> s.IN{=
+        s.IN.set(self.GlacierMessage(sender="Main", target="Cell5",
+        identifier = "random", header = self.GlacierHeader(self.MsgType.REQUEST,
+        (1,0,0), self.MsgNamespace.METHOD, self.MethodMsgName.INVOKE), payload=self.MethodPayload(node="Cell5/do_quality_control",args=[1,2])))
+    =}
+
+    reaction(s.OUT){=
+        print(f"Main received a message: {s.OUT.value}")
+    =}
+}

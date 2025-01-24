@@ -1,8 +1,10 @@
 target Python
 
-reactor OPCUA_Model {
-    state data_model
-    state message
+
+reactor OPCUA_Model(model_path = ""){
+    state model
+    state path = model_path
+    state protocol_manager
 
     input IN 
     output OUT

@@ -1,0 +1,22 @@
+target Python
+
+import CommonBus from "../../../glacier/src/common_bus.lf" 
+
+reactor Bus extends CommonBus{
+
+    preamble{=
+        from machine_data_model.protocols.glacier_v1.glacier_message import GlacierMessage
+    =}
+
+    '''
+    Wondering: 
+    How Bus sees the message content (sender and target) for sending messages?
+    Is there a map for translating the target into the port number?
+    '''
+
+
+    reaction(IN) -> OUT{
+        for port_number, port in enumerate(IN):
+            print(f"Bus received a message on port {port_number} : {port.value}.")
+    }
+}

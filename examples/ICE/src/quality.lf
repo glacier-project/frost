@@ -1,0 +1,44 @@
+target Python 
+
+import Machine from "../../../glacier/src/machine.lf"
+
+
+
+reactor Quality extends Machine{
+
+    preamble{=
+        from machine_data_model.builder.data_model_builder import DataModelBuilder
+        from machine_data_model.protocols.glacier_v1.glacier_message import GlacierMessage
+        from machine_data_model.protocols.glacier_v1.glacier_protocol_mng import GlacierProtocolMng
+    =}
+
+    method Check(Unknown1, Unknown2){=
+        print("Quality control is done", Unknown1, Unknown2)
+        if Unknown1 + Unknown2 % 2 == 0:
+            return True
+        else:
+            return False       
+    =}
+
+    reaction(IN) -> OUT{=
+        message = IN.value
+        if message.target == "Cell5":
+            mex_out = self.protocol_manager.handle_message(message)
+            OUT.set(mex_out)
+    =}
+
+    reaction(startup)-> delay{=
+        self.data_model = self.DataModelBuilder().get_data_model(self.path)
+        method_node = self.data_model._get_node_from_path("Cell5/do_quality_control")
+        method_node._callback = self.Check
+        delay.schedule(0, [method_node, 1, 2])
+        self.protocol_manager = self.GlacierProtocolMng(self.data_model)
+    =}
+
+    reaction(delay){=
+        node, *args = delay.value
+        result = node(*args)
+        print("Quality control result", result)
+    =}
+}
+

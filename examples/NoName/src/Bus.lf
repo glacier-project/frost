@@ -1,7 +1,0 @@
-target Python
-
-import CommonBus from "../../../glacier/src/common_bus.lf" 
-
-reactor Bus(width = 1) extends CommonBus{
-    state bus_model
-}

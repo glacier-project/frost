@@ -3,5 +3,5 @@ target Python
 import OPCUA_Model from "opcua_model.lf"
 
 reactor Machine extends OPCUA_Model{
-    state machine_model
+    logical action delay
 }

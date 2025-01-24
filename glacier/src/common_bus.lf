@@ -3,5 +3,5 @@ target Python
 reactor CommonBus(width = 1){
     input[width] IN
     output[width] OUT
-
+    state protocol_manager
 }
