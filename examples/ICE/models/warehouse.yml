@@ -1,0 +1,232 @@
+name: "Warehouse" # name of the machine
+machine_category: "unknown" # category of the machine
+machine_type: "unknown" # type of the machine
+machine_model: "unknown" # model of the machine
+description: "Warehouse data model" # description of the machine
+root:
+  !!FolderNode
+  name: "Warehouse"
+  description: "Warehouse"
+  children:
+    - !!FolderNode
+      name: "SocketLink"
+      description: "SocketLink"
+      children:
+        - !!MethodNode
+          name: "extractTray"
+          description: "extract Tray"
+          parameters:
+            - !!NumericalVariableNode
+              name: "Tray Number"
+              description: "Index"
+              measure_unit: "NoneMeasureUnits.NONE"
+              value: 0
+          returns:
+            - !!NumericalVariableNode
+              name: "Tray extracted"
+              description: "Index"
+              measure_unit: "NoneMeasureUnits.NONE"
+              value: 0
+        - !!MethodNode
+          name: "enqueueTray"
+          description: "enqueue Tray"
+          parameters:
+            - !!NumericalVariableNode
+              name: "Tray Number"
+              description: "Index"
+              measure_unit: "NoneMeasureUnits.NONE"
+              value: 0
+          returns:
+            - !!NumericalVariableNode
+              name: "Tray enqueued"
+              description: "Index"
+              measure_unit: "NoneMeasureUnits.NONE"
+              value: 0
+        - !!MethodNode
+          name: "sendBack"
+          description: "send back Tray"
+          returns:
+            - !!NumericalVariableNode
+              name: "Tray sent back"
+              description: "Index"
+              measure_unit: "NoneMeasureUnits.NONE"
+              value: 0
+        - !!MethodNode
+          name: "status"
+          description: "Warehouse status"
+          returns:
+            - !!StringVariableNode
+              name: "status"
+              description: "Warehouse status"
+              value: "default"
+        - !!MethodNode
+          name: "clearRequests"
+          description: "clear queue"
+          returns:
+            - !!BooleanVariableNode
+              name: "clear"
+              description: "clear queue"
+              value: true
+        - !!MethodNode
+          name: "alarmsReset"
+          description: "reset alarms"
+          returns:
+            - !!BooleanVariableNode
+              name: "reset"
+              description: "reset"
+              value: true
+        - !!MethodNode
+          name: "alarmsDetail"
+          description: "alarmsDetail"
+          returns:
+            - !!StringVariableNode
+              name: "details"
+              description: "details"
+              value: "str"
+        - !!MethodNode
+          name: "confirmOperation"
+          description: "confirmOperation"
+          parameters:
+            - !!BooleanVariableNode
+              name: "confirm"
+              description: "confirmation"
+              value: false
+          returns:
+            - !!NumericalVariableNode
+              name: "operation"
+              description: "Index"
+              measure_unit: "NoneMeasureUnits.NONE"
+              value: 0
+        - !!MethodNode
+          name: "requestInfoVertimag"
+          description: "requestInfoVertimag"
+          returns:
+            - !!StringVariableNode
+              name: "request"
+              description: "output"
+              value: "info"
+        - !!MethodNode
+          name: "requestInfoBay"
+          description: "requestInfoBay"
+          returns:
+            - !!StringVariableNode
+              name: "request"
+              description: "output"
+              value: "info"
+        - !!MethodNode
+          name: "extendedStatusRequest"
+          description: "extendedStatusRequest"
+          returns:
+            - !!StringVariableNode
+              name: "request"
+              description: "output"
+              value: "info"
+        - !!MethodNode
+          name: "getTrayHeightCm"
+          description: "getTrayHeightCm"
+          parameters:
+            - !!NumericalVariableNode
+              name: "Tray number"
+              description: "Index"
+              measure_unit: "NoneMeasureUnits.NONE"
+              value: 0
+          returns:
+            - !!NumericalVariableNode
+              name: "Tray Height"
+              description: "value"
+              measure_unit: "LengthUnits.Meter"
+              value: 0
+        - !!MethodNode
+          name: "getTrayHeightsCm"
+          description: "getTrayHeightsCm"
+          returns:
+            - !!NumericalVariableNode
+              name: "Tray Height"
+              description: "value"
+              measure_unit: "LengthUnits.Meter"
+              value: 0
+        - !!MethodNode
+          name: "clearBay"
+          description: "clearBay"
+          returns:
+            - !!BooleanVariableNode
+              name: "clearBay"
+              description: "clearBay"
+              value: false
+    - !!FolderNode
+      name: "Status"
+      description: "Variables"
+      children:
+        - !!StringVariableNode
+          name: "activeAlarmsList"
+          description: "activeAlarmsList"
+          value: "alarm"
+        - !!StringVariableNode
+          name: "warehouseInfo"
+          description: "warehouseInfo"
+          value: "info"
+        - !!StringVariableNode
+          name: "bayInfo"
+          description: "bayInfo"
+          value: "info"
+        - !!BooleanVariableNode
+          name: "warehouseAutomaticMode"
+          description: "warehouseAutomaticMode"
+          value: false
+        - !!BooleanVariableNode
+          name: "alarmTriggered"
+          description: "alarmTriggered"
+          value: false
+        - !!NumericalVariableNode
+          name: "trayInBay"
+          description: "Index"
+          measure_unit: "NoneMeasureUnits.NONE"
+          value: 0
+        - !!NumericalVariableNode
+          name: "bayQueueSize"
+          description: "bayQueueSize"
+          measure_unit: "NoneMeasureUnits.NONE"
+          value: 0
+        - !!NumericalVariableNode
+          name: "trayHeights"
+          description: "trayHeights"
+          measure_unit: "NoneMeasureUnits.NONE"
+          value: 0
+        - !!BooleanVariableNode
+          name: "bayBusy"
+          description: "bayBusy"
+          value: false
+        - !!BooleanVariableNode
+          name: "bayReadyForPickPlace"
+          description: "bayReadyForPickPlace"
+          value: false
+        - !!BooleanVariableNode
+          name: "bayClearInProgress"
+          description: "bayClearInProgress"
+          value: false
+    - !!FolderNode
+      name: "Statistics"
+      description: "Contains statistics of the Lego analyzed"
+      children: 
+        - !!NumericalVariableNode
+          name: "TrayCallsCount"
+          description: "TrayCallsCount"
+          measure_unit: "NoneMeasureUnits.NONE"
+          value: 0
+    - !!FolderNode
+      name: "Stock"
+      description: "Contains alarms of the Lego analyzed"
+      children: 
+        - !!NumericalVariableNode
+          name: "Stock"
+          description: "Stock"
+          measure_unit: "NoneMeasureUnits.NONE"
+          value: 0
+    - !!MethodNode
+      name: "showMessage"
+      description: "showMessage"
+      parameters:
+        - !!StringVariableNode
+          name: "message"
+          description: "message"
+          value: "message"

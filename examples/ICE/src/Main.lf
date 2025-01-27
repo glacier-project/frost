@@ -1,26 +1,51 @@
-target Python
+target Python{
+    fast: True
+}
 
-import Quality from "quality.lf" 
+import Quality from "Quality.lf" 
+import Warehouse from "Warehouse.lf"
 
 main reactor{
     preamble{=
         from machine_data_model.protocols.glacier_v1.glacier_message import GlacierMessage
         from machine_data_model.protocols.glacier_v1.glacier_header import GlacierHeader, MsgNamespace, MsgType, MethodMsgName
-        from machine_data_model.protocols.glacier_v1.glacier_payload import MethodPayload
+        from machine_data_model.protocols.glacier_v1.glacier_payload import MethodPayload, VariablePayload
+        from machine_data_model.protocols.glacier_v1.glacier_header import GlacierHeader, MsgNamespace, MsgType, VariableMsgName
     =}
-    s = new Quality(model_path = "models/quality.yml")
-    logical action delay
-    reaction(startup)-> delay{=
-        delay.schedule(SEC(1))
-   =}
+    quality = new Quality(model_path = "models/quality.yml")
+    warehouse = new Warehouse(model_path = "models/warehouse.yml")
+    logical action delayAction
+    logical action statusAction
+    logical action controlUpdate
+    reaction(startup) -> delayAction, controlUpdate, warehouse.IN, statusAction {=
+        delayAction.schedule(SEC(1))
+        controlUpdate.schedule(SEC(10))
+        statusAction.schedule(SEC(3))        
+    =}
 
-    reaction(delay) -> s.IN{=
-        s.IN.set(self.GlacierMessage(sender="Main", target="Cell5",
+    reaction(statusAction) -> warehouse.IN {=
+        warehouse.IN.set(self.GlacierMessage(sender="Main", target="Warehouse",
         identifier = "random", header = self.GlacierHeader(self.MsgType.REQUEST,
-        (1,0,0), self.MsgNamespace.METHOD, self.MethodMsgName.INVOKE), payload=self.MethodPayload(node="Cell5/do_quality_control",args=[1,2])))
+        (1,0,0), self.MsgNamespace.VARIABLE, self.VariableMsgName.READ), 
+        payload=self.VariablePayload(node="Warehouse/Status/warehouseInfo", value="")))
+    =}    
+    reaction(delayAction) -> quality.IN {=
+        quality.IN.set(self.GlacierMessage(sender="Main", target="Cell5",
+        identifier = "random", header = self.GlacierHeader(self.MsgType.REQUEST,
+        (1,0,0), self.MsgNamespace.METHOD, self.MethodMsgName.INVOKE), payload=self.MethodPayload(node="Cell5/do_quality_control", args=[1, 2])))
+    =}
+    reaction(controlUpdate) -> quality.IN {=
+        quality.IN.set(self.GlacierMessage(sender="Main", target="Cell5",
+        identifier = "random", header = self.GlacierHeader(self.MsgType.REQUEST,
+        (1,0,0), self.MsgNamespace.VARIABLE, self.VariableMsgName.READ), 
+        payload=self.VariablePayload(node="Cell5/Statistics/FaultsCounter", value=0)))
     =}
 
-    reaction(s.OUT){=
-        print(f"Main received a message: {s.OUT.value}")
+    reaction(quality.OUT) {=
+        print(f"Main received a message: {quality.OUT.value}")
     =}
+    reaction(warehouse.OUT) {=
+        print(f"Main received a message: {warehouse.OUT.value}")
+    =}
+
 }
