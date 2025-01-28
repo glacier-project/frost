@@ -1,0 +1,35 @@
+target Python
+
+reactor Model(model_path = ""){
+
+    preamble{=
+        from machine_data_model.protocols.protocol_mng import Message
+    =}
+
+    state path = model_path
+    state name
+    state busy
+
+    input IN 
+    output OUT
+
+    state model
+    state protocol_manager
+    state message_queue
+
+    logical action handle_message
+    logical action method_delay
+
+    reaction(startup){=
+        self.busy = False
+        self.message_queue = []
+        self.name = (self.path.split("/")[-1]).split(".")[0]
+    =}
+
+    reaction(IN) -> handle_message{=
+        message = IN.value
+        if isinstance(message, self.Message):
+            self.message_queue.append(message)
+            handle_message.schedule(0)
+    =}
+}

@@ -4,6 +4,7 @@ target Python{
 
 import Quality from "Quality.lf" 
 import Warehouse from "Warehouse.lf"
+import Bus from "Bus.lf"
 
 main reactor{
     preamble{=
@@ -12,14 +13,17 @@ main reactor{
         from machine_data_model.protocols.glacier_v1.glacier_payload import MethodPayload, VariablePayload
         from machine_data_model.protocols.glacier_v1.glacier_header import GlacierHeader, MsgNamespace, MsgType, VariableMsgName
     =}
-    quality = new Quality(model_path = "models/quality.yml")
-    warehouse = new Warehouse(model_path = "models/warehouse.yml")
+
+    quality = new Quality(model_path = "models/Quality.yml")
+    warehouse = new Warehouse(model_path = "models/Warehouse.yml")
+    bus = new Bus(width = 2)
     logical action delayAction
     logical action statusAction
     logical action controlUpdate
+
     reaction(startup) -> delayAction, controlUpdate, warehouse.IN, statusAction {=
-        delayAction.schedule(SEC(1))
-        controlUpdate.schedule(SEC(10))
+        delayAction.schedule(SEC(10))
+        controlUpdate.schedule(SEC(1))
         statusAction.schedule(SEC(3))        
     =}
 
@@ -29,16 +33,19 @@ main reactor{
         (1,0,0), self.MsgNamespace.VARIABLE, self.VariableMsgName.READ), 
         payload=self.VariablePayload(node="Warehouse/Status/warehouseInfo", value="")))
     =}    
-    reaction(delayAction) -> quality.IN {=
+    reaction(delayAction) -> quality.IN, bus.IN {=
         quality.IN.set(self.GlacierMessage(sender="Main", target="Cell5",
         identifier = "random", header = self.GlacierHeader(self.MsgType.REQUEST,
         (1,0,0), self.MsgNamespace.METHOD, self.MethodMsgName.INVOKE), payload=self.MethodPayload(node="Cell5/do_quality_control", args=[1, 2])))
+        bus.IN[1].set(self.GlacierMessage(sender="Main", target="Bus", identifier = "random",
+        header = self.GlacierHeader(self.MsgType.REQUEST, (1,0,0), self.MsgNamespace.METHOD, self.MethodMsgName.INVOKE),
+        payload=self.MethodPayload(node="Bus/forward", args=[1, 2])))
     =}
     reaction(controlUpdate) -> quality.IN {=
         quality.IN.set(self.GlacierMessage(sender="Main", target="Cell5",
         identifier = "random", header = self.GlacierHeader(self.MsgType.REQUEST,
-        (1,0,0), self.MsgNamespace.VARIABLE, self.VariableMsgName.READ), 
-        payload=self.VariablePayload(node="Cell5/Statistics/FaultsCounter", value=0)))
+        (1,0,0), self.MsgNamespace.VARIABLE, self.VariableMsgName.SUBSCRIBE), 
+        payload=self.VariablePayload(node="Cell5/Statistics/FaultsCounter", value="")))
     =}
 
     reaction(quality.OUT) {=

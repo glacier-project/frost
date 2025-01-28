@@ -1,20 +1,10 @@
 target Python 
 
-import Machine from "../../../glacier/src/machine.lf"
+import Glacier_Machine from "glacier_machine.lf"
 
-
-
-reactor Quality extends Machine{
-
-    preamble{=
-        from machine_data_model.builder.data_model_builder import DataModelBuilder
-        from machine_data_model.protocols.glacier_v1.glacier_message import GlacierMessage
-        from machine_data_model.protocols.glacier_v1.glacier_protocol_mng import GlacierProtocolMng
-        from machine_data_model.protocols.glacier_v1.glacier_payload import MethodPayload
-    =}
+reactor Quality extends Glacier_Machine{
 
     method Check(Unknown1, Unknown2){=
-        print("Quality control is done", Unknown1, Unknown2)
         if Unknown1 + Unknown2 % 2 == 0:
             return True
         else:
@@ -30,30 +20,21 @@ reactor Quality extends Machine{
             var  = self.data_model.read_variable("Cell5/Statistics/FaultsCounter")
             var = var + 1
             self.data_model.write_variable("Cell5/Statistics/FaultsCounter", var)
-        print("Statistics updated", self.data_model.read_variable("Cell5/Statistics/CorrectPartsCounter"), self.data_model.read_variable("Cell5/Statistics/FaultsCounter"))
     =}
 
-    reaction(IN) -> OUT{=
-        message = IN.value
-        if message.target == "Cell5":
-            mex_out = self.protocol_manager.handle_message(message)
-            if isinstance(message.payload, self.MethodPayload):
-                self.UpdateStatistics(mex_out.payload.ret)
-            OUT.set(mex_out)
+    reaction(handle_message) -> OUT{=
+        message = self.message_queue.pop(0)        
+        mex_out = self.protocol_manager.handle_message(message)
+        if isinstance(message.payload, self.MethodPayload):
+            self.UpdateStatistics(mex_out.payload.ret)
+        OUT.set(mex_out)
     =}
 
-    reaction(startup)-> delay{=
-        self.data_model = self.DataModelBuilder().get_data_model(self.path)
+    reaction(startup){=
         method_node = self.data_model._get_node_from_path("Cell5/do_quality_control")
         method_node._callback = self.Check
         method_node._post_call = self.UpdateStatistics
-        delay.schedule(0, [method_node, 1, 2])
         self.protocol_manager = self.GlacierProtocolMng(self.data_model)
-    =}
-
-    reaction(delay){=
-        node, *args = delay.value
-        result = node(*args)
     =}
 }
 

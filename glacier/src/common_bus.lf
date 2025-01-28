@@ -1,7 +1,32 @@
 target Python
 
 reactor CommonBus(width = 1){
+
+    preamble{=
+        from machine_data_model.protocols.protocol_mng import Message
+    =}
+
     input[width] IN
     output[width] OUT
     state protocol_manager
+    state name = "CommonBus"
+    state message_queue
+    logical action forward
+
+    reaction(startup){=
+        self.message_queue = []
+    =}
+
+    reaction(IN)->forward{=
+        for i, port in enumerate(IN):
+            if not IN[i].is_present:
+                continue
+            message = IN[i].value
+            if isinstance(message, self.Message):
+                self.message_queue.append(IN[i].value)
+                forward.schedule(0)
+            else:
+                raise Exception("Invalid message type")
+    =}
+
 }

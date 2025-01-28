@@ -8,15 +8,19 @@ reactor Bus extends CommonBus{
         from machine_data_model.protocols.glacier_v1.glacier_message import GlacierMessage
     =}
 
+    method get_DestinationPort(dest){=
+        return 0 #To be implemented
+    =}
+
     '''
     Wondering: 
     How Bus sees the message content (sender and target) for sending messages?
     Is there a map for translating the target into the port number?
     '''
 
+    reaction(forward) -> OUT{=
+        message = self.message_queue.pop(0)
+        OUT[self.get_DestinationPort(message.target)].set(message)
+    =}
 
-    reaction(IN) -> OUT{
-        for port_number, port in enumerate(IN):
-            print(f"Bus received a message on port {port_number} : {port.value}.")
-    }
 }

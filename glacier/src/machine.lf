@@ -1,7 +1,0 @@
-target Python
-
-import OPCUA_Model from "opcua_model.lf"
-
-reactor Machine extends OPCUA_Model{
-    logical action delay
-}

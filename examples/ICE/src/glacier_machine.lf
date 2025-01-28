@@ -1,0 +1,18 @@
+target Python
+
+import Model from "../../../glacier/src/model.lf"
+
+reactor Glacier_Machine extends Model{
+
+    preamble{=
+        from machine_data_model.builder.data_model_builder import DataModelBuilder
+        from machine_data_model.protocols.glacier_v1.glacier_message import GlacierMessage
+        from machine_data_model.protocols.glacier_v1.glacier_protocol_mng import GlacierProtocolMng
+        from machine_data_model.protocols.glacier_v1.glacier_payload import MethodPayload
+    =}    
+
+    reaction(startup){=
+        self.data_model = self.DataModelBuilder().get_data_model(self.path)
+        self.protocol_manager = self.GlacierProtocolMng(self.data_model)
+    =}    
+}
