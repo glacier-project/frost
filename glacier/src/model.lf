@@ -19,6 +19,7 @@ reactor Model(model_path = ""){
 
     logical action handle_message
     logical action method_delay
+    logical action result
 
     reaction(startup){=
         self.busy = False
@@ -31,5 +32,16 @@ reactor Model(model_path = ""){
         if isinstance(message, self.Message):
             self.message_queue.append(message)
             handle_message.schedule(0)
+        else:
+            raise Exception(self.name + "received an Invalid message type:\n", message)
     =}
+
+    reaction(result)->OUT{=
+        mex = result.value
+        if isinstance(mex, self.Message):
+            OUT.set(mex)
+        else:
+            raise Exception(self.name + "produced an Invalid message type:\n", mex)
+    =}
+
 }

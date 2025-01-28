@@ -4,10 +4,10 @@ import Glacier_Machine from "glacier_machine.lf"
 
 reactor Warehouse extends Glacier_Machine{
     
-    reaction(handle_message) -> OUT{=
+    reaction(handle_message) -> result{=
         message = self.message_queue.pop(0)
         mex_out = self.protocol_manager.handle_message(message)
-        OUT.set(mex_out)
+        result.schedule(0,mex_out)
     =}    
 
 }

@@ -49,10 +49,10 @@ main reactor{
     =}
 
     reaction(quality.OUT) {=
-        print(f"Main received a message: {quality.OUT.value}")
+        print(f"Main received a message: \n{quality.OUT.value}")
     =}
     reaction(warehouse.OUT) {=
-        print(f"Main received a message: {warehouse.OUT.value}")
+        print(f"Main received a message: \n{warehouse.OUT.value}")
     =}
 
 }

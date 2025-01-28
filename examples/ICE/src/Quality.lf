@@ -4,6 +4,13 @@ import Glacier_Machine from "glacier_machine.lf"
 
 reactor Quality extends Glacier_Machine{
 
+    reaction(startup){=
+        method_node = self.data_model._get_node_from_path("Cell5/do_quality_control")
+        method_node._callback = self.Check
+        method_node._post_call = self.UpdateStatistics
+        self.protocol_manager = self.GlacierProtocolMng(self.data_model)
+    =}
+
     method Check(Unknown1, Unknown2){=
         if Unknown1 + Unknown2 % 2 == 0:
             return True
@@ -22,19 +29,12 @@ reactor Quality extends Glacier_Machine{
             self.data_model.write_variable("Cell5/Statistics/FaultsCounter", var)
     =}
 
-    reaction(handle_message) -> OUT{=
+    reaction(handle_message) -> result{=
         message = self.message_queue.pop(0)        
         mex_out = self.protocol_manager.handle_message(message)
-        if isinstance(message.payload, self.MethodPayload):
-            self.UpdateStatistics(mex_out.payload.ret)
-        OUT.set(mex_out)
+        result.schedule(0, mex_out)
     =}
 
-    reaction(startup){=
-        method_node = self.data_model._get_node_from_path("Cell5/do_quality_control")
-        method_node._callback = self.Check
-        method_node._post_call = self.UpdateStatistics
-        self.protocol_manager = self.GlacierProtocolMng(self.data_model)
-    =}
+    
 }
 
