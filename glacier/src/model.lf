@@ -1,6 +1,6 @@
 target Python
 
-reactor Model(model_path = ""){
+reactor Model(model_path = "", protcol_mng={=GlacierProtocolMng=}){
 
     preamble{=
         from machine_data_model.protocols.protocol_mng import Message
@@ -14,7 +14,7 @@ reactor Model(model_path = ""){
     output OUT
 
     state model
-    state protocol_manager
+    state protocol_manager = {=self.protcol_mng(DataModelBuilder().get_data_model(self.path))=}
     state message_queue
 
     logical action handle_message
@@ -29,11 +29,16 @@ reactor Model(model_path = ""){
 
     reaction(IN) -> handle_message{=
         message = IN.value
-        if isinstance(message, self.Message):
-            self.message_queue.append(message)
-            handle_message.schedule(0)
-        else:
-            raise Exception(self.name + "received an Invalid message type:\n", message)
+        assert isinstance(message, self.Message)
+
+        self.message_queue.append(message)
+        handle_message.schedule(0)
+
+        # if isinstance(message, self.Message):
+        #     self.message_queue.append(message)
+        #     handle_message.schedule(0)
+        # else:
+        #     raise Exception(self.name + "received an Invalid message type:\n", message)
     =}
 
     reaction(result)->OUT{=

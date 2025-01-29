@@ -13,6 +13,6 @@ reactor Glacier_Machine extends Model{
 
     reaction(startup){=
         self.data_model = self.DataModelBuilder().get_data_model(self.path)
-        self.protocol_manager = self.GlacierProtocolMng(self.data_model)
+        self.protocol_manager = GlacierProtocolMng(self.data_model)
     =}    
 }
