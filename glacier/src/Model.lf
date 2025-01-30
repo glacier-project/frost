@@ -1,0 +1,34 @@
+target Python
+
+
+
+reactor Model(model_path = ""){
+
+    state path = model_path
+    state name
+    state busy
+
+    input  channel_in
+    output channel_out
+
+    state data_model = {= DataModelBuilder().get_data_model(self.path) =}
+    state protocol_mng = {= GlacierProtocolMng(self.data_model) =}
+    state message_queue = {= [GlacierMessage] =}
+
+    reaction(startup)-> channel_out{=
+        self.busy = False
+        self.message_queue = []
+        self.name = (self.path.split("/")[-1]).split(".")[0]
+        message = GlacierSpecialMessage(sender="Bus", target=self.name, identifier=uuid.uuid4(), header=SpecialHeader.INIT_HANDSHAKE)
+        channel_out.set(message)
+    =}
+
+    reaction(channel_in)->channel_out{=
+        message = channel_in.value
+        assert isinstance(message, Message)
+        if isinstance(message, GlacierMessage):
+            response_message = self.protocol_mng.handle_request(message)
+            channel_out.set(response_message)
+    =}
+
+}

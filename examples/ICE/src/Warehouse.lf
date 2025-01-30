@@ -1,13 +1,11 @@
 target Python
 
-import Glacier_Machine from "glacier_machine.lf"
+import Model from "../../../glacier/src/Model.lf"
 
-reactor Warehouse extends Glacier_Machine{
+
+
+
+reactor Warehouse extends Model{
     
-    reaction(handle_message) -> result{=
-        message = self.message_queue.pop(0)
-        mex_out = self.protocol_manager.handle_message(message)
-        result.schedule(0,mex_out)
-    =}    
 
 }
