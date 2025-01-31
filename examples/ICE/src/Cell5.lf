@@ -2,10 +2,7 @@ target Python
 
 import Model from "../../../glacier/src/Model.lf"
 
-
-
-
-reactor Quality extends Model{
+reactor Cell5 extends Model{
 
     state correct_parts = {= self.data_model.get_node("Cell5/Statistics/CorrectPartsCounter")=}
     state faults_parts = {= self.data_model.get_node("Cell5/Statistics/FaultsCounter")=}
@@ -13,9 +10,8 @@ reactor Quality extends Model{
     state do_quality = {= self.data_model.get_node("Cell5/do_quality_control") =}
 
     reaction(startup){=
-        self.do_quality.set_callback(self.Check)
-        self.do_quality.post_callback(self.UpdateStatistics)
-        self.do_quality()
+        self.do_quality.callback = self.Check
+        self.do_quality.post_callback = self.UpdateStatistics
     =}
 
     method Check(Unknown1, Unknown2){=
@@ -26,6 +22,7 @@ reactor Quality extends Model{
     =}
 
     method UpdateStatistics(result){=
+        print(result)
         if result["quality"]:
             var  = self.correct_parts.read()
             var = var + 1
@@ -34,7 +31,6 @@ reactor Quality extends Model{
             var = self.faults_parts.read()
             var = var + 1
             self.faults_parts.update(var)
-        print("Quality control done")
     =}
     
 }

@@ -1,29 +1,25 @@
 target Python
 
-preamble{=
-    from machine_data_model.protocols import *
-=}
-
 reactor CommonBus(width = 1){
     state name = "CommonBus"
     input[width] machine_in
     output[width] machine_out
     state map = {={str: int}=}
 
-
     reaction(machine_in)-> machine_out{=
         for i, port in enumerate(machine_in):
             # Find the triggered port
             if not port.is_present:
                 continue
-            
+
             # Is the message valid?
             message = port.value
             assert isinstance(message, Message), "Invalid message type"
-            
+
             # Handle the message
             if isinstance(message.header, GlacierHeader):
-                target_index = map.get(message.target)
+                assert message.target in self.map, f"Target {message.target} not found in map"
+                target_index = self.map[message.target]
                 assert target_index is not None, f"Target {message.target} not found in map"
                 machine_out[target_index].set(message)
 

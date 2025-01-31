@@ -2,60 +2,29 @@ target Python{
     fast: True
 }
 
-import Quality from "Quality.lf" 
+import Cell5 from "Cell5.lf" 
 import Warehouse from "Warehouse.lf"
 import CommonBus from "../../../glacier/src/CommonBus.lf"
+import Tester from "Tester.lf"
 
 preamble{=
     from machine_data_model.protocols.glacier_v1.glacier_message import GlacierMessage, GlacierSpecialMessage
-    from machine_data_model.protocols.glacier_v1.glacier_header import GlacierHeader, MsgNamespace, MsgType, MethodMsgName, SpecialHeader
-    from machine_data_model.protocols.glacier_v1.glacier_payload import MethodPayload, VariablePayload
+    from machine_data_model.protocols.glacier_v1.glacier_header import * 
+    from machine_data_model.protocols.glacier_v1.glacier_payload import *
     from machine_data_model.protocols.glacier_v1.glacier_protocol_mng import GlacierProtocolMng
     from machine_data_model.builder.data_model_builder import DataModelBuilder
     from machine_data_model.protocols.protocol_mng import Message
-    from machine_data_model.nodes.method_node import MethodNode
+    from machine_data_model.nodes.method_node import *
     import uuid
 =}
 
 main reactor{
 
-    quality = new Quality(model_path = "models/Quality.yml")
+    quality = new Cell5(model_path = "models/Cell5.yml")
     warehouse = new Warehouse(model_path = "models/Warehouse.yml")
-    bus = new CommonBus(width = 2)
-    quality.channel_out, warehouse.channel_out -> bus.machine_in after 0
-    bus.machine_out -> quality.channel_in, warehouse.channel_in
-
-    logical action delayAction
-    logical action statusAction
-    logical action controlUpdate
-
-    reaction(startup) -> delayAction, controlUpdate, statusAction {=
-        '''delayAction.schedule(SEC(10))
-        controlUpdate.schedule(SEC(1))
-        statusAction.schedule(SEC(3)) '''       
-    =}
-
-
-
-    '''reaction(statusAction) -> warehouse.IN {=
-        warehouse.IN.set(self.GlacierMessage(sender="Main", target="Warehouse",
-        identifier = "random", header = self.GlacierHeader(self.MsgType.REQUEST,
-        (1,0,0), self.MsgNamespace.VARIABLE, self.VariableMsgName.READ), 
-        payload=self.VariablePayload(node="Warehouse/Status/warehouseInfo", value="")))
-    =}    
-    reaction(delayAction) -> quality.IN, bus.IN {=
-        quality.IN.set(self.GlacierMessage(sender="Main", target="Cell5",
-        identifier = "random", header = self.GlacierHeader(self.MsgType.REQUEST,
-        (1,0,0), self.MsgNamespace.METHOD, self.MethodMsgName.INVOKE), payload=self.MethodPayload(node="Cell5/do_quality_control", args=[1, 2])))
-        bus.IN[1].set(self.GlacierMessage(sender="Main", target="Bus", identifier = "random",
-        header = self.GlacierHeader(self.MsgType.REQUEST, (1,0,0), self.MsgNamespace.METHOD, self.MethodMsgName.INVOKE),
-        payload=self.MethodPayload(node="Bus/forward", args=[1, 2])))
-    =}
-    reaction(controlUpdate) -> quality.IN {=
-        quality.IN.set(self.GlacierMessage(sender="Main", target="Cell5",
-        identifier = "random", header = self.GlacierHeader(self.MsgType.REQUEST,
-        (1,0,0), self.MsgNamespace.VARIABLE, self.VariableMsgName.SUBSCRIBE), 
-        payload=self.VariablePayload(node="Cell5/Statistics/FaultsCounter", value="")))
-    =}'''
-
+    bus = new CommonBus(width = 3)
+    tester = new Tester()
+    quality.channel_out, warehouse.channel_out, tester.channel_out -> bus.machine_in after 0
+    bus.machine_out -> quality.channel_in, warehouse.channel_in, tester.channel_in after 0
+    
 }

@@ -19,7 +19,7 @@ reactor Model(model_path = ""){
         self.busy = False
         self.message_queue = []
         self.name = (self.path.split("/")[-1]).split(".")[0]
-        message = GlacierSpecialMessage(sender="Bus", target=self.name, identifier=uuid.uuid4(), header=SpecialHeader.INIT_HANDSHAKE)
+        message = GlacierSpecialMessage(sender=self.name, target="Bus", identifier=uuid.uuid4(), header=SpecialHeader.INIT_HANDSHAKE)
         channel_out.set(message)
     =}
 
@@ -27,7 +27,7 @@ reactor Model(model_path = ""){
         message = channel_in.value
         assert isinstance(message, Message)
         if isinstance(message, GlacierMessage):
-            response_message = self.protocol_mng.handle_request(message)
+            response_message = self.protocol_mng.handle_message(message)
             channel_out.set(response_message)
     =}
 

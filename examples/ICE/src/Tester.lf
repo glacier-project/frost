@@ -1,0 +1,42 @@
+target Python
+
+
+reactor Tester{
+    input channel_in
+    output channel_out
+    state name = {="Tester"=}
+    state test_messages ={=
+        [
+            GlacierMessage(sender="Tester", target="Cell5",
+            identifier = "random", header = GlacierHeader(MsgType.REQUEST,
+            (1,0,0), MsgNamespace.METHOD, MethodMsgName.INVOKE), 
+            payload=MethodPayload(node="Cell5/do_quality_control", args=[1, 1])),
+            
+            GlacierMessage(sender="Tester", target="Cell5",
+            identifier = "random", header = GlacierHeader(MsgType.REQUEST,
+            (1,0,0), MsgNamespace.VARIABLE, VariableMsgName.READ), 
+            payload=VariablePayload(node="Cell5/Statistics/FaultsCounter", value=""))
+        ]
+    =}
+    logical action routine
+
+    reaction(startup)-> channel_out, routine{=
+        message = GlacierSpecialMessage(sender=self.name, target="Bus", identifier=uuid.uuid4(), header=SpecialHeader.INIT_HANDSHAKE)
+        channel_out.set(message)
+        routine.schedule(SEC(2))
+    =}
+
+    reaction(routine)-> channel_out{=
+        channel_out.set(self.test_messages.pop(0))
+    =}
+
+    reaction(channel_in) -> routine{=
+        message = channel_in.value
+        assert isinstance(message, Message)
+        if isinstance(message, GlacierMessage):
+            print(message)
+            if self.test_messages:
+                routine.schedule(SEC(2))
+    =}
+
+}
