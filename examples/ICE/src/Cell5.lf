@@ -6,15 +6,15 @@ reactor Cell5 extends Model{
 
     state correct_parts = {= self.data_model.get_node("Cell5/Statistics/CorrectPartsCounter")=}
     state faults_parts = {= self.data_model.get_node("Cell5/Statistics/FaultsCounter")=}
-    
+    state counter = {= self.data_model.get_node("Cell5/Statistics/controlCount")=}
     state do_quality = {= self.data_model.get_node("Cell5/do_quality_control") =}
 
     reaction(startup){=
-        self.do_quality.callback = self.Check
+        self.do_quality.callback = self.Quality_Check
         self.do_quality.post_callback = self.UpdateStatistics
     =}
 
-    method Check(Unknown1, Unknown2){=
+    method Quality_Check(Unknown1, Unknown2){=
         if Unknown1 + Unknown2 % 2 == 0:
             return True
         else:
@@ -22,7 +22,7 @@ reactor Cell5 extends Model{
     =}
 
     method UpdateStatistics(result){=
-        print(result)
+        self.counter.update(self.counter.read() + 1)
         if result["quality"]:
             var  = self.correct_parts.read()
             var = var + 1

@@ -8,14 +8,24 @@ reactor Tester{
     state test_messages ={=
         [
             GlacierMessage(sender="Tester", target="Cell5",
-            identifier = "random", header = GlacierHeader(MsgType.REQUEST,
+            identifier = uuid.uuid4(), header = GlacierHeader(MsgType.REQUEST,            
             (1,0,0), MsgNamespace.METHOD, MethodMsgName.INVOKE), 
             payload=MethodPayload(node="Cell5/do_quality_control", args=[1, 1])),
             
             GlacierMessage(sender="Tester", target="Cell5",
-            identifier = "random", header = GlacierHeader(MsgType.REQUEST,
+            identifier = uuid.uuid4(), header = GlacierHeader(MsgType.REQUEST,
             (1,0,0), MsgNamespace.VARIABLE, VariableMsgName.READ), 
-            payload=VariablePayload(node="Cell5/Statistics/FaultsCounter", value=""))
+            payload=VariablePayload(node="Cell5/Statistics/FaultsCounter", value="")),
+
+            GlacierMessage(sender="Tester", target="Warehouse",
+            identifier = uuid.uuid4(), header = GlacierHeader(MsgType.REQUEST,
+            (1,0,0), MsgNamespace.METHOD, MethodMsgName.INVOKE), 
+            payload=MethodPayload(node="Warehouse/SocketLink/extractTray", args=[1])),
+            
+            GlacierMessage(sender="Tester", target="Warehouse",
+            identifier = uuid.uuid4(), header = GlacierHeader(MsgType.REQUEST,
+            (1,0,0), MsgNamespace.VARIABLE, VariableMsgName.READ),
+            payload=VariablePayload(node="Warehouse/Status/bayInfo", value=""))
         ]
     =}
     logical action routine

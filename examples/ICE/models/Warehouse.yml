@@ -17,7 +17,7 @@ root:
           description: "extract Tray"
           parameters:
             - !!NumericalVariableNode
-              name: "Tray Number"
+              name: "TrayNumber"
               description: "Index"
               measure_unit: "NoneMeasureUnits.NONE"
               value: 0
@@ -32,18 +32,18 @@ root:
           description: "enqueue Tray"
           parameters:
             - !!NumericalVariableNode
-              name: "Tray Number"
+              name: "TrayNumber"
               description: "Index"
               measure_unit: "NoneMeasureUnits.NONE"
               value: 0
           returns:
             - !!NumericalVariableNode
-              name: "Tray enqueued"
+              name: "Trayenqueued"
               description: "Index"
               measure_unit: "NoneMeasureUnits.NONE"
               value: 0
         - !!MethodNode
-          name: "sendBack"
+          name: "sendBackTray"
           description: "send back Tray"
           returns:
             - !!NumericalVariableNode
@@ -215,7 +215,7 @@ root:
           value: 0
     - !!FolderNode
       name: "Stock"
-      description: "Contains alarms of the Lego analyzed"
+      description: "Stock"
       children: 
         - !!NumericalVariableNode
           name: "Stock"

@@ -3,9 +3,49 @@ target Python
 import Model from "../../../glacier/src/Model.lf"
 
 
-
-
 reactor Warehouse extends Model{
     
+    state extractTray = {= self.data_model.get_node("Warehouse/SocketLink/extractTray") =}
+    state sendBackTray = {= self.data_model.get_node("Warehouse/SocketLink/sendBackTray") =}
+    state showMessage = {= self.data_model.get_node("Warehouse/showMessage") =}
+
+    state warehouseInfo = {= self.data_model.get_node("Warehouse/Status/warehouseInfo") =}
+    state bayInfo = {= self.data_model.get_node("Warehouse/Status/bayInfo") =}
+    state trayInBay = {= self.data_model.get_node("Warehouse/Status/trayInBay") =}
+    state bayQueueSize = {= self.data_model.get_node("Warehouse/Status/bayQueueSize") =}
+    state bayBusy = {= self.data_model.get_node("Warehouse/Status/bayBusy") =}
+    state bayReadyForPickPlace = {= self.data_model.get_node("Warehouse/Status/bayReadyForPickPlace") =}
+    state TrayCallsCount = {= self.data_model.get_node("Warehouse/Statistics/TrayCallsCount") =}
+    
+    reaction(startup){=
+        assert isinstance(self.extractTray, MethodNode), "extractTray not found"
+        assert isinstance(self.sendBackTray, MethodNode), "sendBackTray not found"
+        assert isinstance(self.showMessage, MethodNode), "showMessage not found"
+        self.extractTray.callback = self.ExtractTray
+        self.sendBackTray.callback = self.SendBackTray    
+        self.showMessage.callback = self.ShowMessage
+    =}
+
+    method ExtractTray(TrayNumber){=
+        self.trayInBay.update(TrayNumber)
+        self.TrayCallsCount.update(self.TrayCallsCount.read() + 1)
+        self.bayInfo.update("Tray in bay: " + str(TrayNumber))        
+        self.bayBusy.update(True)
+        self.bayReadyForPickPlace.update(True)
+        return TrayNumber
+    =}
+
+    method SendBackTray(TrayNumber){=
+        self.warehouseInfo.update(f" Tray {TrayNumber} sent back")
+        self.trayInBay.update(0)
+        self.bayBusy.update(False)
+        self.bayInfo.update("None")
+        self.bayReadyForPickPlace.update(False)
+        return TrayNumber
+    =}
+
+    method ShowMessage(Message){=
+        print(Message)
+    =}
 
 }
