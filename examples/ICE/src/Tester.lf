@@ -17,6 +17,11 @@ reactor Tester{
             (1,0,0), MsgNamespace.VARIABLE, VariableMsgName.READ), 
             payload=VariablePayload(node="Cell5/Statistics/FaultsCounter", value="")),
 
+            GlacierMessage(sender="Tester", target="RBKairos",
+            identifier = uuid.uuid4(), header = GlacierHeader(MsgType.REQUEST,
+            (1,0,0), MsgNamespace.METHOD, MethodMsgName.INVOKE),
+            payload=MethodPayload(node="RBKairos/Mission_Methods/start_mission", args=["Warehouse"])),
+
             GlacierMessage(sender="Tester", target="Warehouse",
             identifier = uuid.uuid4(), header = GlacierHeader(MsgType.REQUEST,
             (1,0,0), MsgNamespace.METHOD, MethodMsgName.INVOKE), 
@@ -25,7 +30,12 @@ reactor Tester{
             GlacierMessage(sender="Tester", target="Warehouse",
             identifier = uuid.uuid4(), header = GlacierHeader(MsgType.REQUEST,
             (1,0,0), MsgNamespace.VARIABLE, VariableMsgName.READ),
-            payload=VariablePayload(node="Warehouse/Status/bayInfo", value=""))
+            payload=VariablePayload(node="Warehouse/Status/bayInfo", value="")),
+
+            GlacierMessage(sender="Tester", target="RBKairos",
+            identifier = uuid.uuid4(), header = GlacierHeader(MsgType.REQUEST,
+            (1,0,0), MsgNamespace.VARIABLE, VariableMsgName.READ),
+            payload=VariablePayload(node="RBKairos/Mission_Methods/Ongoing_Mission_Name", value="")),
         ]
     =}
     logical action routine

@@ -19,13 +19,18 @@ reactor CommonBus(width = 1){
             # Handle the message
             if isinstance(message.header, GlacierHeader):
                 assert message.target in self.map, f"Target {message.target} not found in map"
+                # Send the message to the target
                 target_index = self.map[message.target]
                 assert target_index is not None, f"Target {message.target} not found in map"
+                # Send the message to the target
                 machine_out[target_index].set(message)
 
+            # Handle special messages
             elif isinstance(message.header, SpecialHeader):
                 assert message.header == SpecialHeader.INIT_HANDSHAKE, f"Invalid special header: {message.header}"
+                #store the sender index
                 self.map[message.sender] = i
+                #send a response back to the sender
                 machine_out[i].set(GlacierSpecialMessage(
                     sender="CommonBus", 
                     target=message.sender, 

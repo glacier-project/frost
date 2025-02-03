@@ -1,0 +1,57 @@
+name: "Kairos" # name of the machine
+machine_category: "Mobile Robot" # category of the machine
+machine_type: "unknown" # type of the machine
+machine_model: "unknown" # model of the machine
+description: "Salacchia" # description of the machine
+root:
+  !!FolderNode
+  name: "RBKairos"
+  description: "OPCUA"
+  children:
+    - !!FolderNode
+      name: "Mission_Methods"
+      description: "OPCUA"
+      children:
+        - !!MethodNode
+          name: "start_mission"
+          description: "Move"
+          parameters:
+            - !!StringVariableNode
+              name: "name"
+              description: "Destination"
+              value: "default"
+          returns:
+            - !!BooleanVariableNode
+              name: "Accepted"
+              description: ""
+              value: True
+        - !!MethodNode
+          name: "preemptRunningMission"
+          description: "Move"
+          returns:
+            - !!BooleanVariableNode
+              name: "accepted"
+              description: ""
+              value: True
+        - !!BooleanVariableNode
+          name: "Control_Busy"
+          description: ""
+          value: True
+        - !!BooleanVariableNode
+          name: "Last_Mission_Result"
+          description: ""
+          value: True
+        - !!NumericalVariableNode
+          name: "Missions_Call_Counter"
+          description: "Number of calls"
+          measure_unit: "NoneMeasureUnits.NONE"
+          value: 0
+        - !!StringVariableNode
+            name: "Ongoing_Mission_Feedback"
+            description: "control"
+            value: "default"
+        - !!StringVariableNode
+            name: "Ongoing_Mission_Name"
+            description: "control"
+            value: "default"
+    

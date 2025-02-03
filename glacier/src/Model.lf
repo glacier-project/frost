@@ -1,13 +1,11 @@
 target Python
 
-
-
 reactor Model(model_path = ""){
 
     state path = model_path
     state name
     state busy
-
+    state handshake
     input  channel_in
     output channel_out
 
@@ -15,20 +13,35 @@ reactor Model(model_path = ""){
     state protocol_mng = {= GlacierProtocolMng(self.data_model) =}
     state message_queue = {= [GlacierMessage] =}
 
-    reaction(startup)-> channel_out{=
+    logical action check_handshake
+    reaction(check_handshake)->channel_out,check_handshake{=
+        if not self.handshake:
+            if lf.time.logical_elapsed() > SEC(9):
+                raise Exception(f"Handshake failed:{self.name} unable to connect to the bus") 
+            message = GlacierSpecialMessage(sender=self.name, target="Bus", identifier=uuid.uuid4(), header=SpecialHeader.INIT_HANDSHAKE)
+            channel_out.set(message)
+            check_handshake.schedule(SEC(3))
+    =}
+
+    reaction(startup)-> channel_out,check_handshake{=
+        self.handshake = False
         self.busy = False
         self.message_queue = []
         self.name = (self.path.split("/")[-1]).split(".")[0]
         message = GlacierSpecialMessage(sender=self.name, target="Bus", identifier=uuid.uuid4(), header=SpecialHeader.INIT_HANDSHAKE)
         channel_out.set(message)
+        check_handshake.schedule(SEC(3))
     =}
 
-    reaction(channel_in)->channel_out{=
+    reaction(channel_in)->channel_out,check_handshake{=
         message = channel_in.value
         assert isinstance(message, Message)
         if isinstance(message, GlacierMessage):
             response_message = self.protocol_mng.handle_message(message)
             channel_out.set(response_message)
+        elif isinstance(message, GlacierSpecialMessage):
+            assert message.header == SpecialHeader.INIT_HANDSHAKE, "Handshake failed"
+            self.handshake = True
     =}
 
 }

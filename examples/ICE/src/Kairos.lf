@@ -1,0 +1,41 @@
+target Python
+
+import Model from "../../../glacier/src/Model.lf"
+
+
+reactor Kairos extends Model{
+    
+    state start_mission = {= self.data_model.get_node("RBKairos/Mission_Methods/start_mission") =}
+    state preemptRunningMission = {= self.data_model.get_node("RBKairos/Mission_Methods/preemptRunningMission") =}
+
+    state controlBusy = {= self.data_model.get_node("RBKairos/Mission_Methods/Control_Busy") =}
+    state lastMissionResult = {= self.data_model.get_node("RBKairos/Mission_Methods/Last_Mission_Result") =}
+    state missionsCallCounter = {= self.data_model.get_node("RBKairos/Mission_Methods/Missions_Call_Counter") =}
+    state ongoingMissionFeedback = {= self.data_model.get_node("RBKairos/Mission_Methods/Ongoing_Mission_Feedback") =}
+    state ongoingMissionName = {= self.data_model.get_node("RBKairos/Mission_Methods/Ongoing_Mission_Name") =}
+
+    reaction(startup){=
+        assert isinstance(self.start_mission, MethodNode), "startMission Node not found"
+        assert isinstance(self.preemptRunningMission, MethodNode), "preemptRunningMission Node not found"
+        self.start_mission.callback = self.startMission
+        self.preemptRunningMission.callback = self.preemptMission
+    =}
+
+    method startMission(name){=
+        self.ongoingMissionName.update(name)
+        self.ongoingMissionFeedback.update("Mission done")
+        self.missionsCallCounter.update(self.missionsCallCounter.read() + 1)   
+        self.controlBusy.update(True)
+        self.lastMissionResult.update(True)        
+        return self.lastMissionResult.read()
+    =}
+
+    method preemptMission(){=
+        self.controlBusy.update(False)
+        self.ongoingMissionFeedback.update("Mission aborted")
+        self.lastMissionResult.update(False)
+        self.ongoingMissionName.update("")
+        return self.lastMissionResult.read()
+    =}
+
+}

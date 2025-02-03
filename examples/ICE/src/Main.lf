@@ -4,6 +4,7 @@ target Python{
 
 import Cell5 from "Cell5.lf" 
 import Warehouse from "Warehouse.lf"
+import Kairos from "Kairos.lf"
 import CommonBus from "../../../glacier/src/CommonBus.lf"
 import Tester from "Tester.lf"
 
@@ -22,9 +23,10 @@ main reactor{
 
     quality = new Cell5(model_path = "models/Cell5.yml")
     warehouse = new Warehouse(model_path = "models/Warehouse.yml")
-    bus = new CommonBus(width = 3)
+    kairos_aa = new Kairos(model_path = "models/RBKairos.yml")
+    bus = new CommonBus(width = 4)
     tester = new Tester()
-    quality.channel_out, warehouse.channel_out, tester.channel_out -> bus.machine_in after 0
-    bus.machine_out -> quality.channel_in, warehouse.channel_in, tester.channel_in after 0
+    quality.channel_out, warehouse.channel_out, tester.channel_out, kairos_aa.channel_out -> bus.machine_in after 1 msec
+    bus.machine_out -> quality.channel_in, warehouse.channel_in, tester.channel_in, kairos_aa.channel_in after 1 msec
     
 }
