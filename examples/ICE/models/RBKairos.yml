@@ -15,6 +15,7 @@ root:
         - !!MethodNode
           name: "start_mission"
           description: "Move"
+          durable: True
           parameters:
             - !!StringVariableNode
               name: "name"

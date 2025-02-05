@@ -19,6 +19,16 @@ preamble{=
     import uuid
 =}
 
+reactor example{
+    input ins
+
+    reaction(ins){=
+        print(f"ins Time elapsed{lf.time.logical_elapsed()}, {lf.tag().microstep}, {ins.value}")
+    =}
+
+
+}
+
 main reactor{
 
     quality = new Cell5(model_path = "models/Cell5.yml")
@@ -29,4 +39,28 @@ main reactor{
     quality.channel_out, warehouse.channel_out, tester.channel_out, kairos_aa.channel_out -> bus.machine_in after 1 msec
     bus.machine_out -> quality.channel_in, warehouse.channel_in, tester.channel_in, kairos_aa.channel_in after 1 msec
     
+    '''logical action a1
+    logical action a2
+    logical action a3
+    ex = new example()
+    reaction(startup)-> a1 ,a2{=
+        a1.schedule(SEC(1))
+        a2.schedule(SEC(1))
+    =}
+
+    reaction (a1)->a3{=
+        print(f"a1 Time elapsed{lf.time.logical_elapsed()}, {lf.tag().microstep}")
+        a3.schedule(SEC(1), [1])
+    =}
+
+    reaction (a2)->a3{=
+        print(f"a2 Time elapsed{lf.time.logical_elapsed()}, {lf.tag().microstep}")
+        a3.schedule(SEC(1), [2])
+    =}
+
+    reaction (a3)->ex.ins{=
+        print(f"a3 Time elapsed{lf.time.logical_elapsed()}, {lf.tag().microstep}, {a3.value}")
+        ex.ins.set(a3.value)
+    =}'''
+
 }

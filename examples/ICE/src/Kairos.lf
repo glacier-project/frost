@@ -14,7 +14,8 @@ reactor Kairos extends Model{
     state ongoingMissionFeedback = {= self.data_model.get_node("RBKairos/Mission_Methods/Ongoing_Mission_Feedback") =}
     state ongoingMissionName = {= self.data_model.get_node("RBKairos/Mission_Methods/Ongoing_Mission_Name") =}
 
-    reaction(startup){=
+    state act
+    reaction (startup){=
         assert isinstance(self.start_mission, MethodNode), "startMission Node not found"
         assert isinstance(self.preemptRunningMission, MethodNode), "preemptRunningMission Node not found"
         self.start_mission.callback = self.startMission
@@ -26,7 +27,7 @@ reactor Kairos extends Model{
         self.ongoingMissionFeedback.update("Mission done")
         self.missionsCallCounter.update(self.missionsCallCounter.read() + 1)   
         self.controlBusy.update(True)
-        self.lastMissionResult.update(True)        
+        self.lastMissionResult.update(True)  
         return self.lastMissionResult.read()
     =}
 
@@ -36,6 +37,10 @@ reactor Kairos extends Model{
         self.lastMissionResult.update(False)
         self.ongoingMissionName.update("")
         return self.lastMissionResult.read()
+    =}
+
+    reaction(durable_method)-> durable_method, durable_method_end{=
+        durable_method_end.schedule(SEC(0), self.protocol_mng.handle_message(durable_method.value))
     =}
 
 }
