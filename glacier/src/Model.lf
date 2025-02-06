@@ -6,6 +6,7 @@ reactor Model(model_path = ""){
     state name
     state busy
     state handshake
+
     input  channel_in
     output channel_out
 
@@ -13,9 +14,12 @@ reactor Model(model_path = ""){
     state protocol_mng = {= GlacierProtocolMng(self.data_model) =}
     state message_queue = {= [GlacierMessage] =}
 
+    timer check_update(1s, 1s)
     logical action check_handshake
     logical action durable_method
     logical action durable_method_end
+    logical action handle_update
+
     reaction(check_handshake)->channel_out,check_handshake{=
         if not self.handshake:
             if lf.time.logical_elapsed() > SEC(9):
@@ -35,24 +39,39 @@ reactor Model(model_path = ""){
         check_handshake.schedule(SEC(3))
     =}
 
-    reaction(channel_in)->channel_out,check_handshake,durable_method{=
+    reaction(channel_in)->channel_out,check_handshake,durable_method,handle_update{=
         message = channel_in.value
-        assert isinstance(message, Message)
+        assert isinstance(message, list) and all(isinstance(item, Message) for item in message), "Expected a list of Message instances"
+
+        for msg in message:
+            if isinstance(msg, GlacierMessage):
+                if msg.header.namespace == MsgNamespace.METHOD and self.data_model.get_node(msg.payload.node).is_durable():
+                    durable_method.schedule(0, msg)
+                elif msg.header.namespace == MsgNamespace.VARIABLE and VariableMsgName.UPDATE == msg.header.msg_name:
+                    handle_update.schedule(0, msg)
+                else:
+                    response_message = self.protocol_mng.handle_message(msg)
+                    self.message_queue.append(response_message)
+            elif isinstance(msg, GlacierSpecialMessage):
+                assert msg.header == SpecialHeader.INIT_HANDSHAKE, "Handshake failed"
+                self.handshake = True
+
+        if self.message_queue:
+            channel_out.set(self.message_queue)
+            self.message_queue = []
         
-        if isinstance(message, GlacierMessage):
-            if message.header.namespace == MsgNamespace.METHOD and self.data_model.get_node(message.payload.node).is_durable():
-                durable_method.schedule(0, message)
-            else:
-                response_message = self.protocol_mng.handle_message(message)
-                channel_out.set(response_message)
-            
-        elif isinstance(message, GlacierSpecialMessage):
-            assert message.header == SpecialHeader.INIT_HANDSHAKE, "Handshake failed"
-            self.handshake = True
     =}
 
     reaction(durable_method_end)-> channel_out{=
-        channel_out.set(durable_method_end.value)
+        channel_out.set([durable_method_end.value])
+    =}
+
+    reaction(check_update)-> channel_out{=
+        changes = self.data_model.get_data_change()
+        if changes:
+            message = self.protocol_mng.handle_update(changes)
+            channel_out.set(message)
+            self.data_model.clear_data_change()
     =}
 
 }

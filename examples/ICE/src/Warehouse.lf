@@ -46,6 +46,6 @@ reactor Warehouse extends Model{
 
     method ShowMessage(Message){=
         print(Message)
-    =}
+    =}    
 
 }

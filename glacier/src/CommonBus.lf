@@ -5,40 +5,54 @@ reactor CommonBus(width = 1){
     input[width] machine_in
     output[width] machine_out
     state map = {={str: int}=}
+    state messages_out = {={}=}
+
+    method list_of_Message(messages){=
+        for msg in messages:
+            assert msg.target in self.map, f"Target {message.target} not found in map"
+            self.messages_out[msg.target].append(msg)
+    =}
+
+    method append_special_message(message, index){=
+        assert message.header == SpecialHeader.INIT_HANDSHAKE, f"Invalid special header: {message.header}"
+        self.map[message.sender] = index
+        if message.sender not in self.messages_out:
+            self.messages_out[message.sender] = []
+        self.messages_out[message.sender].append(
+            GlacierSpecialMessage(
+                sender="CommonBus", 
+                target=message.sender, 
+                identifier=uuid.uuid4(), 
+                header=SpecialHeader.INIT_HANDSHAKE
+            )
+        )
+    =}
 
     reaction(machine_in)-> machine_out{=
         for i, port in enumerate(machine_in):
-            # Find the triggered port
             if not port.is_present:
                 continue
 
-            # Is the message valid?
             message = port.value
-            assert isinstance(message, Message), "Invalid message type"
+            if isinstance(message, Message):
+                if isinstance(message.header, SpecialHeader):
+                    self.append_special_message(message, i)                    
+                    continue
 
-            # Handle the message
-            if isinstance(message.header, GlacierHeader):
-                assert message.target in self.map, f"Target {message.target} not found in map"
-                # Send the message to the target
-                target_index = self.map[message.target]
-                assert target_index is not None, f"Target {message.target} not found in map"
-                # Send the message to the target
-                machine_out[target_index].set(message)
+                assert message.target in self.map, f"Target {message.target} not found in the neighborhood"
+                self.messages_out[message.target].append(message)
 
-            # Handle special messages
-            elif isinstance(message.header, SpecialHeader):
-                assert message.header == SpecialHeader.INIT_HANDSHAKE, f"Invalid special header: {message.header}"
-                #store the sender index
-                self.map[message.sender] = i
-                #send a response back to the sender
-                machine_out[i].set(GlacierSpecialMessage(
-                    sender="CommonBus", 
-                    target=message.sender, 
-                    identifier=uuid.uuid4(), 
-                    header=SpecialHeader.INIT_HANDSHAKE
-                ))
+            elif isinstance(message, list):
+                self.list_of_Message(message)
             else:
-                raise Exception(f"Unknown message header type: {type(message.header)}")
+                Exception(f"Unknown message header type: {type(message.header)}")
+
+        for target, messages in self.messages_out.items():
+            if not messages:
+                continue
+            machine_out[self.map[target]].set(messages)
+            self.messages_out[target] = []
+
     =}
 
 }

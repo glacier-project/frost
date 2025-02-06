@@ -7,6 +7,11 @@ reactor Tester{
     state name = {="Tester"=}
     state test_messages ={=
         [
+            GlacierMessage(sender="Tester", target="Warehouse",
+            identifier = uuid.uuid4(), header = GlacierHeader(MsgType.REQUEST,
+            (1,0,0), MsgNamespace.VARIABLE, VariableMsgName.SUBSCRIBE), 
+            payload=VariablePayload(node="Warehouse/Status/bayBusy", value="")),
+
             GlacierMessage(sender="Tester", target="Cell5",
             identifier = uuid.uuid4(), header = GlacierHeader(MsgType.REQUEST,            
             (1,0,0), MsgNamespace.METHOD, MethodMsgName.INVOKE), 
@@ -38,6 +43,7 @@ reactor Tester{
             payload=VariablePayload(node="RBKairos/Mission_Methods/Ongoing_Mission_Name", value="")),
         ]
     =}
+
     logical action routine
 
     reaction(startup)-> channel_out, routine{=
@@ -47,16 +53,16 @@ reactor Tester{
     =}
 
     reaction(routine)-> channel_out{=
-        channel_out.set(self.test_messages.pop(0))
+        if self.test_messages:
+            channel_out.set(self.test_messages.pop(0))
     =}
 
     reaction(channel_in) -> routine{=
-        message = channel_in.value
-        assert isinstance(message, Message)
-        if isinstance(message, GlacierMessage):
-            print(message)
-            if self.test_messages:
-                routine.schedule(SEC(2))
+        messages = channel_in.value
+        assert isinstance(messages, list) and all(isinstance(item, Message) for item in messages), f"Received invalid messages: {messages}"
+        print(messages, "\n", lf.time.logical_elapsed(), "\n")
+        if self.test_messages:
+            routine.schedule(SEC(2))
     =}
 
 }
