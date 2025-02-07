@@ -1,6 +1,8 @@
 target Python{
     fast: True,
-    timeout: 30s
+    timeout: 30s,
+    files: [../models/l_formatter.py, ../models/time_utils.py, ../models/singleton_meta.py],
+    logging: warn 
 }
 
 import Cell5 from "Cell5.lf" 
@@ -10,6 +12,9 @@ import CommonBus from "../../../glacier/src/CommonBus.lf"
 import Tester from "Tester.lf"
 
 preamble{=
+    import yaml
+    import math 
+    CONFIG_PATH = "models/configuration.yaml"
     from machine_data_model.protocols.glacier_v1.glacier_message import GlacierMessage, GlacierSpecialMessage
     from machine_data_model.protocols.glacier_v1.glacier_header import * 
     from machine_data_model.protocols.glacier_v1.glacier_payload import *
@@ -18,10 +23,30 @@ preamble{=
     from machine_data_model.protocols.protocol_mng import Message
     from machine_data_model.nodes.method_node import *
     import uuid
+    import logging
+    from singleton_meta import SingletonMeta
+    from enum import IntEnum
+    from time_utils import TimeUtils, TimeFormat, convert, f_convert
+    from l_formatter import LFormatter
+    
+    
 =}
 
 
 main reactor{
+
+    preamble{=
+        with open(CONFIG_PATH) as stream:
+            config = yaml.safe_load(stream)
+        TIME_FORMAT = TimeFormat[config["time_format"]]
+
+
+        handler = logging.StreamHandler()
+        handler.setFormatter(LFormatter(lf.time.logical_elapsed, TIME_FORMAT))
+        logging = logging.getLogger()
+        logging.addHandler(handler)
+    =}
+
 
     quality = new Cell5(model_path = "models/Cell5.yml")
     warehouse = new Warehouse(model_path = "models/Warehouse.yml")

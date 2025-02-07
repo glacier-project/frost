@@ -8,12 +8,21 @@ reactor CommonBus(width = 1){
     state messages_out = {={}=}
 
     method list_of_Message(messages){=
+        '''
+        Handle a list of messages:
+        - Check if the target is in the map
+        - Append the message to the corresponding target
+        '''
         for msg in messages:
             assert msg.target in self.map, f"Target {message.target} not found in map"
             self.messages_out[msg.target].append(msg)
     =}
 
     method append_special_message(message, index){=
+        '''
+        Handle special messages: 
+        - INIT_HANDSHAKE: Add the sender to the map, and send a response
+        '''
         assert message.header == SpecialHeader.INIT_HANDSHAKE, f"Invalid special header: {message.header}"
         self.map[message.sender] = index
         if message.sender not in self.messages_out:
@@ -29,6 +38,13 @@ reactor CommonBus(width = 1){
     =}
 
     reaction(machine_in)-> machine_out{=
+        '''
+        Handle incoming messages from the machines:
+        - Check if the message is a special message
+        - Check if the target is in the map
+        - Append the message to the corresponding target
+        - Send the messages to the corresponding machine
+        '''
         for i, port in enumerate(machine_in):
             if not port.is_present:
                 continue
@@ -51,6 +67,7 @@ reactor CommonBus(width = 1){
             if not messages:
                 continue
             machine_out[self.map[target]].set(messages)
+            logging.warning(f"CommonBus sent {len(messages)} messages to {target}")
             self.messages_out[target] = []
 
     =}

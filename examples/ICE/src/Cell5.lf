@@ -18,7 +18,7 @@ reactor Cell5 extends Model{
         if Unknown1 + Unknown2 % 2 == 0:
             return True
         else:
-            return False       
+            return False
     =}
 
     method UpdateStatistics(result){=

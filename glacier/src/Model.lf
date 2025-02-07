@@ -21,6 +21,10 @@ reactor Model(model_path = ""){
     logical action handle_update
 
     reaction(check_handshake)->channel_out,check_handshake{=
+        '''
+        If the handshake is not completed, send a handshake message to the bus
+        After 9 seconds, raise an exception
+        '''
         if not self.handshake:
             if lf.time.logical_elapsed() > SEC(9):
                 raise Exception(f"Handshake failed:{self.name} unable to connect to the bus") 
@@ -30,6 +34,10 @@ reactor Model(model_path = ""){
     =}
 
     reaction(startup)-> channel_out,check_handshake{=
+        '''
+        Initialize the model and internal variables
+        Send an initial handshake message to the bus
+        '''
         self.handshake = False
         self.busy = False
         self.message_queue = []
@@ -40,6 +48,14 @@ reactor Model(model_path = ""){
     =}
 
     reaction(channel_in)->channel_out,check_handshake,durable_method,handle_update{=
+        '''
+        Handle incoming messages from the bus
+        First check if the message is a durable method, if so, schedule it to be executed
+        Second check if the message is an update message, if so, schedule it to be handled
+        Otherwise, handle the message and generate a response (This one used for most of the cases)
+        Once the response is generated, append it to the message queue
+        Send the message queue to the bus
+        '''
         message = channel_in.value
         assert isinstance(message, list) and all(isinstance(item, Message) for item in message), "Expected a list of Message instances"
 
@@ -63,13 +79,20 @@ reactor Model(model_path = ""){
     =}
 
     reaction(durable_method_end)-> channel_out{=
+        '''
+        When the durable method prodocues a result, send it to the bus
+        '''
         channel_out.set([durable_method_end.value])
     =}
 
+
     reaction(check_update)-> channel_out{=
+        '''
+        Check if there are any changes in the data model and send an update message to the bus
+        '''
         changes = self.data_model.get_data_change()
         if changes:
-            message = self.protocol_mng.handle_update(changes)
+            message = self.protocol_mng.generate_updateMsgs(changes)
             channel_out.set(message)
             self.data_model.clear_data_change()
     =}

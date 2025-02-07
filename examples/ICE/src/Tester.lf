@@ -60,7 +60,8 @@ reactor Tester{
     reaction(channel_in) -> routine{=
         messages = channel_in.value
         assert isinstance(messages, list) and all(isinstance(item, Message) for item in messages), f"Received invalid messages: {messages}"
-        print(messages, "\n", lf.time.logical_elapsed(), "\n")
+        for message in messages:
+            logging.warning(f"{message.sender} to {message.target} with header {message.header} and payload {message.payload if not isinstance(message, GlacierSpecialMessage) else None}\n")
         if self.test_messages:
             routine.schedule(SEC(2))
     =}
