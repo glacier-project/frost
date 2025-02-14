@@ -1,0 +1,56 @@
+name: "Cell2" # name of the machine
+machine_category: "unknown" # category of the machine
+machine_type: "unknown" # type of the machine
+machine_model: "unknown" # model of the machine
+description: "" # description of the machine
+root:
+  !!FolderNode
+  name: "OPCUA"
+  description: "OPCUA"
+  children:
+      - !!FolderNode
+        name: "MES"
+        description: "MES"
+        children:
+          - !!FolderNode
+            name: "Methods"
+            description: "Methods"
+            children:
+              - !!MethodNode
+                name: "StartMission"
+                description: "Start"
+                parameters:
+                  - !!StringVariableNode
+                    name: "mission_name"
+                    description: ""
+                    value: "default"
+                returns:
+                  - !!BooleanVariableNode
+                    name: "accepted"
+                    description: ""
+                    value: True
+              - !!MethodNode
+                name: "engraveText"
+                description: "engrave text"
+                parameters:
+                  - !!StringVariableNode
+                    name: "text"
+                    description: ""
+                    value: "default"
+                returns:
+                  - !!BooleanVariableNode
+                    name: "accepted"
+                    description: ""
+                    value: True
+          - !!BooleanVariableNode
+            name: "MESBusy"
+            description: "Busy"
+            value: True
+          - !!BooleanVariableNode
+            name: "MESLastResult"
+            description: ""
+            value: True
+          - !!StringVariableNode
+            name: "CurrentMission"
+            description: "Current mission"
+            value: "default"

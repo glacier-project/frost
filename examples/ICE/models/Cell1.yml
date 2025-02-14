@@ -1,0 +1,71 @@
+name: "Cell1" # name of the machine
+machine_category: "SPEA" # category of the machine
+machine_type: "unknown" # type of the machine
+machine_model: "unknown" # model of the machine
+description: "Checks boards" # description of the machine
+root:
+  !!FolderNode
+  name: "Cell1"
+  description: "OPCUA"
+  children:
+    - !!FolderNode
+      name: "FlyingProbeTester"
+      description: "Flying Probe Tester"
+      children:
+        - !!MethodNode
+          name: "BoardIn"
+          description: "Receive board"
+          returns:
+            - !!BooleanVariableNode
+              name: "accepted"
+              description: ""
+              value: True
+        - !!MethodNode
+          name: "BoardOut"
+          description: "Send board"
+          returns:
+            - !!BooleanVariableNode
+              name: "accepted"
+              description: ""
+              value: True    
+        - !!BooleanVariableNode:
+          name: "Busy"
+          description: "Testing"
+          value: True
+        - !!StringVariableNode:
+          name: "CurrentMission"
+          description: "Name of the mission"
+          value: "default"
+        - !!StringVariableNode:
+          name: "LastResult"
+          description: ""
+          value: "default"
+        - !!MethodNode
+          name: "ShowMessage"
+          description: "Start mission"
+          parameters:
+            - !!StringVariableNode
+              name: "text"
+              description: ""
+              value: "default"
+          returns:
+            - !!BooleanVariableNode
+              name: "accepted"
+              description: ""
+              value: True
+        - !!MethodNode
+          name: "StartTest"
+          description: ""
+          parameters:
+            - !!StringVariableNode
+              name: "serialNumber"
+              description: ""
+              value: "default"
+          returns:
+            - !!BooleanVariableNode
+              name: "accepted"
+              description: ""
+              value: True
+          
+
+    

@@ -61,13 +61,17 @@ reactor Model(model_path = ""){
 
         for msg in message:
             if isinstance(msg, GlacierMessage):
+
                 if msg.header.namespace == MsgNamespace.METHOD and self.data_model.get_node(msg.payload.node).is_durable():
                     durable_method.schedule(0, msg)
+
                 elif msg.header.namespace == MsgNamespace.VARIABLE and VariableMsgName.UPDATE == msg.header.msg_name:
                     handle_update.schedule(0, msg)
+
                 else:
                     response_message = self.protocol_mng.handle_message(msg)
                     self.message_queue.append(response_message)
+
             elif isinstance(msg, GlacierSpecialMessage):
                 assert msg.header == SpecialHeader.INIT_HANDSHAKE, "Handshake failed"
                 self.handshake = True
@@ -90,11 +94,10 @@ reactor Model(model_path = ""){
         '''
         Check if there are any changes in the data model and send an update message to the bus
         '''
-        changes = self.data_model.get_data_change()
+        changes = self.protocol_mng.generate_updateMsgs()
         if changes:
-            message = self.protocol_mng.generate_updateMsgs(changes)
-            channel_out.set(message)
-            self.data_model.clear_data_change()
+            channel_out.set(changes)
+            self.protocol_mng.clear_update()
     =}
 
 }

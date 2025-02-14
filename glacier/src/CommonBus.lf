@@ -69,7 +69,7 @@ reactor CommonBus(width = 1){
             machine_out[self.map[target]].set(messages)
             logging.warning(f"CommonBus sent {len(messages)} messages to {target}")
             self.messages_out[target] = []
-
+            
     =}
 
 }
