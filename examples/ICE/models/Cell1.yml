@@ -28,15 +28,15 @@ root:
               name: "accepted"
               description: ""
               value: True    
-        - !!BooleanVariableNode:
+        - !!BooleanVariableNode
           name: "Busy"
           description: "Testing"
           value: True
-        - !!StringVariableNode:
+        - !!StringVariableNode
           name: "CurrentMission"
           description: "Name of the mission"
           value: "default"
-        - !!StringVariableNode:
+        - !!StringVariableNode
           name: "LastResult"
           description: ""
           value: "default"

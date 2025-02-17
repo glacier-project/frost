@@ -8,9 +8,9 @@ root:
   name: "Cell4"
   description: "OPCUA"
   children:
-    - !!FolderNode:
-      name: Cell_4_Robot_Coordinator_PLC
-      description: Cell_4_Robot_Coordinator_PLC
+    - !!FolderNode
+      name: "Cell_4_Robot_Coordinator_PLC"
+      description: "Cell_4_Robot_Coordinator_PLC"
       children:
         - !!FolderNode
           name: "DataBlocksInstance"
@@ -19,8 +19,6 @@ root:
             - !!MethodNode
               name: "OPC_UA_CLEAR_BUFFER_DB"
               description: ""
-              parameters:
-              returns:
             - !!MethodNode
               name: "OPC_UA_MOVE_AND_PLACE_DB"
               description: ""
@@ -215,11 +213,11 @@ root:
                   name: "plcOperationRunning"
                   description: ice_data_cell4_control
                   value: True
-                - !!BooleanVariableNodeVariableNode
+                - !!BooleanVariableNode
                   name: "plcOperationDone"
                   description: ice_data_cell4_control
                   value: True
-                - !!BooleanVariableNodeVariableNode
+                - !!BooleanVariableNode
                   name: "plcOperationError"
                   description: ice_data_cell4_control
                   value: True
@@ -346,12 +344,12 @@ root:
               name: "DB_STATISTICS"
               description: "DB_STATISTICS"
               children:        
-                - !!NumericalVariableNodeNode
+                - !!NumericalVariableNode
                   name: "ABB_TASK_COUNT"
                   description: "ice_data_cell4_kpi"
                   measure_unit: "NoneMeasureUnits.NONE"
                   value: 0
-                - !!NumericalVariableNodeNode
+                - !!NumericalVariableNode
                   name: "KUKA_TASK_COUNT"
                   description: "ice_data_cell4_kpi"
                   measure_unit: "NoneMeasureUnits.NONE"

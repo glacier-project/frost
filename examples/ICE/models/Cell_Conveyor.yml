@@ -12,211 +12,211 @@ root:
       name: "ConveyorHMI"
       description: "HMI"
       children:
-        - !!FolderNode:
+        - !!FolderNode
           name: "ConveyorDataExchange"
           description: ""
           children:
-            - !!FolderNode:
+            - !!FolderNode
               name: "Commands"
               description: ""
               children:
-                - !!ObjectVariableNode:
+                - !!ObjectVariableNode
                   name: "ConveyorCommandsPointer"
                   description: ""
                   properties:
-                    - !!MethodNode:
+                    - !!MethodNode
                       name: "setPalletDestination"
                       description: ""
                       parameters:
-                        - !!NumericalVariableNode:
+                        - !!NumericalVariableNode
                           name: "palletNumber"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           value: 0
-                        - !!NumericalVariableNode:
+                        - !!NumericalVariableNode
                           name: "destination"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           value: 0
                       returns:
-                        - !!BooleanVariableNode:
+                        - !!BooleanVariableNode
                           name: "result"
                           description: ""
                           value: True
-                    - !!MethodNode:
+                    - !!MethodNode
                       name: "setPalletDestinationWithReservation"
                       description: ""
                       parameters:
-                        - !!NumericalVariableNode:
+                        - !!NumericalVariableNode
                           name: "palletNumber"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           value: 0
-                        - !!NumericalVariableNode:
+                        - !!NumericalVariableNode
                           name: "destination"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           value: 0
-                        - !!NumericalVariableNode:
+                        - !!NumericalVariableNode
                           name: "reservationId"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           value: 0
                       returns:
-                        - !!BooleanVariableNode:
+                        - !!BooleanVariableNode
                           name: "result"
                           description: ""
                           value: True
-                    - !!MethodNode:
+                    - !!MethodNode
                       name: "callFreePalletTo"
                       description: ""
                       parameters:
-                        - !!NumericalVariableNode:
+                        - !!NumericalVariableNode
                           name: "destination"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           value: 0
                       returns:
-                        - !!BooleanVariableNode:
+                        - !!BooleanVariableNode
                           name: "result"
                           description: ""
                           value: True
-                        - !!NumericalVariableNode:
+                        - !!NumericalVariableNode
                           name: "palletNumber"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           value: 0
-                    - !!MethodNode:
+                    - !!MethodNode
                       name: "callFreePalletToWithReservation"
                       description: ""
                       parameters:
-                        - !!NumericalVariableNode:
+                        - !!NumericalVariableNode
                           name: "destination"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           value: 0
-                        - !!NumericalVariableNode:
+                        - !!NumericalVariableNode
                           name: "reservationId"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           value: 0
                       returns:
-                        - !!BooleanVariableNode:
+                        - !!BooleanVariableNode
                           name: "result"
                           description: ""
                           value: True
-                        - !!NumericalVariableNode:
+                        - !!NumericalVariableNode
                           name: "palletNumber"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           value: 0
-                    - !!MethodNode:
+                    - !!MethodNode
                       name: "callFreePalletOfTypeTo"
                       description: ""
                       parameters:
-                        - !!NumericalVariableNode:
+                        - !!NumericalVariableNode
                           name: "destination"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           value: 0
-                        - !!NumericalVariableNode:
+                        - !!NumericalVariableNode
                           name: "type"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           value: 0
                       returns:
-                        - !!BooleanVariableNode:
+                        - !!BooleanVariableNode
                           name: "result"
                           description: ""
                           value: True
-                        - !!NumericalVariableNode:
+                        - !!NumericalVariableNode
                           name: "palletNumber"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           value: 0
-                    - !!MethodNode:
+                    - !!MethodNode
                       name: "callFreePalletOfTypeToWithReservation"
                       description: ""
                       parameters:
-                        - !!NumericalVariableNode:
+                        - !!NumericalVariableNode
                           name: "destination"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           value: 0
-                        - !!NumericalVariableNode:
+                        - !!NumericalVariableNode
                           name: "type"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           value: 0
-                        - !!NumericalVariableNode:
+                        - !!NumericalVariableNode
                           name: "reservationId"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           value: 0
                       returns:
-                        - !!BooleanVariableNode:
+                        - !!BooleanVariableNode
                           name: "result"
                           description: ""
                           value: True
-                        - !!NumericalVariableNode:
+                        - !!NumericalVariableNode
                           name: "palletNumber"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           value: 0
-                    - !!MethodNode:
+                    - !!MethodNode
                       name: "reservePallet"
                       description: ""
                       parameters:
-                        - !!NumericalVariableNode:
+                        - !!NumericalVariableNode
                           name: "palletNumber"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           value: 0
-                        - !!NumericalVariableNode:
+                        - !!NumericalVariableNode
                           name: "reservationId"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           value: 0
                       returns:
-                        - !!BooleanVariableNode:
+                        - !!BooleanVariableNode
                           name: "result"
                           description: ""
                           value: True
-                    - !!MethodNode:
+                    - !!MethodNode
                       name: "releasePallet"
                       description: ""
                       parameters:
-                        - !!NumericalVariableNode:
+                        - !!NumericalVariableNode
                           name: "palletNumber"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           value: 0
                       returns:
-                        - !!BooleanVariableNode:
+                        - !!BooleanVariableNode
                           name: "result"
                           description: ""
                           value: True
-                    - !!MethodNode:
+                    - !!MethodNode
                       name: "setPartOnPallet"
                       description: ""
                       parameters:
-                        - !!NumericalVariableNode:
+                        - !!NumericalVariableNode
                           name: "palletNumber"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           value: 0
-                        - !!NumericalVariableNode:
+                        - !!NumericalVariableNode
                           name: "position"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           value: 0
-                        - !!NumericalVariableNode:
+                        - !!NumericalVariableNode
                           name: "part"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           value: 0
                       returns:
-                        - !!NumericalVariableNode:
+                        - !!NumericalVariableNode
                           name: "destination"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
@@ -949,7 +949,7 @@ root:
               name: "Segments"    
               description: ""
               children:
-                - !!ObjectVariableNode:
+                - !!ObjectVariableNode
                   name: "Segment1"
                   description: ""
                   properties:
@@ -1016,10 +1016,10 @@ root:
                   name: "Segment2"
                   description: ""
                   properties:
-                    - !!FolderNode
+                    - !!ObjectVariableNode
                       name: "FIFO"
                       description: ""
-                      children:
+                      properties:
                         - !!NumericalVariableNode
                           name: "size"
                           description: ""
@@ -1079,10 +1079,10 @@ root:
                   name: "Segment3"
                   description: ""
                   properties:
-                    - !!FolderNode
+                    - !!ObjectVariableNode
                       name: "FIFO"
                       description: ""
-                      children:
+                      properties:
                         - !!NumericalVariableNode
                           name: "size"
                           description: ""
@@ -1142,10 +1142,10 @@ root:
                   name: "Segment4"
                   description: ""
                   properties: 
-                    - !!FolderNode
+                    - !!ObjectVariableNode
                       name: "FIFO"
                       description: ""
-                      children:
+                      properties:
                         - !!NumericalVariableNode
                           name: "size"
                           description: ""
@@ -1205,10 +1205,10 @@ root:
                   name : "Segment5"
                   description: ""
                   properties:
-                    - !!FolderNode
+                    - !!ObjectVariableNode
                       name: "FIFO"
                       description: ""
-                      children:
+                      properties:
                         - !!NumericalVariableNode
                           name: "size"
                           description: ""
@@ -1268,10 +1268,10 @@ root:
                   name: "Segment6"
                   description: ""
                   properties:
-                    - !!FolderNode
+                    - !!ObjectVariableNode
                       name: "FIFO"
                       description: ""
-                      children:
+                      properties:
                         - !!NumericalVariableNode
                           name: "size"
                           description: ""
@@ -1331,10 +1331,10 @@ root:
                   name: "Segment7"
                   description: ""
                   properties:
-                    - !!FolderNode
+                    - !!ObjectVariableNode
                       name: "FIFO"
                       description: ""
-                      children:
+                      properties:
                         - !!NumericalVariableNode
                           name: "size"
                           description: ""
@@ -1394,10 +1394,10 @@ root:
                   name: "Segment8"
                   description: ""
                   properties:
-                    - !!FolderNode
+                    - !!ObjectVariableNode
                       name: "FIFO"
                       description: ""
-                      children:
+                      properties:
                         - !!NumericalVariableNode
                           name: "size"
                           description: ""
