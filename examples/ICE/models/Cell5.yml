@@ -27,7 +27,7 @@ root:
         - !!BooleanVariableNode
           name: "quality"
           description: "Quality of the Lego"
-          value: 0
+          value: True
     - !!FolderNode
       name: "Status"
       description: "Variables"
