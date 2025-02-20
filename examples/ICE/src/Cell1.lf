@@ -1,0 +1,8 @@
+target Python 
+
+import Model from "../../../glacier/src/Model.lf"
+
+reactor Cell1 extends Model{
+
+    
+}

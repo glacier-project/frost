@@ -5,13 +5,16 @@ target Python{
     logging: warn 
 }
 
+import Cell1 from "Cell1.lf"
+import Cell2 from "Cell2.lf"
+import Cell4 from "Cell4.lf"
 import Cell5 from "Cell5.lf" 
 import Warehouse from "Warehouse.lf"
 import Kairos from "Kairos.lf"
 import Conveyor from "Conveyor.lf"
-import Cell4 from "Cell4.lf"
+
 import CommonBus from "../../../glacier/src/CommonBus.lf"
-import Tester from "Tester.lf"
+import Scheduler from "Scheduler.lf"
 
 preamble{=
     import yaml
@@ -50,14 +53,16 @@ main reactor{
     =}
 
 
-    quality = new Cell5(model_path = "models/Cell5.yml")
+    cell1 = new Cell1(model_path = "models/Cell1.yml")
+    cell2 = new Cell2(model_path = "models/Cell2.yml")
+    cell4 = new Cell4(model_path = "models/Cell4.yml")
+    cell5 = new Cell5(model_path = "models/Cell5.yml")
     warehouse = new Warehouse(model_path = "models/Warehouse.yml")
     kairos_aa = new Kairos(model_path = "models/RBKairos.yml")
     conveyor = new Conveyor(model_path= "models/Cell_Conveyor.yml")
-    cell4 = new Cell4(model_path = "models/Cell4.yml")
-    bus = new CommonBus(width = 6)
-    tester = new Tester()
-    quality.channel_out, warehouse.channel_out, tester.channel_out, kairos_aa.channel_out, conveyor.channel_out, cell4.channel_out -> bus.machine_in after 1 msec
-    bus.machine_out -> quality.channel_in, warehouse.channel_in, tester.channel_in, kairos_aa.channel_in, conveyor.channel_in, cell4.channel_in after 1 msec
-    
+   
+    bus = new CommonBus(width = 8)
+    scheduler = new Scheduler()
+    cell1.channel_out, cell2.channel_out, cell5.channel_out, warehouse.channel_out, scheduler.channel_out, kairos_aa.channel_out, conveyor.channel_out, cell4.channel_out -> bus.machine_in after 1 msec
+    bus.machine_out -> cell1.channel_in, cell2.channel_in, cell5.channel_in, warehouse.channel_in, scheduler.channel_in, kairos_aa.channel_in, conveyor.channel_in, cell4.channel_in after 1 msec
 }

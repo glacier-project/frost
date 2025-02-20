@@ -1,0 +1,47 @@
+target Python
+{
+    files: [../recipes/handle_recipe.py]
+
+}
+
+
+preamble{=
+    from handle_recipe import get_messages, get_conditions
+
+=}
+
+reactor Scheduler(recipe_path = "/home/pietro/glacier/examples/ICE/recipes/test_recipe.yaml",
+                condition_path = "/home/pietro/glacier/examples/ICE/recipes/test_conditions.yaml"
+){
+
+    
+    input channel_in
+    output channel_out
+    state name = {="Tester"=}
+    state recipe = {=get_messages(self.recipe_path)=}  
+    state conditions = {=get_conditions(self.condition_path)=}  
+
+    logical action routine
+
+    reaction(startup)-> channel_out, routine{=
+        message = GlacierSpecialMessage(sender=self.name, target="Bus", identifier=uuid.uuid4(), header=SpecialHeader.INIT_HANDSHAKE)
+
+        channel_out.set(message)
+        routine.schedule(SEC(2))
+    =}
+
+    reaction(routine)-> channel_out{=
+        if self.recipe:
+            channel_out.set(self.recipe.pop(0))
+    =}
+
+    reaction(channel_in) -> routine{=
+        messages = channel_in.value
+        assert isinstance(messages, list) and all(isinstance(item, Message) for item in messages), f"Received invalid messages: {messages}"
+        for message in messages:
+            logging.warning(f"{message.sender} to {message.target} with header {message.header} and payload {message.payload if not isinstance(message, GlacierSpecialMessage) else None}\n")
+        if self.recipe:
+            routine.schedule(SEC(2))
+    =}
+
+}

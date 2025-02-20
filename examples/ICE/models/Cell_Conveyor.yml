@@ -273,7 +273,7 @@ root:
                   name: "destination_palletid_1_1"
                   description: ""
                   measure_unit: "NoneMeasureUnits.NONE"
-                  value: 0
+                  value: 0 #id pallet in quella posizione
                 - !!NumericalVariableNode
                   name: "destination_palletid_2_1"
                   description: ""
@@ -324,7 +324,7 @@ root:
                   description: ""
                   measure_unit: "NoneMeasureUnits.NONE"
                   value: 0
-                - !!BooleanVariableNode
+                - !!BooleanVariableNode #skip
                   name: "destination_ok_1_1"
                   description: ""
                   value: True 
@@ -371,7 +371,7 @@ root:
             - !!FolderNode
               name: "Buttons"
               description: ""
-              children:
+              children: # skip
                 - !!BooleanVariableNode
                   name: "auxBay2"
                   description: ""
@@ -945,7 +945,7 @@ root:
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
                       value: 0
-            - !!FolderNode
+            - !!FolderNode #skip
               name: "Segments"    
               description: ""
               children:
@@ -1453,7 +1453,7 @@ root:
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           value: 0
-            - !!FolderNode  
+            - !!FolderNode #skip
               name: "RunningMode"
               description: ""
               children:
@@ -1465,7 +1465,7 @@ root:
                   name: "modeManual"
                   description: ""
                   value: False    
-            - !!FolderNode
+            - !!FolderNode #skip
               name: "LTUMainBelts"
               description: ""
               children:
@@ -1478,7 +1478,7 @@ root:
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
                       value: 0
-        - !!FolderNode
+        - !!FolderNode #skip
           name: ConveyorHMIVars
           description: ""
           children:
@@ -1486,7 +1486,7 @@ root:
               name: "PANEL_ENABLED"
               description: ""
               value: True   
-        - !!FolderNode
+        - !!FolderNode #skip
           name: "ConveyorSystemStatus"
           description: ""
           children:

@@ -1,0 +1,76 @@
+- sender: "Tester"
+  target: "Warehouse"
+  header:
+    type: "REQUEST"
+    version: [1, 0, 0]
+    namespace: "VARIABLE"
+    msg_name: "SUBSCRIBE"
+  payload:
+    node: "Warehouse/Status/bayBusy"
+    value: ""
+
+- sender: "Tester"
+  target: "Cell5"
+  header:
+    type: "REQUEST"
+    version: [1, 0, 0]
+    namespace: "METHOD"
+    msg_name: "INVOKE"
+  payload:
+    node: "Cell5/do_quality_control"
+    args: [1, 1]
+
+- sender: "Tester"
+  target: "Cell5"
+  header:
+    type: "REQUEST"
+    version: [1, 0, 0]
+    namespace: "VARIABLE"
+    msg_name: "READ"
+  payload:
+    node: "Cell5/Statistics/FaultsCounter"
+    value: ""
+
+- sender: "Tester"
+  target: "RBKairos"
+  header:
+    type: "REQUEST"
+    version: [1, 0, 0]
+    namespace: "METHOD"
+    msg_name: "INVOKE"
+  payload:
+    node: "RBKairos/Mission_Methods/start_mission"
+    args: ["Warehouse"]
+
+- sender: "Tester"
+  target: "Warehouse"
+  header:
+    type: "REQUEST"
+    version: [1, 0, 0]
+    namespace: "METHOD"
+    msg_name: "INVOKE"
+  payload:
+    node: "Warehouse/SocketLink/extractTray"
+    args: [1]
+
+- sender: "Tester"
+  target: "Warehouse"
+  header:
+    type: "REQUEST"
+    version: [1, 0, 0]
+    namespace: "VARIABLE"
+    msg_name: "READ"
+  payload:
+    node: "Warehouse/Status/bayInfo"
+    value: ""
+
+- sender: "Tester"
+  target: "RBKairos"
+  header:
+    type: "REQUEST"
+    version: [1, 0, 0]
+    namespace: "VARIABLE"
+    msg_name: "READ"
+  payload:
+    node: "RBKairos/Mission_Methods/Ongoing_Mission_Name"
+    value: ""
