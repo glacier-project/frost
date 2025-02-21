@@ -5,7 +5,7 @@ from machine_data_model.protocols.glacier_v1.glacier_message import GlacierMessa
 from machine_data_model.protocols.glacier_v1.glacier_header import *
 from machine_data_model.protocols.glacier_v1.glacier_payload import VariablePayload, MethodPayload
 
-def get_conditions(path: str)->list:
+def get_conditions(path: str) -> list:
     '''
     This function reads a YAML file and returns a list of dictionaries containing the conditions
     specified in the YAML file.
@@ -18,15 +18,17 @@ def get_conditions(path: str)->list:
     list_of_conditions = []
     with open(path, 'r') as file:
         recipe = yaml.safe_load(file)
-        if not isinstance(recipe, list) or not all(isinstance(item, dict) for item in recipe):
-            raise ValueError("YAML file must contain a list of dictionaries")
-        for item in recipe:
+        if not isinstance(recipe, dict) or "conditions" not in recipe or not isinstance(recipe["conditions"], list):
+            raise ValueError("YAML file must contain a 'conditions' list")
+        for item in recipe["conditions"]:
+            if not isinstance(item, dict) or "node" not in item or "value" not in item:
+                raise ValueError("Each condition must be a dictionary with 'node' and 'value' keys")
             condition = {
-            "node": item["node"],
-            "value": item["value"]
+                "node": item["node"],
+                "value": item["value"]
             }
             list_of_conditions.append(condition)
-        return list_of_conditions
+    return list_of_conditions
 
 def get_messages(path: str) -> list:
     '''
@@ -39,9 +41,9 @@ def get_messages(path: str) -> list:
     list_of_messages = []
     with open(path, 'r') as file:
         recipe = yaml.safe_load(file)
-        if not isinstance(recipe, list) or not all(isinstance(item, dict) for item in recipe):
-            raise ValueError("YAML file must contain a list of dictionaries")
-        for item in recipe:
+        if not isinstance(recipe, dict) or "steps" not in recipe or not isinstance(recipe["steps"], list):
+            raise ValueError("YAML file must contain a 'steps' list")
+        for item in recipe["steps"]:
             sender = item["sender"]
             target = item["target"]
             identifier = uuid.uuid4()

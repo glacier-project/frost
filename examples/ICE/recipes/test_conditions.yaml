@@ -1,2 +1,7 @@
-- node: "Warehouse/Status/bayBusy"
-  value: True
+recipe: "Test"
+conditions:
+  - node: "Warehouse/Status/bayBusy"
+    value: 
+      False
+    
+  
