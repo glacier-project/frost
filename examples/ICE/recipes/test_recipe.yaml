@@ -1,7 +1,7 @@
 recipe: "Test"
 description: "Test recipe for the RBKairos system"
 steps:
-  - sender: "Tester"
+  - sender: "Scheduler"
     target: "Warehouse"
     header:
       type: "REQUEST"
@@ -12,7 +12,7 @@ steps:
       node: "Warehouse/SocketLink/extractTray"
       args: [1]
 
-  - sender: "Tester"
+  - sender: "Scheduler"
     target: "RBKairos"
     header:
       type: "REQUEST"
@@ -22,3 +22,14 @@ steps:
     payload:
       node: "RBKairos/Mission_Methods/start_mission"
       args: ["Warehouse"]  
+
+  - sender: "Scheduler"
+    target: "Cell_Conveyor"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
+      args: [10, 5]
