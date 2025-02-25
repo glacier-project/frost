@@ -33,3 +33,14 @@ steps:
     payload:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
       args: [10, 5]
+
+  - sender: "Scheduler"
+    target: "Cell5"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "VARIABLE"
+      msg_name: "READ"
+    payload:
+      node: "Cell5/Statistics/controlCount"
+      value: 0

@@ -30,7 +30,7 @@ reactor Conveyor extends Model{
     state Segment7 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Segments/Segment7") =}
     state Segment8 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Segments/Segment8") =}
     
-
+    //METHODS
     state setPalletDestination = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination") =}
     state setPalletDestinationWithReservation = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestinationWithReservation") =}
     state callFreePalletTo = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/callFreePalletTo") =}
@@ -42,11 +42,13 @@ reactor Conveyor extends Model{
     state setPartOnPallet = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPartOnPallet") =}
     state clearPartOnPallet = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/clearPartOnPallet") =}
 
+    //LocalVariables
     state pallets = {= [self.Pallet1, self.Pallet2, self.Pallet3, self.Pallet4, self.Pallet5, self.Pallet6, self.Pallet7, self.Pallet8, self.Pallet9, self.Pallet10] =}
     state segments = {= [self.Segment1, self.Segment2, self.Segment3, self.Segment4, self.Segment5, self.Segment6, self.Segment7, self.Segment8] =}
-    state bayes = {= {5: self.LUBay} =}
-    timer movement(0s, 1s)
+    state bayes = {= {5: self.LUBay, 11:self.Bay1, 21:self.Bay2, 31:self.Bay3, 41:self.Bay4} =}    
     state pallet_with_dest = {= [] =}
+
+    timer movement(0s, 1s)
     method setPalletDest(palletNumber, destination){=
         pallet = self.pallets[palletNumber-1]
         self.data_model.write_variable(
@@ -58,7 +60,15 @@ reactor Conveyor extends Model{
 
     method checkIfNextBay(seg_id, pallet_id){=
         dest = self.pallets[pallet_id-1].get_property("destination").read()
-        if dest == 5 and seg_id == 0:
+        if dest == 5 and seg_id == 4: # LoadUnloadZone
+            return True
+        elif dest == 11 and seg_id == 8: # Bay1 SPEA (Cell1)
+            return True
+        elif (dest/10) == 2 and seg_id == 1: # Bay2 Milling (Cell2)
+            return True
+        elif (dest/10) == 3 and seg_id == 2: # Bay3 KUKA and ABB (Cell4)
+            return True
+        elif (dest/10) == 4 and seg_id == 3: # Bay4 Quality (Cell5)
             return True
         
         return False
@@ -67,6 +77,14 @@ reactor Conveyor extends Model{
     method addPalletToBay(bay, pallet_id){=
         if bay.name == "LoadUnloadZone":
             bay.get_property("IndexPosition").get_property("palletNum").update(pallet_id)
+        elif bay.name == "Bay1":
+            bay.get_property("IndexPosition").get_property("PalletPosition1").update(pallet_id)
+        elif bay.name == "Bay2":
+            bay.get_property("IndexPosition").get_property("PalletPosition1").update(pallet_id)
+        elif bay.name == "Bay3":
+            bay.get_property("IndexPosition").get_property("PalletPosition1").update(pallet_id)
+        elif bay.name == "Bay4":
+            bay.get_property("IndexPosition").get_property("PalletPosition1").update(pallet_id)
     =}
 
     method movePallets(){=
@@ -123,6 +141,7 @@ reactor Conveyor extends Model{
     =}
     
     reaction(movement){=
+        #self.moveBayes()
         self.movePallets()
     =}
 
