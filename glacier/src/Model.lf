@@ -15,6 +15,7 @@ reactor Model(model_path = ""){
     state message_queue = {= [GlacierMessage] =}
 
     timer check_update(1s, 1s)
+    timer work(1s, 1s)
     logical action check_handshake
     logical action durable_method
     logical action durable_method_end
@@ -94,10 +95,11 @@ reactor Model(model_path = ""){
         '''
         Check if there are any changes in the data model and send an update message to the bus
         '''
-        update_messages = self.protocol_mng.get_update_messages()
-        if update_messages:
+        update_messages = list(self.protocol_mng.get_update_messages())
+        if update_messages:  
             channel_out.set(update_messages)
             self.protocol_mng.clear_update_messages()
+            
     =}
 
 }

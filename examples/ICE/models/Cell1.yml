@@ -31,7 +31,7 @@ root:
         - !!BooleanVariableNode
           name: "Busy"
           description: "Testing"
-          value: True
+          value: False
         - !!StringVariableNode
           name: "CurrentMission"
           description: "Name of the mission"

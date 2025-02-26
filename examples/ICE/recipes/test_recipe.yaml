@@ -44,3 +44,69 @@ steps:
     payload:
       node: "Cell5/Statistics/controlCount"
       value: 0
+
+  - sender: "Scheduler"
+    target: "Cell1"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "VARIABLE"
+      msg_name: "SUBSCRIBE"
+    payload:
+      node: "Cell1/FlyingProbeTester/LastResult"
+      value: []
+
+  - sender: "Scheduler"
+    target: "Cell1"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "Cell1/FlyingProbeTester/BoardIn"
+      args: []
+
+  - sender: "Scheduler"
+    target: "Cell1"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "Cell1/FlyingProbeTester/StartTest"
+      args: ["1234"]
+  
+  - sender: "Scheduler"
+    target: "Cell2"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "VARIABLE"
+      msg_name: "SUBSCRIBE"
+    payload:
+      node: "OPCUA/MES/MESLastResult"
+      value: []
+
+  - sender: "Scheduler"
+    target: "Cell2"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "OPCUA/MES/Methods/StartMission"
+      args: ["Take"]
+
+  - sender: "Scheduler"
+    target: "Cell2"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "OPCUA/MES/Methods/engraveText"
+      args: ["ICE"]

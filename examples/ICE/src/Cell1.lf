@@ -3,6 +3,56 @@ target Python
 import Model from "../../../glacier/src/Model.lf"
 
 reactor Cell1 extends Model{
+    //METHOD
+    state BoardIn = {= self.data_model.get_node("Cell1/FlyingProbeTester/BoardIn") =}
+    state BoardOut = {= self.data_model.get_node("Cell1/FlyingProbeTester/BoardOut") =}
+    state ShowMessage = {= self.data_model.get_node("Cell1/FlyingProbeTester/ShowMessage") =}
+    state StartTest = {= self.data_model.get_node("Cell1/FlyingProbeTester/StartTest") =}
+    //VARIABLE
+    state Busy = {= self.data_model.get_node("Cell1/FlyingProbeTester/Busy") =}
+    state CurrentMission = {= self.data_model.get_node("Cell1/FlyingProbeTester/CurrentMission") =}
+    state LastResult = {= self.data_model.get_node("Cell1/FlyingProbeTester/LastResult") =}
+    state FlyingProbeTester = {= self.data_model.get_node("Cell1/FlyingProbeTester") =}
+    state board = {= BooleanVariableNode("board", "Board is in?", False) =} 
 
+    method showMessage(text){=
+        print(text)
+        return True
+    =}
+
+    method boardIn(){=
+        self.board.update(True)
+        return True
+    =}
+
+    method boardOut(){=
+        self.board.update(False)
+        return True
+    =}
+
+    method startTest(serialNumber){=
+        if not self.board.read():
+            return False
+
+        self.Busy.update(True)
+        self.CurrentMission.update(serialNumber)
+
+        return True
+    =}
+
+    reaction(startup){=
+        self.FlyingProbeTester.add_child(self.board)
+        self.ShowMessage.callback = self.showMessage
+        self.BoardIn.callback = self.boardIn
+        self.BoardOut.callback = self.boardOut
+        self.StartTest.callback = self.startTest
+    =}
     
+    reaction(work){=
+        if self.Busy.read():
+            self.Busy.update(False)            
+            self.LastResult.update(self.CurrentMission.read())
+            self.CurrentMission.update("")
+    =}
+
 }

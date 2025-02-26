@@ -140,7 +140,7 @@ reactor Conveyor extends Model{
         (self.Segment1.get_property("FIFO")).get_property("size").update(10)
     =}
     
-    reaction(movement){=
+    reaction(work){=
         #self.moveBayes()
         self.movePallets()
     =}

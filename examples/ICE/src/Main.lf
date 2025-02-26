@@ -11,7 +11,7 @@ import Cell4 from "Cell4.lf"
 import Cell5 from "Cell5.lf" 
 import Warehouse from "Warehouse.lf"
 import Kairos from "Kairos.lf"
-import Conveyor from "Conveyor.lf"
+import Conveyor from "Cell_Conveyor.lf"
 
 import CommonBus from "../../../glacier/src/CommonBus.lf"
 import Scheduler from "Scheduler.lf"
@@ -27,14 +27,14 @@ preamble{=
     from machine_data_model.builder.data_model_builder import DataModelBuilder
     from machine_data_model.protocols.protocol_mng import Message
     from machine_data_model.nodes.method_node import *
+    from machine_data_model.nodes.variable_node import *
+    from machine_data_model.nodes.folder_node import *
     import uuid
     import logging
     from singleton_meta import SingletonMeta
     from enum import IntEnum
     from time_utils import TimeUtils, TimeFormat, convert, f_convert
-    from l_formatter import LFormatter
-    
-    
+    from l_formatter import LFormatter    
 =}
 
 

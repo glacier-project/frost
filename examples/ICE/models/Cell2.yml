@@ -45,11 +45,11 @@ root:
           - !!BooleanVariableNode
             name: "MESBusy"
             description: "Busy"
-            value: True
+            value: False
           - !!BooleanVariableNode
             name: "MESLastResult"
             description: ""
-            value: True
+            value: False
           - !!StringVariableNode
             name: "CurrentMission"
             description: "Current mission"

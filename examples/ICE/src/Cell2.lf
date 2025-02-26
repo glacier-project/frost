@@ -3,6 +3,49 @@ target Python
 import Model from "../../../glacier/src/Model.lf"
 
 reactor Cell2 extends Model{
+    //METHOD
+    state startMission = {= self.data_model.get_node("OPCUA/MES/Methods/StartMission")=}
+    state engraveText = {= self.data_model.get_node("OPCUA/MES/Methods/engraveText")=}
 
-    
+    //VARIABLE
+    state Busy = {= self.data_model.get_node("OPCUA/MES/MESBusy")=}
+    state lastResult = {= self.data_model.get_node("OPCUA/MES/MESLastResult")=}
+    state currentMission = {= self.data_model.get_node("OPCUA/MES/CurrentMission")=}
+    state MES = {= self.data_model.get_node("OPCUA/MES") =}
+    state board = {= BooleanVariableNode("board", "Board is in?", False) =} 
+
+    method StartMission(mission_name){=
+        if self.Busy.read() and not self.board.read():
+            return False
+
+        self.board.update(True)
+        self.Busy.update(True)
+        self.currentMission.update(mission_name)
+
+        return True
+    =}
+
+    method EngraveText(text){=
+        if self.Busy.read() and self.board.read():
+            return False
+        
+        self.Busy.update(True)
+        self.currentMission.update(text)
+        
+        return True
+    =}
+
+    reaction(startup){=
+        self.startMission.callback = self.StartMission
+        self.engraveText.callback = self.EngraveText
+        self.MES.add_child(self.board)
+    =}
+
+    reaction(work){=
+        if self.Busy.read():
+            self.Busy.update(False)            
+            self.lastResult.update(True)
+            self.currentMission.update("")
+    =}
+
 }
