@@ -4,15 +4,15 @@ import Model from "../../../glacier/src/Model.lf"
 
 reactor Cell1 extends Model{
     //METHOD
-    state BoardIn = {= self.data_model.get_node("Cell1/FlyingProbeTester/BoardIn") =}
-    state BoardOut = {= self.data_model.get_node("Cell1/FlyingProbeTester/BoardOut") =}
-    state ShowMessage = {= self.data_model.get_node("Cell1/FlyingProbeTester/ShowMessage") =}
-    state StartTest = {= self.data_model.get_node("Cell1/FlyingProbeTester/StartTest") =}
+    state board_in = {= self.data_model.get_node("Cell1/FlyingProbeTester/BoardIn") =}
+    state board_out = {= self.data_model.get_node("Cell1/FlyingProbeTester/BoardOut") =}
+    state show_message = {= self.data_model.get_node("Cell1/FlyingProbeTester/ShowMessage") =}
+    state start_test = {= self.data_model.get_node("Cell1/FlyingProbeTester/StartTest") =}
     //VARIABLE
-    state Busy = {= self.data_model.get_node("Cell1/FlyingProbeTester/Busy") =}
-    state CurrentMission = {= self.data_model.get_node("Cell1/FlyingProbeTester/CurrentMission") =}
-    state LastResult = {= self.data_model.get_node("Cell1/FlyingProbeTester/LastResult") =}
-    state FlyingProbeTester = {= self.data_model.get_node("Cell1/FlyingProbeTester") =}
+    state busy = {= self.data_model.get_node("Cell1/FlyingProbeTester/Busy") =}
+    state current_mission = {= self.data_model.get_node("Cell1/FlyingProbeTester/CurrentMission") =}
+    state last_result = {= self.data_model.get_node("Cell1/FlyingProbeTester/LastResult") =}
+    state flying_probe_tester = {= self.data_model.get_node("Cell1/FlyingProbeTester") =}
     state board = {= BooleanVariableNode("board", "Board is in?", False) =} 
 
     method showMessage(text){=
@@ -34,25 +34,25 @@ reactor Cell1 extends Model{
         if not self.board.read():
             return False
 
-        self.Busy.update(True)
-        self.CurrentMission.update(serialNumber)
+        self.busy.update(True)
+        self.current_mission.update(serialNumber)
 
         return True
     =}
 
     reaction(startup){=
-        self.FlyingProbeTester.add_child(self.board)
-        self.ShowMessage.callback = self.showMessage
-        self.BoardIn.callback = self.boardIn
-        self.BoardOut.callback = self.boardOut
-        self.StartTest.callback = self.startTest
+        self.flying_probe_tester.add_child(self.board)
+        self.show_message.callback = self.showMessage
+        self.board_in.callback = self.boardIn
+        self.board_out.callback = self.boardOut
+        self.start_test.callback = self.startTest
     =}
     
     reaction(work){=
-        if self.Busy.read():
-            self.Busy.update(False)            
-            self.LastResult.update(self.CurrentMission.read())
-            self.CurrentMission.update("")
+        if self.busy.read():
+            self.busy.update(False)            
+            self.last_result.update(self.current_mission.read())
+            self.current_mission.update("")
     =}
 
 }

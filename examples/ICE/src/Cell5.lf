@@ -4,33 +4,41 @@ import Model from "../../../glacier/src/Model.lf"
 
 reactor Cell5 extends Model{
 
-    state correct_parts = {= self.data_model.get_node("Cell5/Statistics/CorrectPartsCounter")=}
-    state faults_parts = {= self.data_model.get_node("Cell5/Statistics/FaultsCounter")=}
-    state counter = {= self.data_model.get_node("Cell5/Statistics/controlCount")=}
-    state do_quality = {= self.data_model.get_node("Cell5/do_quality_control") =}
+    state check_quality_covers = {= self.data_model.get_node("Cell5/Methods/CheckQualityCovers")=}
+    state check_quality_lego = {= self.data_model.get_node("Cell5/Methods/CheckQualityLego")=}
 
-    reaction(startup){=
-        self.do_quality.callback = self.Quality_Check
-        self.do_quality.post_callback = self.UpdateStatistics
-    =}
-
-    method Quality_Check(Unknown1, Unknown2){=
-        if Unknown1 + Unknown2 % 2 == 0:
+    state num_gadget_checks = {= self.data_model.get_node("Cell5/Statistics/ChecksGadget")=}
+    state num_lego_checks = {= self.data_model.get_node("Cell5/Statistics/ChecksLego")=}
+    state num_total_checks = {= self.data_model.get_node("Cell5/Statistics/ChecksTotal")=}
+    state num_gadget_failures = {= self.data_model.get_node("Cell5/Statistics/FaultsGadget")=}
+    state num_lego_failures = {= self.data_model.get_node("Cell5/Statistics/FaultsLego")=}
+    state num_total_failures = {= self.data_model.get_node("Cell5/Statistics/FaultsTotal")=}
+  
+    method check_covers(color){=
+        self.num_total_checks.update(self.num_total_checks.read() + 1)
+        if color == "red":
+            self.num_gadget_checks.update(self.num_gadget_checks.read() + 1)
             return True
         else:
+            self.num_gadget_failures.update(self.num_gadget_failures.read() + 1)
+            self.num_total_failures.update(self.num_total_failures.read() + 1)
             return False
     =}
 
-    method UpdateStatistics(result){=
-        self.counter.update(self.counter.read() + 1)
-        if result["quality"]:
-            var  = self.correct_parts.read()
-            var = var + 1
-            self.correct_parts.update(var)
+    method check_lego(shape1, shape2, shape3){=
+        self.num_total_checks.update(self.num_total_checks.read() + 1)
+        if shape1 == shape2 and shape2 == shape3:
+            self.num_lego_checks.update(self.num_lego_checks.read() + 1)
+            return True
         else:
-            var = self.faults_parts.read()
-            var = var + 1
-            self.faults_parts.update(var)
+            self.num_lego_failures.update(self.num_lego_failures.read() + 1)
+            self.num_total_failures.update(self.num_total_failures.read() + 1)
+            return False
+    =}
+
+    reaction(startup){=
+        self.check_quality_covers.callback = self.check_covers
+        self.check_quality_lego.callback = self.check_lego
     =}
     
 }

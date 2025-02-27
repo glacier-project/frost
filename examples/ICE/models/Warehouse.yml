@@ -47,7 +47,7 @@ root:
           description: "send back Tray"
           returns:
             - !!NumericalVariableNode
-              name: "Tray sent back"
+              name: "TrayNumber"
               description: "Index"
               measure_unit: "NoneMeasureUnits.NONE"
               value: 0
@@ -160,15 +160,15 @@ root:
         - !!StringVariableNode
           name: "activeAlarmsList"
           description: "activeAlarmsList"
-          value: "alarm"
+          value: "None"
         - !!StringVariableNode
           name: "warehouseInfo"
           description: "warehouseInfo"
-          value: "info"
+          value: ""
         - !!StringVariableNode
           name: "bayInfo"
           description: "bayInfo"
-          value: "info"
+          value: ""
         - !!BooleanVariableNode
           name: "warehouseAutomaticMode"
           description: "warehouseAutomaticMode"
@@ -176,7 +176,7 @@ root:
         - !!BooleanVariableNode
           name: "alarmTriggered"
           description: "alarmTriggered"
-          value: false
+          value: true
         - !!NumericalVariableNode
           name: "trayInBay"
           description: "Index"

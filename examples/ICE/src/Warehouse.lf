@@ -5,47 +5,42 @@ import Model from "../../../glacier/src/Model.lf"
 
 reactor Warehouse extends Model{
     
-    state extractTray = {= self.data_model.get_node("Warehouse/SocketLink/extractTray") =}
-    state sendBackTray = {= self.data_model.get_node("Warehouse/SocketLink/sendBackTray") =}
-    state showMessage = {= self.data_model.get_node("Warehouse/showMessage") =}
+    //Extract and send back need COMPOSITE
+    state extract_tray = {= self.data_model.get_node("Warehouse/SocketLink/extractTray") =}
+    state send_back_tray = {= self.data_model.get_node("Warehouse/SocketLink/sendBackTray") =}
+    state show_message = {= self.data_model.get_node("Warehouse/showMessage") =}
 
-    state warehouseInfo = {= self.data_model.get_node("Warehouse/Status/warehouseInfo") =}
-    state bayInfo = {= self.data_model.get_node("Warehouse/Status/bayInfo") =}
-    state trayInBay = {= self.data_model.get_node("Warehouse/Status/trayInBay") =}
-    state bayQueueSize = {= self.data_model.get_node("Warehouse/Status/bayQueueSize") =}
-    state bayBusy = {= self.data_model.get_node("Warehouse/Status/bayBusy") =}
-    state bayReadyForPickPlace = {= self.data_model.get_node("Warehouse/Status/bayReadyForPickPlace") =}
-    state TrayCallsCount = {= self.data_model.get_node("Warehouse/Statistics/TrayCallsCount") =}
+    state warehouse_info = {= self.data_model.get_node("Warehouse/Status/warehouseInfo") =}
+    state bay_info = {= self.data_model.get_node("Warehouse/Status/bayInfo") =}
+    state tray_in_bay = {= self.data_model.get_node("Warehouse/Status/trayInBay") =}
+    state bay_queue_size = {= self.data_model.get_node("Warehouse/Status/bayQueueSize") =}
+    state bay_busy = {= self.data_model.get_node("Warehouse/Status/bayBusy") =}
+    state bay_ready_for_pickplace = {= self.data_model.get_node("Warehouse/Status/bayReadyForPickPlace") =}
+    state tray_calls_count = {= self.data_model.get_node("Warehouse/Statistics/TrayCallsCount") =}
     
     reaction(startup){=
-        assert isinstance(self.extractTray, MethodNode), "extractTray not found"
-        assert isinstance(self.sendBackTray, MethodNode), "sendBackTray not found"
-        assert isinstance(self.showMessage, MethodNode), "showMessage not found"
-        self.extractTray.callback = self.ExtractTray
-        self.sendBackTray.callback = self.SendBackTray    
-        self.showMessage.callback = self.ShowMessage
+        self.extract_tray.callback = self.extract_Tray
+        self.send_back_tray.callback = self.sendback_Tray    
+        self.show_message.callback = self.show_Message
     =}
 
-    method ExtractTray(TrayNumber){=
-        self.trayInBay.update(TrayNumber)
-        self.TrayCallsCount.update(self.TrayCallsCount.read() + 1)
-        self.bayInfo.update("Tray in bay: " + str(TrayNumber))        
-        self.bayBusy.update(True)
-        self.bayReadyForPickPlace.update(True)
+    method extract_Tray(TrayNumber){=
+        self.tray_in_bay.update(TrayNumber)
+        self.tray_calls_count.update(self.tray_calls_count.read() + 1)  
+        self.bay_busy.update(True)
+        self.bay_ready_for_pickplace.update(True)
         return TrayNumber
     =}
 
-    method SendBackTray(TrayNumber){=
-        self.warehouseInfo.update(f" Tray {TrayNumber} sent back")
-        self.trayInBay.update(0)
-        self.bayBusy.update(False)
-        self.bayInfo.update("None")
-        self.bayReadyForPickPlace.update(False)
+    method sendback_Tray(TrayNumber){=
+        self.tray_in_bay.update(0)
+        self.bay_busy.update(False)
+        self.bay_ready_for_pickplace.update(False)
         return TrayNumber
     =}
 
-    method ShowMessage(Message){=
-        print(Message)
+    method show_Message(message){=
+        print(message)
     =}    
 
 }

@@ -2,18 +2,28 @@ target Python
 
 import Model from "../../../glacier/src/Model.lf"
 
+preamble{=
+    from enum import Enum
+    class bay_value(Enum):
+        LoadUnloadZone = 5
+        Bay1 = 11
+        Bay2 = 21
+        Bay3 = 31
+        Bay4 = 41
+=}
+
 reactor Conveyor extends Model{
     //PALLETS
-    state Pallet1 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet1") =}
-    state Pallet2 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet2") =}
-    state Pallet3 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet3") =}
-    state Pallet4 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet4") =}
-    state Pallet5 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet5") =}
-    state Pallet6 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet6") =}
-    state Pallet7 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet7") =}
-    state Pallet8 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet8") =}
-    state Pallet9 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet9") =}
-    state Pallet10 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet10") =}
+    state pallet_1 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet1") =}
+    state pallet_2 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet2") =}
+    state pallet_3 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet3") =}
+    state pallet_4 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet4") =}
+    state pallet_5 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet5") =}
+    state pallet_6 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet6") =}
+    state pallet_7 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet7") =}
+    state pallet_8 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet8") =}
+    state pallet_9 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet9") =}
+    state pallet_10 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet10") =}
     //BAYES
     state LUBay = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Bayes/LoadUnloadZone") =}
     state Bay1 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Bayes/Bay1") =}
@@ -43,7 +53,7 @@ reactor Conveyor extends Model{
     state clearPartOnPallet = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/clearPartOnPallet") =}
 
     //LocalVariables
-    state pallets = {= [self.Pallet1, self.Pallet2, self.Pallet3, self.Pallet4, self.Pallet5, self.Pallet6, self.Pallet7, self.Pallet8, self.Pallet9, self.Pallet10] =}
+    state pallets = {= [self.pallet_1, self.pallet_2, self.pallet_3, self.pallet_4, self.pallet_5, self.pallet_6, self.pallet_7, self.pallet_8, self.pallet_9, self.pallet_10] =}
     state segments = {= [self.Segment1, self.Segment2, self.Segment3, self.Segment4, self.Segment5, self.Segment6, self.Segment7, self.Segment8] =}
     state bayes = {= {5: self.LUBay, 11:self.Bay1, 21:self.Bay2, 31:self.Bay3, 41:self.Bay4} =}    
     state pallet_with_dest = {= [] =}
@@ -60,15 +70,15 @@ reactor Conveyor extends Model{
 
     method checkIfNextBay(seg_id, pallet_id){=
         dest = self.pallets[pallet_id-1].get_property("destination").read()
-        if dest == 5 and seg_id == 4: # LoadUnloadZone
+        if dest == bay_value.LoadUnloadZone.value and seg_id == 0: # LoadUnloadZone
             return True
-        elif dest == 11 and seg_id == 8: # Bay1 SPEA (Cell1)
+        elif dest == bay_value.Bay1.value and seg_id == 8: # Bay1 SPEA (Cell1)
             return True
-        elif (dest/10) == 2 and seg_id == 1: # Bay2 Milling (Cell2)
+        elif dest == bay_value.Bay2.value and seg_id == 1: # Bay2 Milling (Cell2)
             return True
-        elif (dest/10) == 3 and seg_id == 2: # Bay3 KUKA and ABB (Cell4)
+        elif dest == bay_value.Bay3.value and seg_id == 2: # Bay3 KUKA and ABB (Cell4)
             return True
-        elif (dest/10) == 4 and seg_id == 3: # Bay4 Quality (Cell5)
+        elif dest == bay_value.Bay4.value and seg_id == 3: # Bay4 Quality (Cell5)
             return True
         
         return False
@@ -78,13 +88,44 @@ reactor Conveyor extends Model{
         if bay.name == "LoadUnloadZone":
             bay.get_property("IndexPosition").get_property("palletNum").update(pallet_id)
         elif bay.name == "Bay1":
-            bay.get_property("IndexPosition").get_property("PalletPosition1").update(pallet_id)
+            bay.get_property("PalletPosition1").get_property("palletNum").update(pallet_id)
         elif bay.name == "Bay2":
-            bay.get_property("IndexPosition").get_property("PalletPosition1").update(pallet_id)
+            bay.get_property("PalletPosition1").get_property("palletNum").update(pallet_id)
         elif bay.name == "Bay3":
-            bay.get_property("IndexPosition").get_property("PalletPosition1").update(pallet_id)
+            bay.get_property("PalletPosition1").get_property("palletNum").update(pallet_id)
         elif bay.name == "Bay4":
-            bay.get_property("IndexPosition").get_property("PalletPosition1").update(pallet_id)
+            bay.get_property("PalletPosition1").get_property("palletNum").update(pallet_id)
+    =}
+
+    method move_interchanges(){=
+        for seg_num, segment in enumerate(self.segments):
+            size_of_seg = segment.get_property("FIFO").get_property("size")
+            if size_of_seg.read() == 0:
+                continue
+
+            first_pos = segment.get_property("FIFO").get_property("item0")
+            first_pos_value = first_pos.read()
+
+            if first_pos_value != 0:
+                if self.pallets[first_pos_value-1] in self.pallet_with_dest:    
+                    if self.checkIfNextBay(seg_num, first_pos_value):
+                        bay = self.bayes[self.pallets[first_pos_value-1].get_property("destination").read()]
+                        self.addPalletToBay(bay, first_pos_value)
+                        first_pos.update(0)
+                        size_of_seg.update(size_of_seg.read() - 1)
+                else:
+                    next_segment = None
+                    if seg_num == 7:
+                        next_segment = self.segments[0]
+                    else:
+                        next_segment = self.segments[seg_num + 1]
+                    item9 = next_segment.get_property("FIFO").get_property("item9")
+                    if item9.read() == 0:
+                        item9.update(first_pos_value)
+                        first_pos.update(0)
+                        first_pos_value = 0                        
+                        next_segment.get_property("FIFO").get_property("size").update(next_segment.get_property("FIFO").get_property("size").read() + 1)
+                
     =}
 
     method movePallets(){=
@@ -98,30 +139,15 @@ reactor Conveyor extends Model{
             # Iterate over each item in the segment's FIFO queue
             for i in range(len(items) - 1):
                 current_pos = segment.get_property("FIFO").get_property(items[i])
-                curr_pos_content = current_pos.read()
-                next_pos = None
-                if i < 11:
-                    next_pos = segment.get_property("FIFO").get_property(items[i+1])
-                
-                if i == 0 and curr_pos_content != 0:                                    
-                    if self.pallets[curr_pos_content-1] in self.pallet_with_dest:     
-                        if self.checkIfNextBay(seg_num, curr_pos_content):
-                            bay = self.bayes[self.pallets[curr_pos_content-1].get_property("destination").read()]
-                            self.addPalletToBay(bay, curr_pos_content)
-                            current_pos.update(0)
-                            size_of_seg.update(size_of_seg.read() - 1)
-                    else:
-                        next_segment = self.segments[seg_num + 1]
-                        item9 = next_segment.get_property("FIFO").get_property("item9")
-                        if item9.read() == 0:
-                            item9.update(curr_pos_content)
-                            current_pos.update(0)
-                            curr_pos_content = 0                        
-                            next_segment.get_property("FIFO").get_property("size").update(next_segment.get_property("FIFO").get_property("size").read() + 1)
-                    
+                curr_value = current_pos.read()
+                next_pos = segment.get_property("FIFO").get_property(items[i+1])
+                next_value = next_pos.read()    
+                if next_value == 0:
+                    continue            
+                  
                 # Move pallets over segment
-                if curr_pos_content == 0 and next_pos != None:                    
-                    current_pos.update(next_pos.read())
+                if curr_value == 0:                    
+                    current_pos.update(next_value)
                     next_pos.update(0)
     =}
 
@@ -142,27 +168,10 @@ reactor Conveyor extends Model{
     
     reaction(work){=
         #self.moveBayes()
+        self.move_interchanges()
         self.movePallets()
     =}
 
-    timer t(0, 3s)
-    reaction(t) -> channel_out{=
-        if self.pallet_with_dest:
-            for pallet in self.pallet_with_dest:
-                dest = pallet.get_property("destination").read()
-                bay = self.bayes[dest]
-                bay_content = None
-                if bay.name == "LoadUnloadZone":
-                    bay_content = bay.get_property("IndexPosition").get_property("palletNum").read()
-                if bay_content == self.pallets.index(pallet) + 1:
-                    channel_out.set(
-                        GlacierMessage(sender = self.name, target = "Scheduler",
-                        identifier = uuid.uuid4(), 
-                        header = GlacierHeader(MsgType.RESPONSE, tuple([1,0,0]), MsgNamespace.VARIABLE, VariableMsgName.UPDATE),
-                        payload = VariablePayload("CellConveyor/ConveyorHMI/ConveyorObjects/Bayes/LoadUnloadZone/IndexPosition/palletNum", bay_content)
-                        )
-                    )
-                    self.pallet_with_dest.remove(pallet)
-    =}
+    
 
 }

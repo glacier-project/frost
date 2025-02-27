@@ -19,6 +19,7 @@ import Scheduler from "Scheduler.lf"
 preamble{=
     import yaml
     import math 
+    from enum import Enum
     CONFIG_PATH = "models/configuration.yaml"
     from machine_data_model.protocols.glacier_v1.glacier_message import GlacierMessage, GlacierSpecialMessage
     from machine_data_model.protocols.glacier_v1.glacier_header import * 

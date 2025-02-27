@@ -4,7 +4,6 @@ reactor Model(model_path = ""){
 
     state path = model_path
     state name
-    state busy
     state handshake
 
     input  channel_in
@@ -40,7 +39,6 @@ reactor Model(model_path = ""){
         Send an initial handshake message to the bus
         '''
         self.handshake = False
-        self.busy = False
         self.message_queue = []
         self.name = (self.path.split("/")[-1]).split(".")[0]
         message = GlacierSpecialMessage(sender=self.name, target="Bus", identifier=uuid.uuid4(), header=SpecialHeader.INIT_HANDSHAKE)

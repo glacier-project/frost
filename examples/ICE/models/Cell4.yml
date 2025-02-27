@@ -205,22 +205,22 @@ root:
           name: "DataBlocksGlobal"
           description: "DataBlocksInstance"
           children:
-            - !!FolderNode
+            - !!FolderNode 
               name: "DB_ROBOTS"
               description: "DB_ROBOTS"
               children:            
                 - !!BooleanVariableNode
                   name: "plcOperationRunning"
                   description: ice_data_cell4_control
-                  value: True
+                  value: False
                 - !!BooleanVariableNode
                   name: "plcOperationDone"
                   description: ice_data_cell4_control
-                  value: True
+                  value: False
                 - !!BooleanVariableNode
                   name: "plcOperationError"
                   description: ice_data_cell4_control
-                  value: True
+                  value: False
                 - !!FolderNode
                   name: "ABB"
                   description: "ABB"
@@ -228,7 +228,7 @@ root:
                     - !!BooleanVariableNode
                       name: "programRunning"
                       description: "program"
-                      value: True
+                      value: False
                 - !!FolderNode
                   name: "Kuka"
                   description: "Kuka"
@@ -236,7 +236,7 @@ root:
                     - !!BooleanVariableNode
                       name: "programRunning"
                       description: "ice_data_cell4_state"
-                      value: True
+                      value: False
             - !!FolderNode
               name: "DB_OPCUA"
               description: "DB_OPCUA"

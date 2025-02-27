@@ -37,11 +37,11 @@ root:
         - !!BooleanVariableNode
           name: "Control_Busy"
           description: ""
-          value: True
+          value: False
         - !!BooleanVariableNode
           name: "Last_Mission_Result"
           description: ""
-          value: True
+          value: False
         - !!NumericalVariableNode
           name: "Missions_Call_Counter"
           description: "Number of calls"

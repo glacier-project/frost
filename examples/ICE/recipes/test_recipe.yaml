@@ -21,7 +21,18 @@ steps:
       msg_name: "INVOKE"
     payload:
       node: "RBKairos/Mission_Methods/start_mission"
-      args: ["Warehouse"]  
+      args: ["Warehouse"]
+
+  - sender: "Scheduler"
+    target: "Cell_Conveyor"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "VARIABLE"
+      msg_name: "SUBSCRIBE"
+    payload:
+      node: "CellConveyor/ConveyorHMI/ConveyorObjects/Bayes/Bay2/PalletPosition1/palletNum"
+      value: []      
 
   - sender: "Scheduler"
     target: "Cell_Conveyor"
@@ -32,7 +43,7 @@ steps:
       msg_name: "INVOKE"
     payload:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [10, 5]
+      args: [1, 21]
 
   - sender: "Scheduler"
     target: "Cell5"
@@ -42,7 +53,7 @@ steps:
       namespace: "VARIABLE"
       msg_name: "READ"
     payload:
-      node: "Cell5/Statistics/controlCount"
+      node: "Cell5/Statistics/ChecksTotal"
       value: 0
 
   - sender: "Scheduler"
