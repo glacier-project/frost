@@ -23,10 +23,32 @@ reactor Scheduler(recipe_path = "../ICE/recipes/test_recipe.yaml",
 
     logical action routine
 
-    reaction(startup)-> channel_out, routine{=
-        message = GlacierSpecialMessage(sender=self.name, target="Bus", identifier=uuid.uuid4(), header=SpecialHeader.INIT_HANDSHAKE)
+    method generate_bus_registration_message(){=
+        """
+        Generates a `REGISTER` message to initiate the registration process with the CommonBus.
 
-        channel_out.set(message)
+        This method constructs a `GlacierMessage` that requests registration in the 
+        communication system. The message is addressed to the `"CommonBus"` and follows 
+        the `PROTOCOL` namespace with the `REGISTER` message name.
+
+        :return: A `GlacierMessage` representing the registration request.
+        """
+        return GlacierMessage(
+            sender=self.name,
+            target="CommonBus",
+            identifier=str(uuid.uuid4()),
+            header=GlacierHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.PROTOCOL,
+                msg_name=ProtocolMsgName.REGISTER,
+            ),
+            payload=ProtocolPayload(),
+        )
+    =}
+
+    reaction(startup)-> channel_out, routine{=
+        channel_out.set(self.generate_bus_registration_message())
         routine.schedule(SEC(2))
     =}
 
@@ -39,7 +61,12 @@ reactor Scheduler(recipe_path = "../ICE/recipes/test_recipe.yaml",
         messages = channel_in.value
         assert isinstance(messages, list) and all(isinstance(item, Message) for item in messages), f"Received invalid messages: {messages}"
         for message in messages:
-            logging.warning(f"{message.sender} to {message.target} with header {message.header} and payload {message.payload if not isinstance(message, GlacierSpecialMessage) else None}\n")
+            if message.header.matches(MsgType.REQUEST, MsgNamespace.PROTOCOL, ProtocolMsgName.REGISTER):
+                logging.debug(f"{message.sender} requests to register to {message.target}.")
+            if message.header.matches(MsgType.RESPONSE, MsgNamespace.PROTOCOL, ProtocolMsgName.REGISTER):
+                logging.debug(f"{message.sender} notify registration to {message.target}.")
+            else:
+                logging.debug(f"{message.sender} to {message.target} with header {message.header} and payload {message.payload}\n")
         if self.recipe:
             routine.schedule(SEC(2))
     =}
