@@ -6,13 +6,13 @@ preamble{=
     from enum import Enum
     class bay_value(Enum):
         LoadUnloadZone = 5
-        Bay1 = 11
-        Bay2 = 21
-        Bay3 = 31
-        Bay4 = 41
+        Bay1 = 1
+        Bay2 = 2
+        Bay3 = 3
+        Bay4 = 4
 =}
 
-reactor Conveyor extends Model{
+reactor Cell_Conveyor extends Model{
     //PALLETS
     state pallet_1 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet1") =}
     state pallet_2 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet2") =}
@@ -52,13 +52,16 @@ reactor Conveyor extends Model{
     state setPartOnPallet = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPartOnPallet") =}
     state clearPartOnPallet = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/clearPartOnPallet") =}
 
+    //DESTINATIONS
+    state destinations_folder = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Destinations") =}
+
     //LocalVariables
     state pallets = {= [self.pallet_1, self.pallet_2, self.pallet_3, self.pallet_4, self.pallet_5, self.pallet_6, self.pallet_7, self.pallet_8, self.pallet_9, self.pallet_10] =}
     state segments = {= [self.Segment1, self.Segment2, self.Segment3, self.Segment4, self.Segment5, self.Segment6, self.Segment7, self.Segment8] =}
     state bayes = {= {5: self.LUBay, 11:self.Bay1, 21:self.Bay2, 31:self.Bay3, 41:self.Bay4} =}    
     state pallet_with_dest = {= [] =}
+    state segment_items = {= ["item0", "item1", "item2", "item3", "item4", "item5", "item6", "item7", "item8", "item9"] =}
 
-    timer movement(0s, 1s)
     method setPalletDest(palletNumber, destination){=
         pallet = self.pallets[palletNumber-1]
         self.data_model.write_variable(
@@ -68,17 +71,17 @@ reactor Conveyor extends Model{
         return True
     =}
 
-    method checkIfNextBay(seg_id, pallet_id){=
-        dest = self.pallets[pallet_id-1].get_property("destination").read()
-        if dest == bay_value.LoadUnloadZone.value and seg_id == 0: # LoadUnloadZone
+    method check_next_bay(destination, seg_id){=
+        destination = int(destination / 10)
+        if destination == bay_value.LoadUnloadZone.value and seg_id == 0: # LoadUnloadZone
             return True
-        elif dest == bay_value.Bay1.value and seg_id == 8: # Bay1 SPEA (Cell1)
+        elif destination == bay_value.Bay1.value and seg_id == 8: # Bay1 SPEA (Cell1)
             return True
-        elif dest == bay_value.Bay2.value and seg_id == 1: # Bay2 Milling (Cell2)
+        elif destination == bay_value.Bay2.value and seg_id == 1: # Bay2 Milling (Cell2)
             return True
-        elif dest == bay_value.Bay3.value and seg_id == 2: # Bay3 KUKA and ABB (Cell4)
+        elif destination == bay_value.Bay3.value and seg_id == 2: # Bay3 KUKA and ABB (Cell4)
             return True
-        elif dest == bay_value.Bay4.value and seg_id == 3: # Bay4 Quality (Cell5)
+        elif destination == bay_value.Bay4.value and seg_id == 3: # Bay4 Quality (Cell5)
             return True
         
         return False
@@ -97,6 +100,42 @@ reactor Conveyor extends Model{
             bay.get_property("PalletPosition1").get_property("palletNum").update(pallet_id)
     =}
 
+    method is_bay_free(destination, pallet_id){=
+        pos = destination % 10
+        bay = int(destination / 10)
+        target_pos = "destination_palletid_"
+        if bay == bay_value.LoadUnloadZone.value and self.destinations_folder[target_pos + bay_value.LoadUnloadZone.value].read() == 0:
+            self.destinations_folder[target_pos + bay_value.LoadUnloadZone.value].update(pallet_id)
+            return True
+        elif bay == bay_value.Bay1.value:
+            for i in range(1, pos + 1):
+                if self.destinations_folder[target_pos + str(bay_value.Bay1.value) + "_" + str(i)].read() != 0:
+                    return False
+            self.destinations_folder[target_pos + str(bay_value.Bay1.value) + "_" + str(1)].update(pallet_id)
+            return True
+        elif bay == bay_value.Bay2.value:
+            for i in range(1, pos + 1):
+                #print(self.destinations_folder[target_pos + str(bay_value.Bay2.value) + "_" + str(i)].read())
+                if self.destinations_folder[target_pos + str(bay_value.Bay2.value) + "_" + str(i)].read() != 0:
+                    return False
+            self.destinations_folder[target_pos + str(bay_value.Bay2.value) + "_" + str(1)].update(pallet_id)
+            return True
+        elif bay == bay_value.Bay3.value:
+            for i in range(1, pos + 1):
+                if self.destinations_folder[target_pos + str(bay_value.Bay3.value) + "_" + str(i)].read() != 0:
+                    return False
+            self.destinations_folder[target_pos + str(bay_value.Bay3.value) + "_" + str(1)].update(pallet_id)
+            return True
+        elif bay == bay_value.Bay4.value:
+            for i in range(1, pos + 1):
+                if self.destinations_folder[target_pos + str(bay_value.Bay4.value) + "_" + str(i)].read() != 0:
+                    return False
+            self.destinations_folder[target_pos + str(bay_value.Bay4.value) + "_" + str(1)].update(pallet_id)
+            return True
+
+        return False
+    =}
+
     method move_interchanges(){=
         for seg_num, segment in enumerate(self.segments):
             size_of_seg = segment.get_property("FIFO").get_property("size")
@@ -105,31 +144,45 @@ reactor Conveyor extends Model{
 
             first_pos = segment.get_property("FIFO").get_property("item0")
             first_pos_value = first_pos.read()
-
-            if first_pos_value != 0:
-                if self.pallets[first_pos_value-1] in self.pallet_with_dest:    
-                    if self.checkIfNextBay(seg_num, first_pos_value):
-                        bay = self.bayes[self.pallets[first_pos_value-1].get_property("destination").read()]
-                        self.addPalletToBay(bay, first_pos_value)
-                        first_pos.update(0)
-                        size_of_seg.update(size_of_seg.read() - 1)
-                else:
-                    next_segment = None
-                    if seg_num == 7:
-                        next_segment = self.segments[0]
-                    else:
-                        next_segment = self.segments[seg_num + 1]
-                    item9 = next_segment.get_property("FIFO").get_property("item9")
-                    if item9.read() == 0:
-                        item9.update(first_pos_value)
-                        first_pos.update(0)
-                        first_pos_value = 0                        
-                        next_segment.get_property("FIFO").get_property("size").update(next_segment.get_property("FIFO").get_property("size").read() + 1)
+            first_pallet = self.pallets[first_pos_value-1]
+            if first_pos_value != 0 and first_pallet in self.pallet_with_dest:
+                destination = first_pallet.get_property("destination").read()
+                if self.check_next_bay(destination, seg_num) and self.is_bay_free(destination, first_pos_value):
+                    bay = self.bayes[self.pallets[first_pos_value-1].get_property("destination").read()]
+                    self.addPalletToBay(bay, first_pos_value)
+                    first_pos.update(0)
+                    size_of_seg.update(size_of_seg.read() - 1)
+                    continue
                 
+            next_segment = None
+            if seg_num == 7:
+                next_segment = self.segments[0]
+            else:
+                next_segment = self.segments[seg_num + 1]
+            item9 = next_segment.get_property("FIFO").get_property("item9")
+            if item9.read() == 0:
+                item9.update(first_pos_value)
+                first_pos.update(0)
+                first_pos_value = 0                        
+                next_segment.get_property("FIFO").get_property("size").update(next_segment.get_property("FIFO").get_property("size").read() + 1)
+        
     =}
 
-    method movePallets(){=
-        items = ["item0", "item1", "item2", "item3", "item4", "item5", "item6", "item7", "item8", "item9"]
+    method move_bayes(){=
+        for pallet in self.pallet_with_dest:
+            dest = pallet.get_property("destination").read()
+            bay = int(dest / 10)
+            if bay == bay_value.LoadUnloadZone.value:
+                continue
+            
+            pos = int(dest % 10)
+
+
+
+
+    =}
+
+    method move_pallets(){=
         # Iterate over each segment
         for seg_num, segment in enumerate(self.segments):
             size_of_seg = segment.get_property("FIFO").get_property("size")
@@ -137,10 +190,10 @@ reactor Conveyor extends Model{
                 continue
             
             # Iterate over each item in the segment's FIFO queue
-            for i in range(len(items) - 1):
-                current_pos = segment.get_property("FIFO").get_property(items[i])
+            for i in range(len(self.segment_items) - 1):
+                current_pos = segment.get_property("FIFO").get_property(self.segment_items[i])
                 curr_value = current_pos.read()
-                next_pos = segment.get_property("FIFO").get_property(items[i+1])
+                next_pos = segment.get_property("FIFO").get_property(self.segment_items[i+1])
                 next_value = next_pos.read()    
                 if next_value == 0:
                     continue            
@@ -167,9 +220,9 @@ reactor Conveyor extends Model{
     =}
     
     reaction(work){=
-        #self.moveBayes()
+        #self.move_bayes()
         self.move_interchanges()
-        self.movePallets()
+        self.move_pallets()
     =}
 
     

@@ -4,8 +4,11 @@ import Model from "../../../glacier/src/Model.lf"
 
 reactor Cell4 extends Model{
 
-    
-    
+    state operation_running = {= self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationRunning")=}
+    state operation_don = {= self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationDone")=}
+    state operation_error = {= self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationError")=}
+    state abb_prog_running = {= self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/ABB/programRunning")=}
+    state kuka_prog_running = {= self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/KUKA/programRunning")=}
 
 
 }

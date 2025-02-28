@@ -11,7 +11,7 @@ import Cell4 from "Cell4.lf"
 import Cell5 from "Cell5.lf" 
 import Warehouse from "Warehouse.lf"
 import Kairos from "Kairos.lf"
-import Conveyor from "Cell_Conveyor.lf"
+import Cell_Conveyor from "Cell_Conveyor.lf"
 
 import CommonBus from "../../../glacier/src/CommonBus.lf"
 import Scheduler from "Scheduler.lf"
@@ -60,7 +60,7 @@ main reactor{
     cell5 = new Cell5(model_path = "models/Cell5.yml")
     warehouse = new Warehouse(model_path = "models/Warehouse.yml")
     kairos_aa = new Kairos(model_path = "models/RBKairos.yml")
-    conveyor = new Conveyor(model_path= "models/Cell_Conveyor.yml")
+    conveyor = new Cell_Conveyor(model_path= "models/Cell_Conveyor.yml")
     scheduler = new Scheduler()
     bus = new CommonBus(width = 8)
     
