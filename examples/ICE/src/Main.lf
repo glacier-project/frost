@@ -20,7 +20,7 @@ preamble{=
     import yaml
     import math 
     CONFIG_PATH = "models/configuration.yaml"
-    from machine_data_model.protocols.glacier_v1.glacier_message import GlacierMessage, GlacierSpecialMessage
+    from machine_data_model.protocols.glacier_v1.glacier_message import GlacierMessage
     from machine_data_model.protocols.glacier_v1.glacier_header import * 
     from machine_data_model.protocols.glacier_v1.glacier_payload import *
     from machine_data_model.protocols.glacier_v1.glacier_protocol_mng import GlacierProtocolMng
