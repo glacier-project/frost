@@ -24,7 +24,7 @@ root:
                   name: "ConveyorCommandsPointer"
                   description: ""
                   properties:
-                    - !!MethodNode
+                    - !!CompositeMethodNode
                       name: "setPalletDestination"
                       description: ""
                       parameters:
@@ -38,11 +38,23 @@ root:
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           value: 0
+                        - !!BooleanVariableNode
+                          name: "result"
+                          description: ""
+                          value: True
                       returns:
                         - !!BooleanVariableNode
                           name: "result"
                           description: ""
                           value: True
+                      cfg:
+                        - !!WriteVariableNode
+                          variable: "CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet3/destination"
+                          value: "$destination"
+                        - !!WaitConditionNode
+                          variable: "CellConveyor/ConveyorHMI/ConveyorObjects/Bayes/Bay2/PalletPosition1/palletNum"
+                          operator: "=="
+                          rhs: 3
                     - !!MethodNode
                       name: "setPalletDestinationWithReservation"
                       description: ""

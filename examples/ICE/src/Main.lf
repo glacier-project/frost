@@ -21,7 +21,7 @@ preamble{=
     import math 
     from enum import Enum
     CONFIG_PATH = "models/configuration.yaml"
-    from machine_data_model.protocols.glacier_v1.glacier_message import GlacierMessage, GlacierSpecialMessage
+    from machine_data_model.protocols.glacier_v1.glacier_message import GlacierMessage
     from machine_data_model.protocols.glacier_v1.glacier_header import * 
     from machine_data_model.protocols.glacier_v1.glacier_payload import *
     from machine_data_model.protocols.glacier_v1.glacier_protocol_mng import GlacierProtocolMng
@@ -46,11 +46,10 @@ main reactor{
             config = yaml.safe_load(stream)
         TIME_FORMAT = TimeFormat[config["time_format"]]
 
-
         handler = logging.StreamHandler()
         handler.setFormatter(LFormatter(lf.time.logical_elapsed, TIME_FORMAT))
-        logging = logging.getLogger()
-        logging.addHandler(handler)
+        logger = logging.getLogger()
+        logger.addHandler(handler)
     =}
 
 

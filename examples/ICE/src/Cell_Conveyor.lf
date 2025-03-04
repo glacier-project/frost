@@ -62,14 +62,15 @@ reactor Cell_Conveyor extends Model{
     state pallet_with_dest = {= [] =}
     state segment_items = {= ["item0", "item1", "item2", "item3", "item4", "item5", "item6", "item7", "item8", "item9"] =}
 
-    method setPalletDest(palletNumber, destination){=
+    '''method setPalletDest(palletNumber, destination){=
         pallet = self.pallets[palletNumber-1]
         self.data_model.write_variable(
             (pallet.get_property("destination")).id, destination
         )
+        print(f"Pallet {palletNumber} set to destination {destination}")
         self.pallet_with_dest.append(pallet)
         return True
-    =}
+    =}'''
 
     method check_next_bay(destination, seg_id){=
         destination = int(destination / 10)
@@ -115,7 +116,6 @@ reactor Cell_Conveyor extends Model{
             return True
         elif bay == bay_value.Bay2.value:
             for i in range(1, pos + 1):
-                #print(self.destinations_folder[target_pos + str(bay_value.Bay2.value) + "_" + str(i)].read())
                 if self.destinations_folder[target_pos + str(bay_value.Bay2.value) + "_" + str(i)].read() != 0:
                     return False
             self.destinations_folder[target_pos + str(bay_value.Bay2.value) + "_" + str(1)].update(pallet_id)
@@ -145,7 +145,7 @@ reactor Cell_Conveyor extends Model{
             first_pos = segment.get_property("FIFO").get_property("item0")
             first_pos_value = first_pos.read()
             first_pallet = self.pallets[first_pos_value-1]
-            if first_pos_value != 0 and first_pallet in self.pallet_with_dest:
+            if first_pos_value != 0 and first_pallet.get_property("destination").read() != 0:
                 destination = first_pallet.get_property("destination").read()
                 if self.check_next_bay(destination, seg_num) and self.is_bay_free(destination, first_pos_value):
                     bay = self.bayes[self.pallets[first_pos_value-1].get_property("destination").read()]
@@ -205,7 +205,6 @@ reactor Cell_Conveyor extends Model{
     =}
 
     reaction(startup){=
-        self.setPalletDestination.callback = self.setPalletDest
         (self.Segment1.get_property("FIFO")).get_property("item0").update(1)
         (self.Segment1.get_property("FIFO")).get_property("item1").update(2)
         (self.Segment1.get_property("FIFO")).get_property("item2").update(3)

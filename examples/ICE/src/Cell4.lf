@@ -3,12 +3,24 @@ target Python
 import Model from "../../../glacier/src/Model.lf"
 
 reactor Cell4 extends Model{
-
+    //VARIABLES
     state operation_running = {= self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationRunning")=}
     state operation_don = {= self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationDone")=}
     state operation_error = {= self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationError")=}
     state abb_prog_running = {= self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/ABB/programRunning")=}
     state kuka_prog_running = {= self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/KUKA/programRunning")=}
+    state abb_positions = {= self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_BUFFER/ABBPositions")=}
+    state kuka_positions = {= self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_BUFFER/KUKAPositions")=}
+    //METHODS
+    state clear_buffer = {= self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_CLEAR_BUFFER_DB")=}
+    state move_and_place = {= self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_MOVE_AND_PLACE_DB")=}
+    state move_over = {= self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_MOVE_OVER_PALLET_DB")=}
+    state pick_from_pallet = {= self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_PICK_FROM_PALLET_DB")=}
+    state place_to_pallet = {= self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_PLACE_TO_PALLET_DB")=}
+    state submit_robot_operation = {= self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_SUBMIT_ROBOT_OPERATION_DB")=}
+    state abb_pick_board = {= self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_ABB_PICK_BOARD_FROM_PALLET_DB")=}
+    state gadget_assembly = {= self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_GADGET_ASSEMBLY_DB")=}
 
+    
 
 }

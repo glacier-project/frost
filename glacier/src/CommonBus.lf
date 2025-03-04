@@ -18,23 +18,43 @@ reactor CommonBus(width = 1){
             self.messages_out[msg.target].append(msg)
     =}
 
-    method append_special_message(message, index){=
+    method register_machine(message, index){=
         '''
-        Handle special messages: 
-        - INIT_HANDSHAKE: Add the sender to the map, and send a response
+        Handles machines that register to the bus (`REGISTER` request).
+
+        - Validates that the message is a proper `PROTOCOL REGISTER` request.
+        - Registers the sender in the communication map.
+        - Ensures the sender has an output queue.
+        - Sends a `REGISTER` response to acknowledge the handshake.
+
+        :param message: The incoming handshake message.
+        :param index: The index representing the sender in the communication list.
         '''
-        assert message.header == SpecialHeader.INIT_HANDSHAKE, f"Invalid special header: {message.header}"
+        assert message.header.matches(MsgType.REQUEST, MsgNamespace.PROTOCOL, ProtocolMsgName.REGISTER), (
+            f"Invalid header: {message.header}"
+        )
+        # Register sender to the map.
         self.map[message.sender] = index
+        # Ensure sender has an output queue.
         if message.sender not in self.messages_out:
             self.messages_out[message.sender] = []
-        self.messages_out[message.sender].append(
-            GlacierSpecialMessage(
-                sender="CommonBus", 
-                target=message.sender, 
-                identifier=uuid.uuid4(), 
-                header=SpecialHeader.INIT_HANDSHAKE
-            )
+        # Generate the correct response.
+        response = GlacierMessage(
+            sender="CommonBus",
+            target=message.sender,
+            identifier=str(uuid.uuid4()),
+            header=GlacierHeader(
+                type=MsgType.RESPONSE,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.PROTOCOL,
+                msg_name=ProtocolMsgName.REGISTER,
+            ),
+            payload=ProtocolPayload(),
         )
+        # Store the response in the sender's queue.
+        self.messages_out[message.sender].append(response)
+        # Log the registrer operation.
+        logging.debug(f"CommonBus register machine {message.sender}, with index {index}.")
     =}
 
     reaction(machine_in)-> machine_out{=
@@ -51,8 +71,10 @@ reactor CommonBus(width = 1){
 
             message = port.value
             if isinstance(message, Message):
-                if isinstance(message.header, SpecialHeader):
-                    self.append_special_message(message, i)                    
+
+                # Handle requests to register to the bus.
+                if message.header.matches(MsgType.REQUEST, MsgNamespace.PROTOCOL, ProtocolMsgName.REGISTER):
+                    self.register_machine(message, i)
                     continue
 
                 assert message.target in self.map, f"Target {message.target} not found in the neighborhood"
@@ -67,7 +89,7 @@ reactor CommonBus(width = 1){
             if not messages:
                 continue
             machine_out[self.map[target]].set(messages)
-            logging.warning(f"CommonBus sent {len(messages)} messages to {target}")
+            logging.debug(f"CommonBus routed {len(messages)} message{'s' if len(messages) > 1 else ''} to {target}")
             self.messages_out[target] = []
             
     =}
