@@ -1,6 +1,6 @@
 target Python 
 
-import Model from "../../../glacier/src/Model.lf"
+import GlacierMachine from "../../../glacier/src/GlacierMachine.lf"
 
 preamble{=
     from enum import Enum
@@ -12,7 +12,7 @@ preamble{=
         Bay4 = 4
 =}
 
-reactor Cell_Conveyor extends Model{
+reactor Cell_Conveyor extends GlacierMachine{
     //PALLETS
     state pallet_1 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet1") =}
     state pallet_2 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet2") =}

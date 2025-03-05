@@ -13,7 +13,7 @@ import Warehouse from "Warehouse.lf"
 import Kairos from "Kairos.lf"
 import Cell_Conveyor from "Cell_Conveyor.lf"
 
-import CommonBus from "../../../glacier/src/CommonBus.lf"
+import GlacierBus from "../../../glacier/src/GlacierBus.lf"
 import Scheduler from "Scheduler.lf"
 
 preamble{=
@@ -61,8 +61,8 @@ main reactor{
     kairos_aa = new Kairos(model_path = "models/RBKairos.yml")
     conveyor = new Cell_Conveyor(model_path= "models/Cell_Conveyor.yml")
     scheduler = new Scheduler()
-    bus = new CommonBus(width = 8)
+    bus = new GlacierBus(model_path = "models/Common_Bus.yml",width = 8)
     
-    cell1.channel_out, cell2.channel_out, cell5.channel_out, warehouse.channel_out, scheduler.channel_out, kairos_aa.channel_out, conveyor.channel_out, cell4.channel_out -> bus.machine_in after 1 msec
-    bus.machine_out -> cell1.channel_in, cell2.channel_in, cell5.channel_in, warehouse.channel_in, scheduler.channel_in, kairos_aa.channel_in, conveyor.channel_in, cell4.channel_in after 1 msec
+    cell1.channel_out, cell2.channel_out, cell5.channel_out, warehouse.channel_out, scheduler.channel_out, kairos_aa.channel_out, conveyor.channel_out, cell4.channel_out -> bus.channel_in after 1 msec
+    bus.channel_out -> cell1.channel_in, cell2.channel_in, cell5.channel_in, warehouse.channel_in, scheduler.channel_in, kairos_aa.channel_in, conveyor.channel_in, cell4.channel_in after 1 msec
 }

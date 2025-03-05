@@ -1,8 +1,8 @@
 target Python 
 
-import Model from "../../../glacier/src/Model.lf"
+import GlacierMachine from "../../../glacier/src/GlacierMachine.lf"
 
-reactor Cell5 extends Model{
+reactor Cell5 extends GlacierMachine{
 
     state check_quality_covers = {= self.data_model.get_node("Cell5/Methods/CheckQualityCovers")=}
     state check_quality_lego = {= self.data_model.get_node("Cell5/Methods/CheckQualityLego")=}

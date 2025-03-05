@@ -1,8 +1,8 @@
 target Python 
 
-import Model from "../../../glacier/src/Model.lf"
+import GlacierMachine from "../../../glacier/src/GlacierMachine.lf"
 
-reactor Cell2 extends Model{
+reactor Cell2 extends GlacierMachine{
     //METHOD
     state start_mission = {= self.data_model.get_node("OPCUA/MES/Methods/StartMission")=}
     state engrave_text = {= self.data_model.get_node("OPCUA/MES/Methods/engraveText")=}

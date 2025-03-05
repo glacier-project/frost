@@ -1,8 +1,8 @@
 target Python 
 
-import Model from "../../../glacier/src/Model.lf"
+import GlacierMachine from "../../../glacier/src/GlacierMachine.lf"
 
-reactor Cell1 extends Model{
+reactor Cell1 extends GlacierMachine{
     //METHOD
     state board_in = {= self.data_model.get_node("Cell1/FlyingProbeTester/BoardIn") =}
     state board_out = {= self.data_model.get_node("Cell1/FlyingProbeTester/BoardOut") =}

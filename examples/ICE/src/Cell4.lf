@@ -1,8 +1,8 @@
 target Python 
 
-import Model from "../../../glacier/src/Model.lf"
+import GlacierMachine from "../../../glacier/src/GlacierMachine.lf"
 
-reactor Cell4 extends Model{
+reactor Cell4 extends GlacierMachine{
     //VARIABLES
     state operation_running = {= self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationRunning")=}
     state operation_don = {= self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationDone")=}

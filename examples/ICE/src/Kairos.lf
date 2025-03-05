@@ -1,9 +1,9 @@
 target Python
 
-import Model from "../../../glacier/src/Model.lf"
+import GlacierMachine from "../../../glacier/src/GlacierMachine.lf"
 
 
-reactor Kairos extends Model{
+reactor Kairos extends GlacierMachine{
     
     state start_mission = {= self.data_model.get_node("RBKairos/Mission_Methods/start_mission") =}
     state preempt_running_mission = {= self.data_model.get_node("RBKairos/Mission_Methods/preemptRunningMission") =}
