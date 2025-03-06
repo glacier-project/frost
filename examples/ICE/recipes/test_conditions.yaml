@@ -1,7 +1,9 @@
 recipe: "Test"
 conditions:
-  - node: "Warehouse/Status/bayBusy"
-    value: 
-      False
+  - machine: "Warehouse"
+    header: METHOD
+    node: "TrayNumber"
+    value: 8
+    
     
   

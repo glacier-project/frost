@@ -10,114 +10,135 @@ steps:
       msg_name: "INVOKE"
     payload:
       node: "Warehouse/SocketLink/extractTray"
-      args: [1]
-
-  - sender: "Scheduler"
-    target: "RBKairos"
-    header:
-      type: "REQUEST"
-      version: [1, 0, 0]
-      namespace: "METHOD"
-      msg_name: "INVOKE"
-    payload:
-      node: "RBKairos/Mission_Methods/start_mission"
-      args: ["Warehouse"]
-
-  - sender: "Scheduler"
-    target: "Cell_Conveyor"
-    header:
-      type: "REQUEST"
-      version: [1, 0, 0]
-      namespace: "METHOD"
-      msg_name: "INVOKE"
-    payload:
-      node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [3, 21]
-
-  - sender: "Scheduler"
-    target: "Cell_Conveyor"
-    header:
-      type: "REQUEST"
-      version: [1, 0, 0]
-      namespace: "METHOD"
-      msg_name: "INVOKE"
-    payload:
-      node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [5, 21]
-
-  - sender: "Scheduler"
-    target: "Cell5"
-    header:
-      type: "REQUEST"
-      version: [1, 0, 0]
-      namespace: "VARIABLE"
-      msg_name: "READ"
-    payload:
-      node: "Cell5/Statistics/ChecksTotal"
-      value: 0
-
-  - sender: "Scheduler"
-    target: "Cell1"
-    header:
-      type: "REQUEST"
-      version: [1, 0, 0]
-      namespace: "VARIABLE"
-      msg_name: "SUBSCRIBE"
-    payload:
-      node: "Cell1/FlyingProbeTester/LastResult"
-      value: []
-
-  - sender: "Scheduler"
-    target: "Cell1"
-    header:
-      type: "REQUEST"
-      version: [1, 0, 0]
-      namespace: "METHOD"
-      msg_name: "INVOKE"
-    payload:
-      node: "Cell1/FlyingProbeTester/BoardIn"
-      args: []
-
-  - sender: "Scheduler"
-    target: "Cell1"
-    header:
-      type: "REQUEST"
-      version: [1, 0, 0]
-      namespace: "METHOD"
-      msg_name: "INVOKE"
-    payload:
-      node: "Cell1/FlyingProbeTester/StartTest"
-      args: ["1234"]
+      args: [8]
   
-  - sender: "Scheduler"
-    target: "Cell2"
-    header:
-      type: "REQUEST"
-      version: [1, 0, 0]
-      namespace: "VARIABLE"
-      msg_name: "SUBSCRIBE"
-    payload:
-      node: "OPCUA/MES/MESLastResult"
-      value: []
+  # - sender: "Scheduler"
+  #   target: "Warehouse"
+  #   header:
+  #     type: "REQUEST"
+  #     version: [1, 0, 0]
+  #     namespace: "METHOD"
+  #     msg_name: "INVOKE"
+  #   payload:
+  #     node: "Warehouse/SocketLink/extractTray"
+  #     args: [8]
+  
+  # - sender: "Scheduler"
+  #   target: "Cell_Conveyor"
+  #   header:
+  #     type: "REQUEST"
+  #     version: [1, 0, 0]
+  #     namespace: "VARIABLE"
+  #     msg_name: "SUBSCRIBE"
+  #   payload:
+  #     node: "CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet3/destination"
+  #     value: []
 
+  # - sender: "Scheduler"
+  #   target: "RBKairos"
+  #   header:
+  #     type: "REQUEST"
+  #     version: [1, 0, 0]
+  #     namespace: "METHOD"
+  #     msg_name: "INVOKE"
+  #   payload:
+  #     node: "RBKairos/Mission_Methods/start_mission"
+  #     args: ["Warehouse"]
+
+  # - sender: "Scheduler"
+  #   target: "Cell_Conveyor"
+  #   header:
+  #     type: "REQUEST"
+  #     version: [1, 0, 0]
+  #     namespace: "METHOD"
+  #     msg_name: "INVOKE"
+  #   payload:
+  #     node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
+  #     args: [3, 21]
+
+  # - sender: "Scheduler"
+  #   target: "Cell5"
+  #   header:
+  #     type: "REQUEST"
+  #     version: [1, 0, 0]
+  #     namespace: "VARIABLE"
+  #     msg_name: "READ"
+  #   payload:
+  #     node: "Cell5/Statistics/ChecksTotal"
+  #     value: 0
+
+  # - sender: "Scheduler"
+  #   target: "Cell1"
+  #   header:
+  #     type: "REQUEST"
+  #     version: [1, 0, 0]
+  #     namespace: "VARIABLE"
+  #     msg_name: "SUBSCRIBE"
+  #   payload:
+  #     node: "Cell1/FlyingProbeTester/LastResult"
+  #     value: []
+
+  # - sender: "Scheduler"
+  #   target: "Cell1"
+  #   header:
+  #     type: "REQUEST"
+  #     version: [1, 0, 0]
+  #     namespace: "METHOD"
+  #     msg_name: "INVOKE"
+  #   payload:
+  #     node: "Cell1/FlyingProbeTester/BoardIn"
+  #     args: []
+
+  # - sender: "Scheduler"
+  #   target: "Cell1"
+  #   header:
+  #     type: "REQUEST"
+  #     version: [1, 0, 0]
+  #     namespace: "METHOD"
+  #     msg_name: "INVOKE"
+  #   payload:
+  #     node: "Cell1/FlyingProbeTester/StartTest"
+  #     args: ["1234"]
+  
+  # - sender: "Scheduler"
+  #   target: "Cell2"
+  #   header:
+  #     type: "REQUEST"
+  #     version: [1, 0, 0]
+  #     namespace: "VARIABLE"
+  #     msg_name: "SUBSCRIBE"
+  #   payload:
+  #     node: "OPCUA/MES/MESLastResult"
+  #     value: []
+
+  # - sender: "Scheduler"
+  #   target: "Cell2"
+  #   header:
+  #     type: "REQUEST"
+  #     version: [1, 0, 0]
+  #     namespace: "METHOD"
+  #     msg_name: "INVOKE"
+  #   payload:
+  #     node: "OPCUA/MES/Methods/StartMission"
+  #     args: ["Take"]
+
+  # - sender: "Scheduler"
+  #   target: "Cell2"
+  #   header:
+  #     type: "REQUEST"
+  #     version: [1, 0, 0]
+  #     namespace: "METHOD"
+  #     msg_name: "INVOKE"
+  #   payload:
+  #     node: "OPCUA/MES/Methods/engraveText"
+  #     args: ["ICE"]
   - sender: "Scheduler"
-    target: "Cell2"
+    target: "Warehouse"
     header:
       type: "REQUEST"
       version: [1, 0, 0]
       namespace: "METHOD"
       msg_name: "INVOKE"
     payload:
-      node: "OPCUA/MES/Methods/StartMission"
-      args: ["Take"]
-
-  - sender: "Scheduler"
-    target: "Cell2"
-    header:
-      type: "REQUEST"
-      version: [1, 0, 0]
-      namespace: "METHOD"
-      msg_name: "INVOKE"
-    payload:
-      node: "OPCUA/MES/Methods/engraveText"
-      args: ["ICE"]
+      node: "Warehouse/SocketLink/sendBackTray"
+      args: [8]

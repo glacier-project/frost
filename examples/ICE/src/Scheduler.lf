@@ -64,12 +64,15 @@ reactor Scheduler(recipe_path = "../ICE/recipes/test_recipe.yaml",
         for message in messages:
             if message.header.matches(MsgType.REQUEST, MsgNamespace.PROTOCOL, ProtocolMsgName.REGISTER):
                 self.logger.warning(f"{message.sender} requests to register to {message.target}.")
+                continue
             if message.header.matches(MsgType.RESPONSE, MsgNamespace.PROTOCOL, ProtocolMsgName.REGISTER):
                 self.logger.warning(f"{message.sender} notify registration to {message.target}.")
+                continue
             else:
                 self.logger.warning(f"{message.sender} to {message.target} with header {message.header} and payload {message.payload}\n")
-        if self.recipe:
-            routine.schedule(SEC(2))
+            
+            if "TrayNumber" in message.payload.ret:
+                routine.schedule(SEC(2))
     =}
 
 }

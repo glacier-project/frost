@@ -12,7 +12,37 @@ root:
       name: "SocketLink"
       description: "SocketLink"
       children:
-        - !!MethodNode
+        - !!AsyncMethodNode
+          name: "extract"
+          description: ""
+          parameters:
+            - !!NumericalVariableNode
+              name: "TrayNumber"
+              description: "Index"
+              measure_unit: "NoneMeasureUnits.NONE"
+              value: 0
+          returns:
+            - !!BooleanVariableNode
+              name: "Accepted"
+              description: "Index"
+              measure_unit: "NoneMeasureUnits.NONE"
+              value: True
+        - !!AsyncMethodNode
+          name: "sendback"
+          description: ""
+          parameters:
+            - !!NumericalVariableNode
+              name: "TrayNumber"
+              description: "Index"
+              measure_unit: "NoneMeasureUnits.NONE"
+              value: 0
+          returns:
+            - !!BooleanVariableNode
+              name: "Accepted"
+              description: "Index"
+              measure_unit: "NoneMeasureUnits.NONE"
+              value: True    
+        - !!CompositeMethodNode
           name: "extractTray"
           description: "extract Tray"
           parameters:
@@ -23,10 +53,23 @@ root:
               value: 0
           returns:
             - !!NumericalVariableNode
-              name: "Tray extracted"
+              name: "TrayNumber"
               description: "Index"
               measure_unit: "NoneMeasureUnits.NONE"
               value: 0
+          cfg:
+            - !!CallMethodNode
+              method: "Warehouse/SocketLink/extract"
+              args:
+                  -  $TrayNumber
+            - !!WaitConditionNode
+              variable: "Warehouse/Status/trayInBay"
+              operator: "=="
+              rhs: $TrayNumber 
+            - !!ReadVariableNode
+              variable: "Warehouse/Status/trayInBay"
+              store_as: "Tray_extracted"   
+            
         - !!MethodNode
           name: "enqueueTray"
           description: "enqueue Tray"
@@ -42,15 +85,33 @@ root:
               description: "Index"
               measure_unit: "NoneMeasureUnits.NONE"
               value: 0
-        - !!MethodNode
+        - !!CompositeMethodNode
           name: "sendBackTray"
           description: "send back Tray"
+          parameters:
+            - !!NumericalVariableNode
+              name: "TrayNumber"
+              description: "Index"
+              measure_unit: "NoneMeasureUnits.NONE"
+              value: 0
           returns:
             - !!NumericalVariableNode
               name: "TrayNumber"
               description: "Index"
               measure_unit: "NoneMeasureUnits.NONE"
               value: 0
+          cfg:
+            - !!CallMethodNode
+              method: "Warehouse/SocketLink/sendback"
+              args:
+                - $TrayNumber
+            - !!WaitConditionNode
+              variable: "Warehouse/Status/trayInBay"
+              operator: "=="
+              rhs: 0
+            - !!ReadVariableNode
+              variable: "Warehouse/Status/trayInBay"
+              store_as: "TrayNumber"
         - !!MethodNode
           name: "status"
           description: "Warehouse status"

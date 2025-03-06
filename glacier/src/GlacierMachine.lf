@@ -5,14 +5,12 @@ import GlacierReactor from "GlacierReactor.lf"
 reactor GlacierMachine extends GlacierReactor{
 
     state registered_to_bus = False
-
+    state custom_node
     timer check_update(1s, 1s)
     timer work(1s, 1s)
-
     logical action check_bus_registration
-    logical action durable_method
-    logical action durable_method_end
     logical action handle_update
+    logical action delay
 
     method generate_bus_registration_message(){=
         """
@@ -61,9 +59,11 @@ reactor GlacierMachine extends GlacierReactor{
         channel_out[0].set(self.generate_bus_registration_message())
         # Schedule the check in 3 seconds.
         check_bus_registration.schedule(SEC(3))
+        self.custom_node = FolderNode(name = "custom_node")
+        self.data_model.add_child(parent_id = self.data_model.root, child = self.custom_node)
     =}
 
-    reaction(channel_in)->channel_out,check_bus_registration,durable_method,handle_update{=
+    reaction(channel_in)->channel_out,check_bus_registration,handle_update{=
         '''
         Handle incoming messages from the bus
         First check if the message is a durable method, if so, schedule it to be executed
@@ -93,13 +93,6 @@ reactor GlacierMachine extends GlacierReactor{
             channel_out[0].set(self.message_queue)
             self.message_queue = []
         
-    =}
-
-    reaction(durable_method_end)-> channel_out{=
-        '''
-        When the durable method prodocues a result, send it to the bus
-        '''
-        channel_out[0].set([durable_method_end.value])
     =}
 
     reaction(check_update)-> channel_out{=

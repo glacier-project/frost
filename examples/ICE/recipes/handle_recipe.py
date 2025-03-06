@@ -24,6 +24,8 @@ def get_conditions(path: str) -> list:
             if not isinstance(item, dict) or "node" not in item or "value" not in item:
                 raise ValueError("Each condition must be a dictionary with 'node' and 'value' keys")
             condition = {
+                "machine": item["machine"],
+                "header": item["header"],
                 "node": item["node"],
                 "value": item["value"]
             }

@@ -62,27 +62,26 @@ reactor Cell_Conveyor extends GlacierMachine{
     state pallet_with_dest = {= [] =}
     state segment_items = {= ["item0", "item1", "item2", "item3", "item4", "item5", "item6", "item7", "item8", "item9"] =}
 
-    '''method setPalletDest(palletNumber, destination){=
+    method setPalletDest(palletNumber, destination){=
         pallet = self.pallets[palletNumber-1]
         self.data_model.write_variable(
             (pallet.get_property("destination")).id, destination
         )
-        print(f"Pallet {palletNumber} set to destination {destination}")
         self.pallet_with_dest.append(pallet)
         return True
-    =}'''
+    =}
 
     method check_next_bay(destination, seg_id){=
         destination = int(destination / 10)
-        if destination == bay_value.LoadUnloadZone.value and seg_id == 0: # LoadUnloadZone
+        if destination == bay_value.LoadUnloadZone.value  and seg_id == 3: # LoadUnloadZone
             return True
-        elif destination == bay_value.Bay1.value and seg_id == 8: # Bay1 SPEA (Cell1)
+        elif destination == bay_value.Bay1.value and seg_id == 7: # Bay1 SPEA (Cell1)
             return True
-        elif destination == bay_value.Bay2.value and seg_id == 1: # Bay2 Milling (Cell2)
+        elif destination == bay_value.Bay2.value and seg_id == (0 or 6): # Bay2 Milling (Cell2)
             return True
-        elif destination == bay_value.Bay3.value and seg_id == 2: # Bay3 KUKA and ABB (Cell4)
+        elif destination == bay_value.Bay3.value and seg_id == (1 or 5): # Bay3 KUKA and ABB (Cell4)
             return True
-        elif destination == bay_value.Bay4.value and seg_id == 3: # Bay4 Quality (Cell5)
+        elif destination == bay_value.Bay4.value and seg_id == (2 or 4): # Bay4 Quality (Cell5)
             return True
         
         return False
@@ -205,6 +204,7 @@ reactor Cell_Conveyor extends GlacierMachine{
     =}
 
     reaction(startup){=
+        self.setPalletDestination.callback = self.setPalletDest
         (self.Segment1.get_property("FIFO")).get_property("item0").update(1)
         (self.Segment1.get_property("FIFO")).get_property("item1").update(2)
         (self.Segment1.get_property("FIFO")).get_property("item2").update(3)

@@ -38,8 +38,4 @@ reactor Kairos extends GlacierMachine{
         return self.last_mission_result.read()
     =}
 
-    reaction(durable_method)-> durable_method, durable_method_end{=
-        durable_method_end.schedule(SEC(1), self.protocol_mng.handle_message(durable_method.value))
-    =}
-
 }

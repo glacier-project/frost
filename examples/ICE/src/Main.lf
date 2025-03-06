@@ -30,6 +30,7 @@ preamble{=
     from machine_data_model.nodes.method_node import *
     from machine_data_model.nodes.variable_node import *
     from machine_data_model.nodes.folder_node import *
+    from machine_data_model.nodes.composite_method.composite_method_node import *
     import uuid
     import logging
     from singleton_meta import SingletonMeta

@@ -5,7 +5,7 @@ machine_model: "unknown" # model of the machine
 description: "" # description of the machine
 root:
   !!FolderNode
-  name: "OPCUA"
+  name: "Cell2"
   description: "OPCUA"
   children:
       - !!FolderNode
