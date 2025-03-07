@@ -5,6 +5,33 @@ from machine_data_model.protocols.glacier_v1.glacier_message import GlacierMessa
 from machine_data_model.protocols.glacier_v1.glacier_header import *
 from machine_data_model.protocols.glacier_v1.glacier_payload import VariablePayload, MethodPayload
 
+class Condition:
+    def __init__(self, machine: str, header: str, node: str, value: str):
+        self.machine = machine
+        self.header = header
+        self.node = node
+        self.value = value
+
+    def __str__(self):
+        return f"Machine: {self.machine}, Header: {self.header}, Node: {self.node}, Value: {self.value}"
+
+    def __repr__(self):
+        return self.__str__()
+
+    def check_condition(self, machine: str, header: str, node: str, value: str):
+        return self.machine == machine and self.header == header and self.node == node and self.value == value
+
+    def check_condition(self, message: GlacierMessage) -> bool:
+        if self.machine != message.sender:
+            return False
+
+        if self.header == MsgNamespace.METHOD.value and self.node in message.payload.ret:
+            return self.value == message.payload.ret[self.node]
+        elif self.header == MsgNamespace.VARIABLE.value:
+            return self.node == message.payload.node and self.value == message.payload.value
+
+        return False
+
 def get_conditions(path: str) -> list:
     '''
     This function reads a YAML file and returns a list of dictionaries containing the conditions
@@ -14,7 +41,7 @@ def get_conditions(path: str) -> list:
     Returns:
         list: A list of dictionaries containing the conditions specified in the YAML file
     '''
-    
+
     list_of_conditions = []
     with open(path, 'r') as file:
         recipe = yaml.safe_load(file)
@@ -23,12 +50,12 @@ def get_conditions(path: str) -> list:
         for item in recipe["conditions"]:
             if not isinstance(item, dict) or "node" not in item or "value" not in item:
                 raise ValueError("Each condition must be a dictionary with 'node' and 'value' keys")
-            condition = {
-                "machine": item["machine"],
-                "header": item["header"],
-                "node": item["node"],
-                "value": item["value"]
-            }
+            condition = Condition(
+                machine=item["machine"],
+                header=item["header"],
+                node=item["node"],
+                value=item["value"]
+            )
             list_of_conditions.append(condition)
     return list_of_conditions
 

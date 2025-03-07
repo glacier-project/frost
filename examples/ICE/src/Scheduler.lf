@@ -1,20 +1,16 @@
 target Python
 {
     files: [../recipes/handle_recipe.py]
-
 }
 
-
 preamble{=
-    from handle_recipe import get_messages, get_conditions
-
+    from handle_recipe import *
 =}
 
 reactor Scheduler(recipe_path = "../ICE/recipes/test_recipe.yaml",
                 condition_path = "../ICE/recipes/test_conditions.yaml"
 ){
 
-    
     input channel_in
     output channel_out
     state name = {="Scheduler"=}
@@ -70,9 +66,12 @@ reactor Scheduler(recipe_path = "../ICE/recipes/test_recipe.yaml",
                 continue
             else:
                 self.logger.warning(f"{message.sender} to {message.target} with header {message.header} and payload {message.payload}\n")
-            
-            if "TrayNumber" in message.payload.ret:
-                routine.schedule(SEC(2))
+
+            if self.conditions:
+                current_condition = self.conditions[0]
+                if current_condition.check_condition(message):
+                    self.conditions.pop(0)
+                    routine.schedule(SEC(2))
     =}
 
 }
