@@ -4,7 +4,7 @@ import GlacierMachine from "../../../glacier/src/GlacierMachine.lf"
 
 
 reactor Kairos extends GlacierMachine{
-    
+
     state start_mission = {= self.data_model.get_node("RBKairos/Mission_Methods/start_mission") =}
     state preempt_running_mission = {= self.data_model.get_node("RBKairos/Mission_Methods/preemptRunningMission") =}
 
@@ -14,28 +14,42 @@ reactor Kairos extends GlacierMachine{
     state ongoing_mission_feedback = {= self.data_model.get_node("RBKairos/Mission_Methods/Ongoing_Mission_Feedback") =}
     state ongoing_mission_name = {= self.data_model.get_node("RBKairos/Mission_Methods/Ongoing_Mission_Name") =}
 
-    state act
     reaction (startup){=
         assert isinstance(self.start_mission, MethodNode), "start_mission Node not found"
         assert isinstance(self.preempt_running_mission, MethodNode), "preempt_running_mission Node not found"
-        self.start_mission.callback = self.startMission
         self.preempt_running_mission.callback = self.preemptMission
     =}
 
-    method startMission(name){=
-        self.ongoing_mission_name.update(name)
-        self.missions_call_counter.update(self.missions_call_counter.read() + 1)   
-        self.control_busy.update(True)
-        self.last_mission_result.update(True)  
-        return self.last_mission_result.read()
+    method startMission(){=
+        self.ongoing_mission_name.update("")
+        self.missions_call_counter.update(self.missions_call_counter.read() + 1)
+        self.last_mission_result.update(True)
+        self.control_busy.update(False)        
     =}
 
     method preemptMission(){=
+        if not self.control_busy.read():
+            return False
+
         self.control_busy.update(False)
         self.ongoing_mission_feedback.update("Mission aborted")
         self.last_mission_result.update(False)
         self.ongoing_mission_name.update("")
-        return self.last_mission_result.read()
+        return True
+    =}
+
+    reaction(work)-> delay{=
+        if self.control_busy.read():
+            delay.schedule(SEC(1), [self.startMission])
+    =}
+
+    reaction(delay){=
+        callback = delay.value[0]
+        if len(delay.value) > 1:
+            args = delay.value[1:]
+            callback(*args)
+        else:
+            callback()
     =}
 
 }

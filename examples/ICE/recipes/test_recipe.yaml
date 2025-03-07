@@ -1,16 +1,16 @@
 recipe: "Test"
 description: "Test recipe for the RBKairos system"
 steps:
-  - sender: "Scheduler"
-    target: "Warehouse"
-    header:
-      type: "REQUEST"
-      version: [1, 0, 0]
-      namespace: "METHOD"
-      msg_name: "INVOKE"
-    payload:
-      node: "Warehouse/SocketLink/extractTray"
-      args: [8]
+#  - sender: "Scheduler"
+#    target: "Warehouse"
+#    header:
+#      type: "REQUEST"
+#      version: [1, 0, 0]
+#      namespace: "METHOD"
+#      msg_name: "INVOKE"
+#    payload:
+#      node: "Warehouse/SocketLink/extractTray"
+#      args: [8]
   
   # - sender: "Scheduler"
   #   target: "Warehouse"
@@ -34,27 +34,27 @@ steps:
   #     node: "CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet3/destination"
   #     value: []
 
-  # - sender: "Scheduler"
-  #   target: "RBKairos"
-  #   header:
-  #     type: "REQUEST"
-  #     version: [1, 0, 0]
-  #     namespace: "METHOD"
-  #     msg_name: "INVOKE"
-  #   payload:
-  #     node: "RBKairos/Mission_Methods/start_mission"
-  #     args: ["Warehouse"]
+#  - sender: "Scheduler"
+#    target: "RBKairos"
+#    header:
+#      type: "REQUEST"
+#      version: [1, 0, 0]
+#      namespace: "METHOD"
+#      msg_name: "INVOKE"
+#    payload:
+#      node: "RBKairos/Mission_Methods/start_mission"
+#      args: ["Warehouse"]
 
-  # - sender: "Scheduler"
-  #   target: "Cell_Conveyor"
-  #   header:
-  #     type: "REQUEST"
-  #     version: [1, 0, 0]
-  #     namespace: "METHOD"
-  #     msg_name: "INVOKE"
-  #   payload:
-  #     node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-  #     args: [3, 21]
+  - sender: "Scheduler"
+    target: "Cell_Conveyor"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
+      args: [3, 21]
 
   # - sender: "Scheduler"
   #   target: "Cell5"
@@ -132,13 +132,14 @@ steps:
   #   payload:
   #     node: "OPCUA/MES/Methods/engraveText"
   #     args: ["ICE"]
-  - sender: "Scheduler"
-    target: "Warehouse"
-    header:
-      type: "REQUEST"
-      version: [1, 0, 0]
-      namespace: "METHOD"
-      msg_name: "INVOKE"
-    payload:
-      node: "Warehouse/SocketLink/sendBackTray"
-      args: [8]
+  
+#  - sender: "Scheduler"
+#    target: "Warehouse"
+#    header:
+#      type: "REQUEST"
+#      version: [1, 0, 0]
+#      namespace: "METHOD"
+#      msg_name: "INVOKE"
+#    payload:
+#      node: "Warehouse/SocketLink/sendBackTray"
+#      args: [8]

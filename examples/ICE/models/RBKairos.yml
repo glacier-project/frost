@@ -12,10 +12,9 @@ root:
       name: "Mission_Methods"
       description: "OPCUA"
       children:
-        - !!MethodNode
+        - !!CompositeMethodNode
           name: "start_mission"
           description: "Move"
-          durable: True
           parameters:
             - !!StringVariableNode
               name: "name"
@@ -23,10 +22,24 @@ root:
               value: "default"
           returns:
             - !!BooleanVariableNode
-              name: "Accepted"
+              name: "Result"
               description: ""
               value: True
-        - !!MethodNode
+          cfg:
+            - !!WriteVariableNode
+              variable: "RBKairos/Mission_Methods/Ongoing_Mission_Name"
+              value: "$name"
+            - !!WriteVariableNode
+              variable: "RBKairos/Mission_Methods/Control_Busy"
+              value: True
+            - !!WaitConditionNode
+              variable: "RBKairos/Mission_Methods/Control_Busy"
+              operator: "=="
+              rhs: False
+            - !!ReadVariableNode
+              variable: "RBKairos/Mission_Methods/Last_Mission_Result"
+              store_as: "Result"
+        - !!AsyncMethodNode
           name: "preemptRunningMission"
           description: "Move"
           returns:

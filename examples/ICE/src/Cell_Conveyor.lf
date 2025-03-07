@@ -187,18 +187,18 @@ reactor Cell_Conveyor extends GlacierMachine{
             size_of_seg = segment.get_property("FIFO").get_property("size")
             if size_of_seg.read() == 0:
                 continue
-            
+
             # Iterate over each item in the segment's FIFO queue
             for i in range(len(self.segment_items) - 1):
                 current_pos = segment.get_property("FIFO").get_property(self.segment_items[i])
                 curr_value = current_pos.read()
                 next_pos = segment.get_property("FIFO").get_property(self.segment_items[i+1])
-                next_value = next_pos.read()    
+                next_value = next_pos.read()
                 if next_value == 0:
-                    continue            
-                  
+                    continue
+
                 # Move pallets over segment
-                if curr_value == 0:                    
+                if curr_value == 0:
                     current_pos.update(next_value)
                     next_pos.update(0)
     =}
@@ -217,13 +217,11 @@ reactor Cell_Conveyor extends GlacierMachine{
         (self.Segment1.get_property("FIFO")).get_property("item9").update(10)
         (self.Segment1.get_property("FIFO")).get_property("size").update(10)
     =}
-    
+
     reaction(work){=
         #self.move_bayes()
         self.move_interchanges()
         self.move_pallets()
-    =}
-
-    
+    =}    
 
 }

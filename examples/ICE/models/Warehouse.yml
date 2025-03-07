@@ -25,7 +25,6 @@ root:
             - !!BooleanVariableNode
               name: "Accepted"
               description: "Index"
-              measure_unit: "NoneMeasureUnits.NONE"
               value: True
         - !!AsyncMethodNode
           name: "sendback"
