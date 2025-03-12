@@ -48,11 +48,15 @@ reactor Cell1 extends GlacierMachine{
         self.start_test.callback = self.startTest
     =}
     
-    reaction(work){=
-        if self.busy.read():
-            self.busy.update(False)            
-            self.last_result.update(self.current_mission.read())
-            self.current_mission.update("")
+    reaction(work) -> delay{=
+        if self.busy.read() and self.current_mission.read() != "":
+            delay.schedule(SEC(7))            
+    =}
+
+    reaction(delay){=
+        self.busy.update(False)            
+        self.last_result.update("positive")
+        self.current_mission.update("")
     =}
 
 }

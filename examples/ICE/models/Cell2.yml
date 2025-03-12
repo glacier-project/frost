@@ -12,11 +12,15 @@ root:
         name: "MES"
         description: "MES"
         children:
+          - !!BooleanVariableNode
+            name: "Board"
+            description: ""
+            value: False
           - !!FolderNode
             name: "Methods"
             description: "Methods"
             children:
-              - !!MethodNode
+              - !!CompositeMethodNode
                 name: "StartMission"
                 description: "Start"
                 parameters:
@@ -29,7 +33,21 @@ root:
                     name: "accepted"
                     description: ""
                     value: True
-              - !!MethodNode
+                cfg:
+                  - !!WriteVariableNode
+                    variable: "Cell2/MES/CurrentMission"
+                    value: "$mission_name"
+                  - !!WriteVariableNode
+                    variable: "Cell2/MES/MESBusy"
+                    value: True
+                  - !!WaitConditionNode
+                    variable: "Cell2/MES/MESBusy"
+                    operator: "=="
+                    rhs: False
+                  - !!ReadVariableNode
+                    variable: "Cell2/MES/MESLastResult"
+                    store_as: "accepted"
+              - !!CompositeMethodNode
                 name: "engraveText"
                 description: "engrave text"
                 parameters:
@@ -39,9 +57,26 @@ root:
                     value: "default"
                 returns:
                   - !!BooleanVariableNode
-                    name: "accepted"
+                    name: "Done"
                     description: ""
                     value: True
+                cfg:
+                  - !!WriteVariableNode
+                    variable: "Cell2/MES/CurrentMission"
+                    value: "engraveText"
+                  - !!WriteVariableNode
+                    variable: "Cell2/MES/MESBusy"
+                    value: True
+                  - !!WriteVariableNode
+                    variable: "Cell2/MES/TextToWrite"
+                    value: "$text"
+                  - !!WaitConditionNode
+                    variable: "Cell2/MES/MESBusy"
+                    operator: "=="
+                    rhs: False
+                  - !!ReadVariableNode
+                    variable: "Cell2/MES/MESLastResult"
+                    store_as: "Done"
           - !!BooleanVariableNode
             name: "MESBusy"
             description: "Busy"
@@ -54,3 +89,7 @@ root:
             name: "CurrentMission"
             description: "Current mission"
             value: "default"
+          - !!StringVariableNode
+            name: "TextToWrite"
+            description: "Last text written"
+            value: ""

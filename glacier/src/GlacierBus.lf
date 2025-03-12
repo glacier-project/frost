@@ -102,7 +102,7 @@ reactor GlacierBus extends GlacierReactor{
     =}
 
     reaction(startup) {=
-        self.number_of_machines.update(self.width)
+        self.number_of_machines.value = self.width
     =}
 
 }

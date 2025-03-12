@@ -1,12 +1,28 @@
 recipe: "Test"
 conditions:
-  - machine: "Warehouse"
+  - machine: "Cell1"
     header: METHOD
-    node: "TrayNumber"
-    value: 8
-  - machine: "RBKairos"
+    node: "accepted"
+    value: True
+  - machine: "Cell1"
     header: METHOD
-    node: "Result"
+    node: "accepted"
+    value: True
+  - machine: "Cell1"
+    header: METHOD
+    node: "boardOut"
+    value: True
+  - machine: "Cell2"
+    header: METHOD
+    node: "accepted"
+    value: True
+  - machine: "Cell2"
+    header: METHOD
+    node: "Done"
+    value: True
+  - machine: "Cell2"
+    header: METHOD
+    node: "accepted"
     value: True
     
     

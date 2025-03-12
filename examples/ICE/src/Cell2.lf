@@ -12,40 +12,29 @@ reactor Cell2 extends GlacierMachine{
     state last_result = {= self.data_model.get_node("OPCUA/MES/MESLastResult")=}
     state current_mission = {= self.data_model.get_node("OPCUA/MES/CurrentMission")=}
     state mes = {= self.data_model.get_node("OPCUA/MES") =}
-    state board = {= BooleanVariableNode("board", "Board is in?", False) =} 
+    state board = {= self.data_model.get_node("OPCUA/MES/Board")=}
+    state text = {= self.data_model.get_node("OPCUA/MES/TextToWrite")=}
 
-    method StartMission(mission_name){=
-        if self.busy.read() and not self.board.read():
-            return False
-
-        self.board.update(True)
-        self.busy.update(True)
-        self.current_mission.update(mission_name)
-
-        return True
-    =}
-
-    method EngraveText(text){=
-        if self.busy.read() and self.board.read():
-            return False
-        
-        self.busy.update(True)
-        self.current_mission.update(text)
-        
-        return True
-    =}
-
-    reaction(startup){=
-        self.start_mission.callback = self.StartMission
-        self.engrave_text.callback = self.EngraveText
-        self.mes.add_child(self.board)
-    =}
-
-    reaction(work){=
+    reaction(work) -> delay{=
         if self.busy.read():
-            self.busy.update(False)            
-            self.last_result.update(True)
-            self.current_mission.update("")
+            if self.current_mission.read() == "TakeBoard":
+                if not self.board.read():
+                    self.board.update(True)               
+                    delay.schedule(SEC(5))
+            elif self.current_mission.read() == "engraveText":
+                if not self.text.read() == "":
+                    self.text.update("")
+                    delay.schedule(SEC(7))
+            elif self.current_mission.read() == "TakeBoardOut":
+                if self.board.read():
+                    self.board.update(False)
+                    delay.schedule(SEC(5))
+    =}
+
+    reaction(delay){=
+        self.last_result.update(True)
+        self.current_mission.update("")
+        self.busy.update(False)        
     =}
 
 }

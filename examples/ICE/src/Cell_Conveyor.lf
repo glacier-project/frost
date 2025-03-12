@@ -41,7 +41,7 @@ reactor Cell_Conveyor extends GlacierMachine{
     state Segment8 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Segments/Segment8") =}
     
     //METHODS
-    state setPalletDestination = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination") =}
+    state setPalletDestination = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setDestination") =}
     state setPalletDestinationWithReservation = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestinationWithReservation") =}
     state callFreePalletTo = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/callFreePalletTo") =}
     state callFreePalletToWithReservation = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/callFreePalletToWithReservation") =}
@@ -54,7 +54,8 @@ reactor Cell_Conveyor extends GlacierMachine{
 
     //DESTINATIONS
     state destinations_folder = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Destinations") =}
-
+    //COMMANDS
+    state command = {= self.data_model.get_node("CellConveyor/command") =}    
     //LocalVariables
     state pallets = {= [self.pallet_1, self.pallet_2, self.pallet_3, self.pallet_4, self.pallet_5, self.pallet_6, self.pallet_7, self.pallet_8, self.pallet_9, self.pallet_10] =}
     state segments = {= [self.Segment1, self.Segment2, self.Segment3, self.Segment4, self.Segment5, self.Segment6, self.Segment7, self.Segment8] =}
@@ -67,8 +68,11 @@ reactor Cell_Conveyor extends GlacierMachine{
         self.data_model.write_variable(
             (pallet.get_property("destination")).id, destination
         )
-        self.pallet_with_dest.append(pallet)
-        return True
+        res = str(destination)
+        if destination != 5:
+            res = res[:len(res)//2] + "_" + res[len(res)//2:]
+            self.command.update("CellConveyor/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_" + res)
+        return 
     =}
 
     method check_next_bay(destination, seg_id){=
@@ -77,33 +81,39 @@ reactor Cell_Conveyor extends GlacierMachine{
             return True
         elif destination == bay_value.Bay1.value and seg_id == 7: # Bay1 SPEA (Cell1)
             return True
-        elif destination == bay_value.Bay2.value and seg_id == (0 or 6): # Bay2 Milling (Cell2)
+        elif destination == bay_value.Bay2.value and (seg_id == 0 or seg_id == 6): # Bay2 Milling (Cell2)
             return True
-        elif destination == bay_value.Bay3.value and seg_id == (1 or 5): # Bay3 KUKA and ABB (Cell4)
+        elif destination == bay_value.Bay3.value and (seg_id == 1 or seg_id == 5): # Bay3 KUKA and ABB (Cell4)
             return True
-        elif destination == bay_value.Bay4.value and seg_id == (2 or 4): # Bay4 Quality (Cell5)
+        elif destination == bay_value.Bay4.value and (seg_id == 2 or seg_id == 4): # Bay4 Quality (Cell5)
             return True
-        
         return False
     =}
 
     method addPalletToBay(bay, pallet_id){=
+        print(bay, pallet_id)
         if bay.name == "LoadUnloadZone":
             bay.get_property("IndexPosition").get_property("palletNum").update(pallet_id)
+            self.destinations_folder["destination_palletid_5"].update(pallet_id)
         elif bay.name == "Bay1":
             bay.get_property("PalletPosition1").get_property("palletNum").update(pallet_id)
+            self.destinations_folder["destination_palletid_1_1"].update(pallet_id)
         elif bay.name == "Bay2":
             bay.get_property("PalletPosition1").get_property("palletNum").update(pallet_id)
+            self.destinations_folder["destination_palletid_2_1"].update(pallet_id)
         elif bay.name == "Bay3":
             bay.get_property("PalletPosition1").get_property("palletNum").update(pallet_id)
+            self.destinations_folder["destination_palletid_3_1"].update(pallet_id)
         elif bay.name == "Bay4":
             bay.get_property("PalletPosition1").get_property("palletNum").update(pallet_id)
+            self.destinations_folder["destination_palletid_4_1"].update(pallet_id)
     =}
 
     method is_bay_free(destination, pallet_id){=
         pos = destination % 10
         bay = int(destination / 10)
         target_pos = "destination_palletid_"
+        print("dest: ", destination, pos, bay, pallet_id)
         if bay == bay_value.LoadUnloadZone.value and self.destinations_folder[target_pos + bay_value.LoadUnloadZone.value].read() == 0:
             self.destinations_folder[target_pos + bay_value.LoadUnloadZone.value].update(pallet_id)
             return True
@@ -146,6 +156,7 @@ reactor Cell_Conveyor extends GlacierMachine{
             first_pallet = self.pallets[first_pos_value-1]
             if first_pos_value != 0 and first_pallet.get_property("destination").read() != 0:
                 destination = first_pallet.get_property("destination").read()
+                print(seg_num, first_pos_value, first_pallet.get_property("destination").read())
                 if self.check_next_bay(destination, seg_num) and self.is_bay_free(destination, first_pos_value):
                     bay = self.bayes[self.pallets[first_pos_value-1].get_property("destination").read()]
                     self.addPalletToBay(bay, first_pos_value)
@@ -175,9 +186,6 @@ reactor Cell_Conveyor extends GlacierMachine{
                 continue
             
             pos = int(dest % 10)
-
-
-
 
     =}
 

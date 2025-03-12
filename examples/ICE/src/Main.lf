@@ -1,6 +1,6 @@
 target Python{
     fast: True,
-    timeout: 30s,
+    timeout: 100s,
     files: [../models/l_formatter.py, ../models/time_utils.py, ../models/singleton_meta.py],
     logging: warn 
 }

@@ -8,6 +8,14 @@ root:
   name: "CellConveyor"
   description: "OPCUA"
   children:
+    - !!StringVariableNode
+      name: "command"
+      description: ""
+      value: ""
+    - !!BooleanVariableNode
+      name: "output"
+      description: ""
+      value: True
     - !!FolderNode
       name: "ConveyorHMI"
       description: "HMI"
@@ -24,7 +32,26 @@ root:
                   name: "ConveyorCommandsPointer"
                   description: ""
                   properties:
-                    - !!MethodNode
+                    - !!AsyncMethodNode
+                      name: "setDestination"
+                      description: ""
+                      parameters:
+                        - !!NumericalVariableNode
+                          name: "palletNumber"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          value: 0
+                        - !!NumericalVariableNode
+                          name: "destination"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          value: 0
+                      returns:
+                        - !!StringVariableNode
+                          name: "res"
+                          description: ""
+                          value: True
+                    - !!CompositeMethodNode
                       name: "setPalletDestination"
                       description: ""
                       parameters:
@@ -39,10 +66,26 @@ root:
                           measure_unit: "NoneMeasureUnits.NONE"
                           value: 0
                       returns:
-                        - !!BooleanVariableNode
+                        - !!NumericalVariableNode
                           name: "result"
                           description: ""
                           value: True
+                      cfg:
+                        - !!CallMethodNode
+                          method: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setDestination"
+                          args: 
+                            - $palletNumber
+                            - $destination
+                        - !!ReadVariableNode
+                          variable: "CellConveyor/command"
+                          store_as: "seekingnode"
+                        - !!WaitConditionNode
+                          variable: "$seekingnode"
+                          operator: "=="
+                          rhs: $palletNumber
+                        - !!ReadVariableNode
+                          variable: "CellConveyor/output"
+                          store_as: "result"
                     - !!MethodNode
                       name: "setPalletDestinationWithReservation"
                       description: ""

@@ -15,24 +15,24 @@ reactor Cell5 extends GlacierMachine{
     state num_total_failures = {= self.data_model.get_node("Cell5/Statistics/FaultsTotal")=}
   
     method check_covers(color){=
-        self.num_total_checks.update(self.num_total_checks.read() + 1)
+        self.num_total_checks.write(self.num_total_checks.read() + 1)
         if color == "red":
-            self.num_gadget_checks.update(self.num_gadget_checks.read() + 1)
+            self.num_gadget_checks.write(self.num_gadget_checks.read() + 1)
             return True
         else:
-            self.num_gadget_failures.update(self.num_gadget_failures.read() + 1)
-            self.num_total_failures.update(self.num_total_failures.read() + 1)
+            self.num_gadget_failures.write(self.num_gadget_failures.read() + 1)
+            self.num_total_failures.write(self.num_total_failures.read() + 1)
             return False
     =}
 
     method check_lego(shape1, shape2, shape3){=
-        self.num_total_checks.update(self.num_total_checks.read() + 1)
+        self.num_total_checks.write(self.num_total_checks.read() + 1)
         if shape1 == shape2 and shape2 == shape3:
-            self.num_lego_checks.update(self.num_lego_checks.read() + 1)
+            self.num_lego_checks.write(self.num_lego_checks.read() + 1)
             return True
         else:
-            self.num_lego_failures.update(self.num_lego_failures.read() + 1)
-            self.num_total_failures.update(self.num_total_failures.read() + 1)
+            self.num_lego_failures.write(self.num_lego_failures.read() + 1)
+            self.num_total_failures.write(self.num_total_failures.read() + 1)
             return False
     =}
 

@@ -12,7 +12,7 @@ root:
       name: "Methods"
       description: "Variables"
       children:
-        - !!MethodNode
+        - !!AsyncMethodNode
           name: "CheckQualityCovers"
           description: "Checks quality"
           parameters:
@@ -25,7 +25,7 @@ root:
               name: "result"
               description: "QualityCover"
               value: True
-        - !!MethodNode
+        - !!AsyncMethodNode
           name: "CheckQualityLego"
           description: "Checks quality"
           parameters:

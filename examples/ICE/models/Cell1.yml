@@ -25,7 +25,7 @@ root:
           description: "Send board"
           returns:
             - !!BooleanVariableNode
-              name: "accepted"
+              name: "boardOut"
               description: ""
               value: True    
         - !!BooleanVariableNode

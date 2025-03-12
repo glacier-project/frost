@@ -72,6 +72,8 @@ reactor Scheduler(recipe_path = "../ICE/recipes/test_recipe.yaml",
                 if current_condition.check_condition(message):
                     self.conditions.pop(0)
                     routine.schedule(SEC(2))
+            else:
+                routine.schedule(SEC(2))
     =}
 
 }
