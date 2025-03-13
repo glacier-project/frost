@@ -8,19 +8,45 @@ root:
   name: "Cell1"
   description: "OPCUA"
   children:
+    - !!StringVariableNode
+      name: "Board"
+      description: "Board"
+      value: ""
     - !!FolderNode
       name: "FlyingProbeTester"
       description: "Flying Probe Tester"
       children:
-        - !!MethodNode
+        - !!CompositeMethodNode
           name: "BoardIn"
           description: "Receive board"
+          parameters:
+            - !!StringVariableNode
+              name: "board"
+              description: ""
+              value: "electronic"
           returns:
             - !!BooleanVariableNode
               name: "accepted"
               description: ""
               value: True
-        - !!MethodNode
+          cfg:
+            - !!WriteVariableNode
+              variable: "Cell1/Board"
+              value: "$board"
+            - !!WriteVariableNode
+              variable: "Cell1/FlyingProbeTester/Busy"
+              value: True
+            - !!WriteVariableNode
+              variable: "Cell1/FlyingProbeTester/CurrentMission"
+              value: "BoardIn"
+            - !!WaitConditionNode
+              variable: "Cell1/FlyingProbeTester/Busy"
+              operator: "=="
+              rhs: False
+            - !!ReadVariableNode
+              variable: "Cell1/FlyingProbeTester/LastResult"
+              store_as: "accepted"
+        - !!CompositeMethodNode
           name: "BoardOut"
           description: "Send board"
           returns:
@@ -28,6 +54,20 @@ root:
               name: "boardOut"
               description: ""
               value: True    
+          cfg:
+            - !!WriteVariableNode
+              variable: "Cell1/FlyingProbeTester/Busy"
+              value: True
+            - !!WriteVariableNode
+              variable: "Cell1/FlyingProbeTester/CurrentMission"
+              value: "BoardOut"
+            - !!WaitConditionNode
+              variable: "Cell1/FlyingProbeTester/Busy"
+              operator: "=="
+              rhs: False
+            - !!ReadVariableNode
+              variable: "Cell1/FlyingProbeTester/LastResult"
+              store_as: "boardOut"
         - !!BooleanVariableNode
           name: "Busy"
           description: "Testing"
@@ -36,10 +76,10 @@ root:
           name: "CurrentMission"
           description: "Name of the mission"
           value: "default"
-        - !!StringVariableNode
+        - !!BooleanVariableNode
           name: "LastResult"
           description: ""
-          value: "default"
+          value: False
         - !!MethodNode
           name: "ShowMessage"
           description: "Start mission"
@@ -53,7 +93,7 @@ root:
               name: "accepted"
               description: ""
               value: True
-        - !!MethodNode
+        - !!CompositeMethodNode
           name: "StartTest"
           description: ""
           parameters:
@@ -66,6 +106,21 @@ root:
               name: "accepted"
               description: ""
               value: True
+          cfg:
+            - !!WriteVariableNode
+              variable: "Cell1/FlyingProbeTester/Busy"
+              value: True
+            - !!WriteVariableNode
+              variable: "Cell1/FlyingProbeTester/CurrentMission"
+              value: "StartTest"
+            - !!WaitConditionNode
+              variable: "Cell1/FlyingProbeTester/Busy"
+              operator: "=="
+              rhs: False
+            - !!ReadVariableNode
+              variable: "Cell1/FlyingProbeTester/LastResult"
+              store_as: "accepted"
+
           
 
     

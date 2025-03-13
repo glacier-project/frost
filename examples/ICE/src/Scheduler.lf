@@ -74,6 +74,10 @@ reactor Scheduler(recipe_path = "../ICE/recipes/test_recipe.yaml",
                     routine.schedule(SEC(2))
             else:
                 routine.schedule(SEC(2))
+
+        if not self.recipe and not self.conditions:
+            self.recipe = get_messages(self.recipe_path)
+            self.conditions = get_conditions(self.condition_path)
     =}
 
 }

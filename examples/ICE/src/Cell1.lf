@@ -4,59 +4,41 @@ import GlacierMachine from "../../../glacier/src/GlacierMachine.lf"
 
 reactor Cell1 extends GlacierMachine{
     //METHOD
-    state board_in = {= self.data_model.get_node("Cell1/FlyingProbeTester/BoardIn") =}
-    state board_out = {= self.data_model.get_node("Cell1/FlyingProbeTester/BoardOut") =}
     state show_message = {= self.data_model.get_node("Cell1/FlyingProbeTester/ShowMessage") =}
-    state start_test = {= self.data_model.get_node("Cell1/FlyingProbeTester/StartTest") =}
     //VARIABLE
     state busy = {= self.data_model.get_node("Cell1/FlyingProbeTester/Busy") =}
     state current_mission = {= self.data_model.get_node("Cell1/FlyingProbeTester/CurrentMission") =}
     state last_result = {= self.data_model.get_node("Cell1/FlyingProbeTester/LastResult") =}
-    state flying_probe_tester = {= self.data_model.get_node("Cell1/FlyingProbeTester") =}
-    state board = {= BooleanVariableNode("board", "Board is in?", False) =} 
+    state board = {= self.data_model.get_node("Cell1/Board") =} 
 
     method showMessage(text){=
         print(text)
         return True
     =}
 
-    method boardIn(){=
-        self.board.update(True)
-        return True
-    =}
-
-    method boardOut(){=
-        self.board.update(False)
-        return True
-    =}
-
-    method startTest(serialNumber){=
-        if not self.board.read():
-            return False
-
-        self.busy.update(True)
-        self.current_mission.update(serialNumber)
-
-        return True
-    =}
-
     reaction(startup){=
-        self.flying_probe_tester.add_child(self.board)
         self.show_message.callback = self.showMessage
-        self.board_in.callback = self.boardIn
-        self.board_out.callback = self.boardOut
-        self.start_test.callback = self.startTest
     =}
     
     reaction(work) -> delay{=
-        if self.busy.read() and self.current_mission.read() != "":
-            delay.schedule(SEC(7))            
+        if self.busy.read():
+            if self.current_mission.read() == "BoardIn":
+                if self.board.read() != "electronic":
+                    self.board.update("")
+                    self.last_result.update(False)
+                    self.busy.update(False)
+                    self.current_mission.update("")
+                    return
+                delay.schedule(SEC(5))
+            elif self.current_mission.read() == "BoardOut":                
+                delay.schedule(SEC(5))
+            elif self.current_mission.read() == "StartTest":
+                delay.schedule(SEC(10))
     =}
 
     reaction(delay){=
-        self.busy.update(False)            
-        self.last_result.update("positive")
+        self.last_result.update(True)
         self.current_mission.update("")
+        self.busy.update(False)
     =}
-
 }

@@ -22,8 +22,8 @@ reactor Warehouse extends GlacierMachine{
 
     
     reaction(startup){=
-        self.data_model.get_node("Warehouse/SocketLink/extract").callback = lambda TrayNumber: self.tray_to_extract.write(TrayNumber) if 1 <= TrayNumber <= 8 else -1
-        self.data_model.get_node("Warehouse/SocketLink/sendback").callback = lambda TrayNumber: self.tray_to_sendback.write(TrayNumber) if 1 <= TrayNumber <= 8 else -1
+        self.data_model.get_node("Warehouse/SocketLink/extract").callback = lambda TrayNumber: self.tray_to_extract.update(TrayNumber) if 1 <= TrayNumber <= 8 else -1
+        self.data_model.get_node("Warehouse/SocketLink/sendback").callback = lambda TrayNumber: self.tray_to_sendback.update(TrayNumber) if 1 <= TrayNumber <= 8 else -1
         self.show_message.callback = self.show_Message
         self.tray_to_extract = NumericalVariableNode(name = "tray_to_extract", value = 0, measure_unit = "NoneMeasureUnits.NONE")
         self.custom_node.add_child(self.tray_to_extract)
@@ -34,17 +34,17 @@ reactor Warehouse extends GlacierMachine{
     method extract_Tray(TrayNumber){=
         if self.bay_busy.read() == True:
             return False
-        self.tray_in_bay.write(TrayNumber)
-        self.tray_calls_count.write(self.tray_calls_count.read() + 1)  
-        self.bay_busy.write(True)
-        self.bay_ready_for_pickplace.write(True)
+        self.tray_in_bay.update(TrayNumber)
+        self.tray_calls_count.update(self.tray_calls_count.read() + 1)  
+        self.bay_busy.update(True)
+        self.bay_ready_for_pickplace.update(True)
         return True
     =}
 
     method sendback_Tray(TrayNumber){=
-        self.tray_in_bay.write(0)
-        self.bay_busy.write(False)
-        self.bay_ready_for_pickplace.write(False)
+        self.tray_in_bay.update(0)
+        self.bay_busy.update(False)
+        self.bay_ready_for_pickplace.update(False)
         return TrayNumber
     =}
 
@@ -55,10 +55,10 @@ reactor Warehouse extends GlacierMachine{
     reaction(work)-> delay{=
         if self.tray_to_extract and self.tray_to_extract.read() > 0:
             delay.schedule(SEC(5), [self.extract_Tray, self.tray_to_extract.read()])
-            self.tray_to_extract.write(0)
+            self.tray_to_extract.update(0)
         elif self.tray_to_sendback and self.tray_to_sendback.read() > 0:
             delay.schedule(SEC(5), [self.sendback_Tray, self.tray_to_sendback.read()])
-            self.tray_to_sendback.write(0)
+            self.tray_to_sendback.update(0)
     =}
 
     reaction(delay){=

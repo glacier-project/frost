@@ -42,6 +42,7 @@ reactor Cell_Conveyor extends GlacierMachine{
     
     //METHODS
     state setPalletDestination = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setDestination") =}
+    state release = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/release") =}
     state setPalletDestinationWithReservation = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestinationWithReservation") =}
     state callFreePalletTo = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/callFreePalletTo") =}
     state callFreePalletToWithReservation = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/callFreePalletToWithReservation") =}
@@ -60,8 +61,19 @@ reactor Cell_Conveyor extends GlacierMachine{
     state pallets = {= [self.pallet_1, self.pallet_2, self.pallet_3, self.pallet_4, self.pallet_5, self.pallet_6, self.pallet_7, self.pallet_8, self.pallet_9, self.pallet_10] =}
     state segments = {= [self.Segment1, self.Segment2, self.Segment3, self.Segment4, self.Segment5, self.Segment6, self.Segment7, self.Segment8] =}
     state bayes = {= {5: self.LUBay, 11:self.Bay1, 21:self.Bay2, 31:self.Bay3, 41:self.Bay4} =}    
-    state pallet_with_dest = {= [] =}
     state segment_items = {= ["item0", "item1", "item2", "item3", "item4", "item5", "item6", "item7", "item8", "item9"] =}
+    state bay_out = {=[]=}
+    state out = {=self.data_model.get_node("CellConveyor/output")=}
+    state dict_bay = {= {
+                        0:21,
+                        1:31, 
+                        2:41, 
+                        3:5,
+                        4:41,
+                        5:31,
+                        6:21,
+                        7:11
+                    } =}
 
     method setPalletDest(palletNumber, destination){=
         pallet = self.pallets[palletNumber-1]
@@ -73,6 +85,17 @@ reactor Cell_Conveyor extends GlacierMachine{
             res = res[:len(res)//2] + "_" + res[len(res)//2:]
             self.command.update("CellConveyor/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_" + res)
         return 
+    =}
+    
+    method releaseP(palletNumber){=
+        pallet = self.pallets[palletNumber-1]
+        self.bay_out.append(pallet.get_property("destination").read())
+        dest = pallet.get_property("destination").read()
+        res = str(dest)
+        if dest != 5:
+            res = res[:len(res)//2] + "_" + res[len(res)//2:]
+            self.command.update("CellConveyor/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_" + res)
+        return True
     =}
 
     method check_next_bay(destination, seg_id){=
@@ -91,7 +114,6 @@ reactor Cell_Conveyor extends GlacierMachine{
     =}
 
     method addPalletToBay(bay, pallet_id){=
-        print(bay, pallet_id)
         if bay.name == "LoadUnloadZone":
             bay.get_property("IndexPosition").get_property("palletNum").update(pallet_id)
             self.destinations_folder["destination_palletid_5"].update(pallet_id)
@@ -113,7 +135,6 @@ reactor Cell_Conveyor extends GlacierMachine{
         pos = destination % 10
         bay = int(destination / 10)
         target_pos = "destination_palletid_"
-        print("dest: ", destination, pos, bay, pallet_id)
         if bay == bay_value.LoadUnloadZone.value and self.destinations_folder[target_pos + bay_value.LoadUnloadZone.value].read() == 0:
             self.destinations_folder[target_pos + bay_value.LoadUnloadZone.value].update(pallet_id)
             return True
@@ -145,18 +166,37 @@ reactor Cell_Conveyor extends GlacierMachine{
         return False
     =}
 
-    method move_interchanges(){=
+    method move_interchanges(){=            
         for seg_num, segment in enumerate(self.segments):
-            size_of_seg = segment.get_property("FIFO").get_property("size")
-            if size_of_seg.read() == 0:
+            if self.dict_bay[seg_num] in self.bay_out:
+                
+                next_segment = None
+                if seg_num == 7:
+                    next_segment = self.segments[0]
+                else:
+                    next_segment = self.segments[seg_num + 1]
+                    item9 = next_segment.get_property("FIFO").get_property("item9")
+                if item9.read() == 0:
+                    bay = self.bayes[self.dict_bay[seg_num]]
+                    palletNumber = bay.get_property("PalletPosition1").get_property("palletNum").read()
+                    bay.get_property("PalletPosition1").get_property("palletNum").update(0)
+                    res = str(self.dict_bay[seg_num])
+                    if self.dict_bay[seg_num] != 5:
+                        res = res[:len(res)//2] + "_" + res[len(res)//2:]
+                    s = "destination_palletid_" + res
+                    self.destinations_folder[s].update(0)
+                    item9.update(palletNumber)             
+                    next_segment.get_property("FIFO").get_property("size").update(next_segment.get_property("FIFO").get_property("size").read() + 1)
+                    self.pallets[palletNumber-1].get_property("destination").update(0)
+                    self.bay_out.remove(self.dict_bay[seg_num])
                 continue
 
+            size_of_seg = segment.get_property("FIFO").get_property("size")
             first_pos = segment.get_property("FIFO").get_property("item0")
             first_pos_value = first_pos.read()
             first_pallet = self.pallets[first_pos_value-1]
             if first_pos_value != 0 and first_pallet.get_property("destination").read() != 0:
                 destination = first_pallet.get_property("destination").read()
-                print(seg_num, first_pos_value, first_pallet.get_property("destination").read())
                 if self.check_next_bay(destination, seg_num) and self.is_bay_free(destination, first_pos_value):
                     bay = self.bayes[self.pallets[first_pos_value-1].get_property("destination").read()]
                     self.addPalletToBay(bay, first_pos_value)
@@ -178,17 +218,6 @@ reactor Cell_Conveyor extends GlacierMachine{
         
     =}
 
-    method move_bayes(){=
-        for pallet in self.pallet_with_dest:
-            dest = pallet.get_property("destination").read()
-            bay = int(dest / 10)
-            if bay == bay_value.LoadUnloadZone.value:
-                continue
-            
-            pos = int(dest % 10)
-
-    =}
-
     method move_pallets(){=
         # Iterate over each segment
         for seg_num, segment in enumerate(self.segments):
@@ -207,12 +236,14 @@ reactor Cell_Conveyor extends GlacierMachine{
 
                 # Move pallets over segment
                 if curr_value == 0:
+                    #print(next_value, ":", seg_num, i)
                     current_pos.update(next_value)
                     next_pos.update(0)
     =}
 
     reaction(startup){=
         self.setPalletDestination.callback = self.setPalletDest
+        self.release.callback = self.releaseP
         (self.Segment1.get_property("FIFO")).get_property("item0").update(1)
         (self.Segment1.get_property("FIFO")).get_property("item1").update(2)
         (self.Segment1.get_property("FIFO")).get_property("item2").update(3)
@@ -227,7 +258,6 @@ reactor Cell_Conveyor extends GlacierMachine{
     =}
 
     reaction(work){=
-        #self.move_bayes()
         self.move_interchanges()
         self.move_pallets()
     =}    

@@ -28,7 +28,7 @@ root:
               name: "Commands"
               description: ""
               children:
-                - !!ObjectVariableNode
+                - !!FolderNode
                   name: "ConveyorCommandsPointer"
                   description: ""
                   properties:
@@ -225,8 +225,37 @@ root:
                           name: "result"
                           description: ""
                           value: True
-                    - !!MethodNode
+                    - !!CompositeMethodNode
                       name: "releasePallet"
+                      description: ""
+                      parameters:
+                        - !!NumericalVariableNode
+                          name: "palletNumber"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          value: 0
+                      returns:
+                        - !!BooleanVariableNode
+                          name: "result"
+                          description: ""
+                          value: True
+                      cfg:
+                        - !!CallMethodNode
+                          method: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/release"
+                          args: 
+                            - $palletNumber
+                        - !!ReadVariableNode
+                          variable: "CellConveyor/command"
+                          store_as: "seekingnode"
+                        - !!WaitConditionNode
+                          variable: "$seekingnode"
+                          operator: "=="
+                          rhs: 0
+                        - !!ReadVariableNode
+                          variable: "CellConveyor/output"
+                          store_as: "result"
+                    - !!AsyncMethodNode
+                      name: "release"
                       description: ""
                       parameters:
                         - !!NumericalVariableNode
