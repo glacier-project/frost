@@ -40,7 +40,7 @@ reactor Kairos extends GlacierMachine{
 
     reaction(work)-> delay{=
         if self.control_busy.read():
-            delay.schedule(SEC(6), [self.startMission])
+            delay.schedule(SEC(20), [self.startMission])
     =}
 
     reaction(delay){=

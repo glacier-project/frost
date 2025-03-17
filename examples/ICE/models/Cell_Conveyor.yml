@@ -1,11 +1,11 @@
-name: "CellConveyor" # name of the machine
+name: "Cell_Conveyor" # name of the machine
 machine_category: "unknown" # category of the machine
 machine_type: "unknown" # type of the machine
 machine_model: "unknown" # model of the machine
 description: "" # description of the machine
 root:
   !!FolderNode
-  name: "CellConveyor"
+  name: "Cell_Conveyor"
   description: "OPCUA"
   children:
     - !!StringVariableNode
@@ -31,7 +31,7 @@ root:
                 - !!FolderNode
                   name: "ConveyorCommandsPointer"
                   description: ""
-                  properties:
+                  children:
                     - !!AsyncMethodNode
                       name: "setDestination"
                       description: ""
@@ -71,20 +71,23 @@ root:
                           description: ""
                           value: True
                       cfg:
+                        - !!WriteVariableNode
+                          variable: "Cell_Conveyor/output"
+                          value: False
                         - !!CallMethodNode
-                          method: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setDestination"
+                          method: "Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setDestination"
                           args: 
                             - $palletNumber
                             - $destination
                         - !!ReadVariableNode
-                          variable: "CellConveyor/command"
+                          variable: "Cell_Conveyor/command"
                           store_as: "seekingnode"
                         - !!WaitConditionNode
-                          variable: "$seekingnode"
+                          variable: "Cell_Conveyor/output"
                           operator: "=="
-                          rhs: $palletNumber
+                          rhs: True
                         - !!ReadVariableNode
-                          variable: "CellConveyor/output"
+                          variable: "Cell_Conveyor/output"
                           store_as: "result"
                     - !!MethodNode
                       name: "setPalletDestinationWithReservation"
@@ -240,19 +243,22 @@ root:
                           description: ""
                           value: True
                       cfg:
+                        - !!WriteVariableNode
+                          variable: "Cell_Conveyor/output"
+                          value: False
                         - !!CallMethodNode
-                          method: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/release"
+                          method: "Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/release"
                           args: 
                             - $palletNumber
                         - !!ReadVariableNode
-                          variable: "CellConveyor/command"
+                          variable: "Cell_Conveyor/command"
                           store_as: "seekingnode"
                         - !!WaitConditionNode
-                          variable: "$seekingnode"
+                          variable: "Cell_Conveyor/output"
                           operator: "=="
-                          rhs: 0
+                          rhs: True
                         - !!ReadVariableNode
-                          variable: "CellConveyor/output"
+                          variable: "Cell_Conveyor/output"
                           store_as: "result"
                     - !!AsyncMethodNode
                       name: "release"

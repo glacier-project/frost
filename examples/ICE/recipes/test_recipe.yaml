@@ -1,6 +1,7 @@
 recipe: "Test"
 description: "Test recipe for the RBKairos system"
 steps:
+  #WAREHOUSE + KAIROS
   - sender: "Scheduler"
     target: "Warehouse"
     header:
@@ -31,17 +32,7 @@ steps:
     payload:
       node: "RBKairos/Mission_Methods/start_mission"
       args: ["Conveyor"]
-  - sender: "Scheduler"
-    target: "RBKairos"
-    header:
-      type: "REQUEST"
-      version: [1, 0, 0]
-      namespace: "METHOD"
-      msg_name: "INVOKE"
-    payload:
-      node: "RBKairos/Mission_Methods/start_mission"
-      args: ["Warehouse"]
-
+  #CONVEYOR + KAIROS
   - sender: "Scheduler"
     target: "Cell_Conveyor"
     header:
@@ -51,8 +42,17 @@ steps:
       msg_name: "INVOKE"
     payload:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [4, 21]
-
+      args: [4, 5]
+  - sender: "Scheduler"
+    target: "RBKairos"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "RBKairos/Mission_Methods/start_mission"
+      args: ["Conveyor"]
   - sender: "Scheduler"
     target: "Cell_Conveyor"
     header:
@@ -64,6 +64,17 @@ steps:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/releasePallet"
       args: [4]
 
+  #CONVEYOR + CELL5
+  - sender: "Scheduler"
+    target: "Cell_Conveyor"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
+      args: [4, 41]
   - sender: "Scheduler"
     target: "Cell5"
     header:
@@ -74,6 +85,27 @@ steps:
     payload:
       node: "Cell5/Methods/CheckQualityCovers"
       args: ["red"]
+  - sender: "Scheduler"
+    target: "Cell_Conveyor"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/releasePallet"
+      args: [4]
+  #CONVEYOR + CELL1
+  - sender: "Scheduler"
+    target: "Cell_Conveyor"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
+      args: [4, 11]  
   - sender: "Scheduler"
     target: "Cell1"
     header:
@@ -105,6 +137,27 @@ steps:
       node: "Cell1/FlyingProbeTester/BoardOut"
       args: []
   - sender: "Scheduler"
+    target: "Cell_Conveyor"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/releasePallet"
+      args: [4]
+  #CONVEYOR + CELL2
+  - sender: "Scheduler"
+    target: "Cell_Conveyor"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
+      args: [4, 21]
+  - sender: "Scheduler"
     target: "Cell2"
     header:
       type: "REQUEST"
@@ -134,6 +187,47 @@ steps:
     payload:
       node: "OPCUA/MES/Methods/StartMission"
       args: ["TakeBoardOut"]
+  - sender: "Scheduler"
+    target: "Cell_Conveyor"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/releasePallet"
+      args: [4]
+  #CONVEYOR + KAIROS + WAREHOUSE
+  - sender: "Scheduler"
+    target: "Cell_Conveyor"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
+      args: [4, 5]
+  - sender: "Scheduler"
+    target: "RBKairos"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "RBKairos/Mission_Methods/start_mission"
+      args: ["Warehouse"]
+  - sender: "Scheduler"
+    target: "Cell_Conveyor"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/releasePallet"
+      args: [4]
   - sender: "Scheduler"
     target: "Warehouse"
     header:

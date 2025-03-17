@@ -14,56 +14,56 @@ preamble{=
 
 reactor Cell_Conveyor extends GlacierMachine{
     //PALLETS
-    state pallet_1 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet1") =}
-    state pallet_2 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet2") =}
-    state pallet_3 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet3") =}
-    state pallet_4 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet4") =}
-    state pallet_5 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet5") =}
-    state pallet_6 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet6") =}
-    state pallet_7 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet7") =}
-    state pallet_8 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet8") =}
-    state pallet_9 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet9") =}
-    state pallet_10 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet10") =}
+    state pallet_1 = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet1") =}
+    state pallet_2 = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet2") =}
+    state pallet_3 = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet3") =}
+    state pallet_4 = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet4") =}
+    state pallet_5 = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet5") =}
+    state pallet_6 = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet6") =}
+    state pallet_7 = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet7") =}
+    state pallet_8 = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet8") =}
+    state pallet_9 = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet9") =}
+    state pallet_10 = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet10") =}
     //BAYES
-    state LUBay = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Bayes/LoadUnloadZone") =}
-    state Bay1 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Bayes/Bay1") =}
-    state Bay2 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Bayes/Bay2") =}
-    state Bay3 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Bayes/Bay3") =}
-    state Bay4 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Bayes/Bay4") =}
+    state LUBay = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Bayes/LoadUnloadZone") =}
+    state Bay1 = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Bayes/Bay1") =}
+    state Bay2 = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Bayes/Bay2") =}
+    state Bay3 = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Bayes/Bay3") =}
+    state Bay4 = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Bayes/Bay4") =}
     //SEGMENTS
-    state Segment1 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Segments/Segment1") =}
-    state Segment2 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Segments/Segment2") =}
-    state Segment3 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Segments/Segment3") =}
-    state Segment4 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Segments/Segment4") =}
-    state Segment5 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Segments/Segment5") =}
-    state Segment6 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Segments/Segment6") =}
-    state Segment7 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Segments/Segment7") =}
-    state Segment8 = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorObjects/Segments/Segment8") =}
+    state Segment1 = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Segments/Segment1") =}
+    state Segment2 = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Segments/Segment2") =}
+    state Segment3 = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Segments/Segment3") =}
+    state Segment4 = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Segments/Segment4") =}
+    state Segment5 = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Segments/Segment5") =}
+    state Segment6 = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Segments/Segment6") =}
+    state Segment7 = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Segments/Segment7") =}
+    state Segment8 = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Segments/Segment8") =}
     
     //METHODS
-    state setPalletDestination = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setDestination") =}
-    state release = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/release") =}
-    state setPalletDestinationWithReservation = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestinationWithReservation") =}
-    state callFreePalletTo = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/callFreePalletTo") =}
-    state callFreePalletToWithReservation = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/callFreePalletToWithReservation") =}
-    state callFreePalletOfTypeTo = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/callFreePalletOfTypeTo") =}
-    state callFreePalletOfTypeToWithReservation = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/callFreePalletOfTypeToWithReservation") =}
-    state reservePallet = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/reservePallet") =}
-    state releasePallet = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/releasePallet") =}
-    state setPartOnPallet = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPartOnPallet") =}
-    state clearPartOnPallet = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/clearPartOnPallet") =}
+    state setPalletDestination = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setDestination") =}
+    state release = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/release") =}
+    state setPalletDestinationWithReservation = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestinationWithReservation") =}
+    state callFreePalletTo = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/callFreePalletTo") =}
+    state callFreePalletToWithReservation = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/callFreePalletToWithReservation") =}
+    state callFreePalletOfTypeTo = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/callFreePalletOfTypeTo") =}
+    state callFreePalletOfTypeToWithReservation = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/callFreePalletOfTypeToWithReservation") =}
+    state reservePallet = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/reservePallet") =}
+    state releasePallet = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/releasePallet") =}
+    state setPartOnPallet = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPartOnPallet") =}
+    state clearPartOnPallet = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/clearPartOnPallet") =}
 
     //DESTINATIONS
-    state destinations_folder = {= self.data_model.get_node("CellConveyor/ConveyorHMI/ConveyorDataExchange/Destinations") =}
+    state destinations_folder = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Destinations") =}
     //COMMANDS
-    state command = {= self.data_model.get_node("CellConveyor/command") =}    
+    state command = {= self.data_model.get_node("Cell_Conveyor/command") =}    
     //LocalVariables
     state pallets = {= [self.pallet_1, self.pallet_2, self.pallet_3, self.pallet_4, self.pallet_5, self.pallet_6, self.pallet_7, self.pallet_8, self.pallet_9, self.pallet_10] =}
     state segments = {= [self.Segment1, self.Segment2, self.Segment3, self.Segment4, self.Segment5, self.Segment6, self.Segment7, self.Segment8] =}
     state bayes = {= {5: self.LUBay, 11:self.Bay1, 21:self.Bay2, 31:self.Bay3, 41:self.Bay4} =}    
     state segment_items = {= ["item0", "item1", "item2", "item3", "item4", "item5", "item6", "item7", "item8", "item9"] =}
     state bay_out = {=[]=}
-    state out = {=self.data_model.get_node("CellConveyor/output")=}
+    state out = {=self.data_model.get_node("Cell_Conveyor/output")=}
     state dict_bay = {= {
                         0:21,
                         1:31, 
@@ -83,8 +83,11 @@ reactor Cell_Conveyor extends GlacierMachine{
         res = str(destination)
         if destination != 5:
             res = res[:len(res)//2] + "_" + res[len(res)//2:]
-            self.command.update("CellConveyor/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_" + res)
-        return 
+            self.command.update("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_" + res)
+        else:
+            self.command.update("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_" + str(destination))
+
+        return res
     =}
     
     method releaseP(palletNumber){=
@@ -94,12 +97,15 @@ reactor Cell_Conveyor extends GlacierMachine{
         res = str(dest)
         if dest != 5:
             res = res[:len(res)//2] + "_" + res[len(res)//2:]
-            self.command.update("CellConveyor/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_" + res)
+            self.command.update("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_" + res)
+        else:
+            self.command.update("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_" + str(dest))
         return True
     =}
 
     method check_next_bay(destination, seg_id){=
-        destination = int(destination / 10)
+        if destination > 5:
+            destination = int(destination / 10)
         if destination == bay_value.LoadUnloadZone.value  and seg_id == 3: # LoadUnloadZone
             return True
         elif destination == bay_value.Bay1.value and seg_id == 7: # Bay1 SPEA (Cell1)
@@ -129,14 +135,18 @@ reactor Cell_Conveyor extends GlacierMachine{
         elif bay.name == "Bay4":
             bay.get_property("PalletPosition1").get_property("palletNum").update(pallet_id)
             self.destinations_folder["destination_palletid_4_1"].update(pallet_id)
-    =}
+        self.out.update(True)
+   =}
 
     method is_bay_free(destination, pallet_id){=
         pos = destination % 10
         bay = int(destination / 10)
+        if destination == 5:
+            pos = None
+            bay = destination
         target_pos = "destination_palletid_"
-        if bay == bay_value.LoadUnloadZone.value and self.destinations_folder[target_pos + bay_value.LoadUnloadZone.value].read() == 0:
-            self.destinations_folder[target_pos + bay_value.LoadUnloadZone.value].update(pallet_id)
+        if bay == bay_value.LoadUnloadZone.value and self.destinations_folder[target_pos + str(bay_value.LoadUnloadZone.value)].read() == 0:
+            self.destinations_folder[target_pos + str(bay_value.LoadUnloadZone.value)].update(pallet_id)
             return True
         elif bay == bay_value.Bay1.value:
             for i in range(1, pos + 1):
@@ -178,8 +188,13 @@ reactor Cell_Conveyor extends GlacierMachine{
                     item9 = next_segment.get_property("FIFO").get_property("item9")
                 if item9.read() == 0:
                     bay = self.bayes[self.dict_bay[seg_num]]
-                    palletNumber = bay.get_property("PalletPosition1").get_property("palletNum").read()
-                    bay.get_property("PalletPosition1").get_property("palletNum").update(0)
+                    palletNumber = 0
+                    if bay.name == "LoadUnloadZone":
+                        palletNumber = bay.get_property("IndexPosition").get_property("palletNum").read()
+                        bay.get_property("IndexPosition").get_property("palletNum").update(0)
+                    else:
+                        palletNumber = bay.get_property("PalletPosition1").get_property("palletNum").read()
+                        bay.get_property("PalletPosition1").get_property("palletNum").update(0)
                     res = str(self.dict_bay[seg_num])
                     if self.dict_bay[seg_num] != 5:
                         res = res[:len(res)//2] + "_" + res[len(res)//2:]
@@ -189,6 +204,7 @@ reactor Cell_Conveyor extends GlacierMachine{
                     next_segment.get_property("FIFO").get_property("size").update(next_segment.get_property("FIFO").get_property("size").read() + 1)
                     self.pallets[palletNumber-1].get_property("destination").update(0)
                     self.bay_out.remove(self.dict_bay[seg_num])
+                    self.out.update(True)
                 continue
 
             size_of_seg = segment.get_property("FIFO").get_property("size")
@@ -215,8 +231,7 @@ reactor Cell_Conveyor extends GlacierMachine{
                 first_pos.update(0)
                 first_pos_value = 0                        
                 next_segment.get_property("FIFO").get_property("size").update(next_segment.get_property("FIFO").get_property("size").read() + 1)
-        
-    =}
+   =}
 
     method move_pallets(){=
         # Iterate over each segment
