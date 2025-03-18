@@ -1,0 +1,14 @@
+recipe: "2_Machine"
+conditions:
+  - machine: "Warehouse"
+    header: METHOD
+    node: "TrayNumber"
+    value: 8
+  - machine: "RBKairos"
+    header: METHOD
+    node: "Result"
+    value: True
+  - machine: "RBKairos"
+    header: METHOD
+    node: "Result"
+    value: True
