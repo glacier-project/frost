@@ -14,7 +14,8 @@ reactor Cell2 extends GlacierMachine{
     state mes = {= self.data_model.get_node("OPCUA/MES") =}
     state board = {= self.data_model.get_node("OPCUA/MES/Board")=}
     state text = {= self.data_model.get_node("OPCUA/MES/TextToWrite")=}
-
+    timer work(0ms, 1000ms)
+    logical action delay
     reaction(work) -> delay{=
         if self.busy.read():
             if self.current_mission.read() == "TakeBoard":

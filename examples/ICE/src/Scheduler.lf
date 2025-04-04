@@ -53,7 +53,7 @@ reactor Scheduler(recipe_path = "../ICE/recipes/test_recipe.yaml",
         if self.recipe:
             channel_out.set(self.recipe.pop(0))
     =}
-
+    state counter = 0
     reaction(channel_in) -> routine{=
         messages = channel_in.value
         assert isinstance(messages, list) and all(isinstance(item, Message) for item in messages), f"Received invalid messages: {messages}"
@@ -76,8 +76,10 @@ reactor Scheduler(recipe_path = "../ICE/recipes/test_recipe.yaml",
                 routine.schedule(SEC(2))
 
         if not self.recipe and not self.conditions:
+            self.counter += 1            
             self.recipe = get_messages(self.recipe_path)
             self.conditions = get_conditions(self.condition_path)
+            print(self.counter)
     =}
 
 }

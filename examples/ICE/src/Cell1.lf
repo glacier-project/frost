@@ -10,7 +10,8 @@ reactor Cell1 extends GlacierMachine{
     state current_mission = {= self.data_model.get_node("Cell1/FlyingProbeTester/CurrentMission") =}
     state last_result = {= self.data_model.get_node("Cell1/FlyingProbeTester/LastResult") =}
     state board = {= self.data_model.get_node("Cell1/Board") =} 
-
+    timer work(0ms, 1000ms)
+    logical action delay
     method showMessage(text){=
         print(text)
         return True

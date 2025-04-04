@@ -13,7 +13,8 @@ reactor Kairos extends GlacierMachine{
     state missions_call_counter = {= self.data_model.get_node("RBKairos/Mission_Methods/Missions_Call_Counter") =}
     state ongoing_mission_feedback = {= self.data_model.get_node("RBKairos/Mission_Methods/Ongoing_Mission_Feedback") =}
     state ongoing_mission_name = {= self.data_model.get_node("RBKairos/Mission_Methods/Ongoing_Mission_Name") =}
-
+    timer work(0ms, 1000ms)
+    logical action delay
     reaction (startup){=
         assert isinstance(self.start_mission, MethodNode), "start_mission Node not found"
         assert isinstance(self.preempt_running_mission, MethodNode), "preempt_running_mission Node not found"

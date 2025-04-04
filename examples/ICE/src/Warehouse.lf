@@ -19,7 +19,8 @@ reactor Warehouse extends GlacierMachine{
     state tray_calls_count = {= self.data_model.get_node("Warehouse/Statistics/TrayCallsCount") =}
     state tray_to_extract
     state tray_to_sendback
-
+    timer work(0ms, 1000ms)
+    logical action delay
     
     reaction(startup){=
         self.data_model.get_node("Warehouse/SocketLink/extract").callback = lambda TrayNumber: self.tray_to_extract.update(TrayNumber) if 1 <= TrayNumber <= 8 else -1

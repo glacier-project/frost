@@ -74,7 +74,10 @@ reactor Cell_Conveyor extends GlacierMachine{
                         6:21,
                         7:11
                     } =}
+    timer work(0ms, 1000ms)
+    logical action delay
 
+    
     method setPalletDest(palletNumber, destination){=
         pallet = self.pallets[palletNumber-1]
         self.data_model.write_variable(
@@ -176,7 +179,7 @@ reactor Cell_Conveyor extends GlacierMachine{
         return False
     =}
 
-    method move_interchanges(){=            
+    method move_interchanges(delay){=    
         for seg_num, segment in enumerate(self.segments):
             if self.dict_bay[seg_num] in self.bay_out:
                 
@@ -204,7 +207,7 @@ reactor Cell_Conveyor extends GlacierMachine{
                     next_segment.get_property("FIFO").get_property("size").update(next_segment.get_property("FIFO").get_property("size").read() + 1)
                     self.pallets[palletNumber-1].get_property("destination").update(0)
                     self.bay_out.remove(self.dict_bay[seg_num])
-                    self.out.update(True)
+                    delay.schedule(SEC(5))
                 continue
 
             size_of_seg = segment.get_property("FIFO").get_property("size")
@@ -233,27 +236,25 @@ reactor Cell_Conveyor extends GlacierMachine{
                 next_segment.get_property("FIFO").get_property("size").update(next_segment.get_property("FIFO").get_property("size").read() + 1)
    =}
 
-    method move_pallets(){=
-        # Iterate over each segment
-        for seg_num, segment in enumerate(self.segments):
-            size_of_seg = segment.get_property("FIFO").get_property("size")
-            if size_of_seg.read() == 0:
+    method move_pallets(seg_num, segment){=
+        size_of_seg = segment.get_property("FIFO").get_property("size")
+        if size_of_seg.read() == 0:
+            return
+
+        # Iterate over each item in the segment's FIFO queue
+        for i in range(len(self.segment_items) - 1):
+            current_pos = segment.get_property("FIFO").get_property(self.segment_items[i])
+            curr_value = current_pos.read()
+            next_pos = segment.get_property("FIFO").get_property(self.segment_items[i+1])
+            next_value = next_pos.read()
+            if next_value == 0:
                 continue
 
-            # Iterate over each item in the segment's FIFO queue
-            for i in range(len(self.segment_items) - 1):
-                current_pos = segment.get_property("FIFO").get_property(self.segment_items[i])
-                curr_value = current_pos.read()
-                next_pos = segment.get_property("FIFO").get_property(self.segment_items[i+1])
-                next_value = next_pos.read()
-                if next_value == 0:
-                    continue
-
-                # Move pallets over segment
-                if curr_value == 0:
-                    #print(next_value, ":", seg_num, i)
-                    current_pos.update(next_value)
-                    next_pos.update(0)
+            # Move pallets over segment
+            if curr_value == 0:
+                #print(next_value, ":", seg_num, i)
+                current_pos.update(next_value)
+                next_pos.update(0)
     =}
 
     reaction(startup){=
@@ -273,8 +274,31 @@ reactor Cell_Conveyor extends GlacierMachine{
     =}
 
     reaction(work){=
-        self.move_interchanges()
-        self.move_pallets()
+        self.move_pallets(1, self.Segment2)
+        self.move_pallets(6, self.Segment7)
     =}    
+
+    timer half_time(0ms, 500ms)
+    reaction(half_time){=
+        self.move_pallets(0, self.Segment1)
+        self.move_pallets(2, self.Segment3)
+        self.move_pallets(5, self.Segment6)
+        self.move_pallets(7, self.Segment8)
+    =}
+
+    timer hh_time(0ms, 2500ms)
+    reaction(hh_time){=
+        self.move_pallets(3, self.Segment4)
+        self.move_pallets(4, self.Segment5)
+    =}  
+
+    timer interchanges(0, 5s)
+    reaction(interchanges)-> delay{=
+        self.move_interchanges(delay)
+    =}
+
+    reaction(delay){=
+        self.out.update(True)
+    =}
 
 }

@@ -2,15 +2,14 @@ target Python
 
 import GlacierReactor from "GlacierReactor.lf"
 
-reactor GlacierMachine extends GlacierReactor{
+reactor GlacierMachine(update_step = 1000 msec) extends GlacierReactor{
 
     state registered_to_bus = False
     state custom_node
-    timer check_update(1s, 1s)
-    timer work(1s, 1s)
+    state time_step = 1
+    timer check_update(0, update_step)
     logical action check_bus_registration
-    logical action handle_update
-    logical action delay
+
 
     method generate_bus_registration_message(){=
         """
@@ -63,7 +62,7 @@ reactor GlacierMachine extends GlacierReactor{
         self.data_model.add_child(parent_id = self.data_model.root, child = self.custom_node)
     =}
 
-    reaction(channel_in)->channel_out,check_bus_registration,handle_update{=
+    reaction(channel_in)->channel_out,check_bus_registration{=
         '''
         Handle incoming messages from the bus
         First check if the message is a durable method, if so, schedule it to be executed
@@ -78,10 +77,7 @@ reactor GlacierMachine extends GlacierReactor{
         for message in messages:
             if isinstance(message, GlacierMessage):
 
-                if message.header.namespace == MsgNamespace.VARIABLE and message.header.msg_name == VariableMsgName.UPDATE:
-                    handle_update.schedule(0, message)
-
-                elif message.header.matches(MsgType.RESPONSE, MsgNamespace.PROTOCOL, ProtocolMsgName.REGISTER):
+                if message.header.matches(MsgType.RESPONSE, MsgNamespace.PROTOCOL, ProtocolMsgName.REGISTER):
                     self.logger.debug(f"Machine {self.name}, correctly registered with the CommonBus.")
                     self.registered_to_bus = True
     
