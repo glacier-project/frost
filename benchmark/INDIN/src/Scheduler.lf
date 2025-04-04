@@ -7,8 +7,8 @@ preamble{=
     from handle_recipe import *
 =}
 
-reactor Scheduler(recipe_path = "../ICE/recipes/test_recipe.yaml",
-                condition_path = "../ICE/recipes/test_conditions.yaml"
+reactor Scheduler(recipe_path = "../INDIN/recipes/recipes/test_TrainDoor.yaml",
+                condition_path = "../INDIN/recipes/conditions/test_TrainDoor.yaml"
 ){
 
     input channel_in
@@ -79,7 +79,8 @@ reactor Scheduler(recipe_path = "../ICE/recipes/test_recipe.yaml",
             self.counter += 1            
             self.recipe = get_messages(self.recipe_path)
             self.conditions = get_conditions(self.condition_path)
-            print(self.counter)
+            if self.counter == 1000:
+                request_stop()
     =}
 
 }

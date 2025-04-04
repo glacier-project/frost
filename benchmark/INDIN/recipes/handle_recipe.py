@@ -46,7 +46,7 @@ def get_conditions(path: str) -> list:
     with open(path, 'r') as file:
         recipe = yaml.safe_load(file)
         if not isinstance(recipe, dict) or "conditions" not in recipe or not isinstance(recipe["conditions"], list):
-            raise ValueError("YAML file must contain a 'conditions' list")
+            return None
         for item in recipe["conditions"]:
             if not isinstance(item, dict) or "node" not in item or "value" not in item:
                 raise ValueError("Each condition must be a dictionary with 'node' and 'value' keys")

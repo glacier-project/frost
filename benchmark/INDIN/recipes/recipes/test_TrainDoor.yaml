@@ -1,0 +1,85 @@
+recipe: "Test"
+description: "Test recipe for the RBKairos system"
+steps:
+  - sender: "Scheduler"
+    target: "TrainDoor"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "TrainDoor/operation"
+      args: "c"
+  - sender: "Scheduler"
+    target: "TrainDoor"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "TrainDoor/operation"
+      args: "o"
+  - sender: "Scheduler"
+    target: "TrainDoor"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "TrainDoor/operation"
+      args: "m"
+  - sender: "Scheduler"
+    target: "TrainDoor"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "TrainDoor/operation"
+      args: "o"
+  - sender: "Scheduler"
+    target: "TrainDoor"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "TrainDoor/operation"
+      args: "c"
+  - sender: "Scheduler"
+    target: "TrainDoor"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "TrainDoor/operation"
+      args: "o"
+  - sender: "Scheduler"
+    target: "TrainDoor"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "TrainDoor/operation"
+      args: "c"
+  - sender: "Scheduler"
+    target: "TrainDoor"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "TrainDoor/operation"
+      args: "m"
+  
+  
