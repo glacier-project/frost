@@ -22,15 +22,15 @@ preamble{=
     from enum import Enum
     CONFIG_PATH = "models/configuration.yaml"
     from machine_data_model.protocols.glacier_v1.glacier_message import GlacierMessage
-    from machine_data_model.protocols.glacier_v1.glacier_header import * 
-    from machine_data_model.protocols.glacier_v1.glacier_payload import *
+    from machine_data_model.protocols.glacier_v1.glacier_header import MsgType, MsgNamespace, ProtocolMsgName, GlacierHeader
+    from machine_data_model.protocols.glacier_v1.glacier_payload import VariablePayload, ProtocolPayload, MethodPayload 
     from machine_data_model.protocols.glacier_v1.glacier_protocol_mng import GlacierProtocolMng
     from machine_data_model.builder.data_model_builder import DataModelBuilder
     from machine_data_model.protocols.protocol_mng import Message
-    from machine_data_model.nodes.method_node import *
-    from machine_data_model.nodes.variable_node import *
-    from machine_data_model.nodes.folder_node import *
-    from machine_data_model.nodes.composite_method.composite_method_node import *
+    from machine_data_model.nodes.method_node import MethodNode, AsyncMethodNode
+    from machine_data_model.nodes.composite_method.composite_method_node import CompositeMethodNode
+    from machine_data_model.nodes.variable_node import NumericalVariableNode, StringVariableNode, BooleanVariableNode, ObjectVariableNode
+    from machine_data_model.nodes.folder_node import FolderNode
     import uuid
     import logging
     from singleton_meta import SingletonMeta

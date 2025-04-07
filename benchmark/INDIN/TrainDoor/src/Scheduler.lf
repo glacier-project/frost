@@ -7,8 +7,8 @@ preamble{=
     from handle_recipe import *
 =}
 
-reactor Scheduler(recipe_path = "../INDIN/recipes/recipes/test_TrainDoor.yaml",
-                condition_path = "../INDIN/recipes/conditions/test_TrainDoor.yaml"
+reactor Scheduler(recipe_path = "../TrainDoor/recipes/recipes/test_TrainDoor.yaml",
+                condition_path = "../TrainDoor/recipes/conditions/test_TrainDoor.yaml"
 ){
 
     input channel_in

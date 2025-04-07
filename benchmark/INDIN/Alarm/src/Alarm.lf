@@ -1,0 +1,28 @@
+target Python 
+
+import GlacierMachine from "../../../../glacier/src/GlacierMachine.lf"
+
+reactor Alarm extends GlacierMachine{
+    state out = {= self.data_model.get_node("Alarm/out") =}
+    state out2 = {= self.data_model.get_node("Alarm/out2") =}
+    state fault = {= self.data_model.get_node("Alarm/fault") =}
+    logical action turnOff(500 msec)
+    timer work(0 sec, 500 msec)
+
+    reaction(work) -> turnOff {=
+        if self.fault.read() == True and self.out.read() == 0 and self.out2.read() == 0: 
+            turnOff.schedule(0, False)
+            self.out.update(5)
+            self.out2.update(10)            
+        elif self.fault.read() == False and self.out.read() != 0 and self.out2.read() != 0:
+            self.out.update(0)
+            self.out2.update(0) 
+    =}
+
+    reaction(turnOff) {=
+        if (turnOff.value == True):
+            self.fault.udpate(False) 
+    =}
+
+
+}

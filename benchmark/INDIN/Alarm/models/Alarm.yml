@@ -1,0 +1,25 @@
+name: "Alarm" # name of the machine
+machine_category: "unknown" # category of the machine
+machine_type: "unknown" # type of the machine
+machine_model: "unknown" # model of the machine
+description: "" # description of the machine
+root:
+  !!FolderNode
+  name: "Alarm"
+  description: ""
+  children:
+    - !!NumericalVariableNode
+      name: "out"
+      description: ""
+      measure_unit: "NoneMeasureUnits.NONE"
+      value: 0
+    - !!NumericalVariableNode
+      name: "out2"
+      description: ""
+      measure_unit: "NoneMeasureUnits.NONE"
+      value: 0
+    - !!NumericalVariableNode
+      name: "fault"
+      description: ""
+      measure_unit: "NoneMeasureUnits.NONE"
+      value: False  
