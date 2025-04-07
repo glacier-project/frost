@@ -1,0 +1,63 @@
+recipe: "Test"
+description: "Test recipe for the RBKairos system"
+steps:
+  - sender: "Scheduler"
+    target: "TrafficLight"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "VARIABLE"
+      msg_name: "SUBSCRIBE"
+    payload:
+      node: "TrafficLight/sigG"
+      value: 0
+  - sender: "Scheduler"
+    target: "TrafficLight"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "VARIABLE"
+      msg_name: "SUBSCRIBE"
+    payload:
+      node: "TrafficLight/sigY"
+      value: 0
+  - sender: "Scheduler"
+    target: "TrafficLight"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "VARIABLE"
+      msg_name: "SUBSCRIBE"
+    payload:
+      node: "TrafficLight/sigR"
+      value: 0
+  - sender: "Scheduler"
+    target: "TrafficLight"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "VARIABLE"
+      msg_name: "WRITE"
+    payload:
+      node: "TrafficLight/pedestrian"
+      value: True
+  - sender: "Scheduler"
+    target: "TrafficLight"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "VARIABLE"
+      msg_name: "READ"
+    payload:
+      node: "TrafficLight/count"
+      value: True
+  - sender: "Scheduler"
+    target: "TrafficLight"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "VARIABLE"
+      msg_name: "READ"
+    payload:
+      node: "TrafficLight/mode"
+      value: True

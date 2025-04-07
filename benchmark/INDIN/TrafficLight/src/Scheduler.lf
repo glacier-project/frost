@@ -1,0 +1,80 @@
+target Python
+{
+    files: [../recipes/handle_recipe.py]
+}
+
+preamble{=
+    from handle_recipe import *
+=}
+
+reactor Scheduler(recipe_path = "../TrafficLight/recipes/recipes/test.yaml", 
+                condition_path = "../TrafficLight/recipes/recipes/test.yaml"
+){
+
+    input channel_in
+    output channel_out
+    state name = {="Scheduler"=}
+    state recipe = {=get_messages(self.recipe_path)=}  
+    state conditions = {=get_conditions(self.condition_path)=}  
+
+    logical action routine
+
+    method generate_bus_registration_message(){=
+        """
+        Generates a `REGISTER` message to initiate the registration process with the CommonBus.
+
+        This method constructs a `GlacierMessage` that requests registration in the 
+        communication system. The message is addressed to the `"CommonBus"` and follows 
+        the `PROTOCOL` namespace with the `REGISTER` message name.
+
+        :return: A `GlacierMessage` representing the registration request.
+        """
+        return GlacierMessage(
+            sender=self.name,
+            target="CommonBus",
+            identifier=str(uuid.uuid4()),
+            header=GlacierHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.PROTOCOL,
+                msg_name=ProtocolMsgName.REGISTER,
+            ),
+            payload=ProtocolPayload(),
+        )
+    =}
+
+    reaction(startup)-> channel_out, routine{=
+        channel_out.set(self.generate_bus_registration_message())
+        self.logger = logging.getLogger("Scheduler")
+        routine.schedule(SEC(10))
+    =}
+
+    reaction(routine)-> channel_out{=
+        if self.recipe:
+            channel_out.set(self.recipe.pop(0))
+    =}
+    state counter = -3
+    reaction(channel_in) -> routine{=
+        messages = channel_in.value
+        assert isinstance(messages, list) and all(isinstance(item, Message) for item in messages), f"Received invalid messages: {messages}"
+        for message in messages:
+            if message.header.matches(MsgType.REQUEST, MsgNamespace.PROTOCOL, ProtocolMsgName.REGISTER):
+                self.logger.warning(f"{message.sender} requests to register to {message.target}.")
+                continue
+            if message.header.matches(MsgType.RESPONSE, MsgNamespace.PROTOCOL, ProtocolMsgName.REGISTER):
+                self.logger.warning(f"{message.sender} notify registration to {message.target}.")
+                continue
+            else:
+                self.logger.warning(f"{message.sender} to {message.target} with header {message.header} and payload {message.payload}\n")
+        
+            if not (message.header.msg_name.value == "UPDATE"):
+                if not self.recipe:
+                    self.counter += 1            
+                    self.recipe = get_messages(self.recipe_path)
+                    self.recipe = self.recipe[3:]
+                    if self.counter == 1000:
+                        request_stop()
+                routine.schedule(SEC(10))
+    =}
+
+}
