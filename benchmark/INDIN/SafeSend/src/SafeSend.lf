@@ -1,0 +1,22 @@
+target Python 
+
+import GlacierMachine from "../../../../glacier/src/GlacierMachine.lf"
+
+reactor SafeSend extends GlacierMachine{
+    state req = {= self.data_model.get_node("SafeSend/req") =}
+    state error = {= self.data_model.get_node("SafeSend/error") =}  
+    state c = {= self.data_model.get_node("SafeSend/call") =}
+    
+    method call(ins){=
+        if ins == 0:
+            self.error.update(1)               
+        else:
+            self.req.update(0)
+        return ins
+    =}
+
+    reaction(startup){=
+        self.c.callback = self.call
+    =}  
+
+}

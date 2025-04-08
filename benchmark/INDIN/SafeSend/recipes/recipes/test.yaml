@@ -1,0 +1,15 @@
+recipe: "Test"
+description: "Test recipe"
+steps:
+  - sender: "Scheduler"
+    target: "SafeSend"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "PingPong/call"
+      args: [1]
+
+  
