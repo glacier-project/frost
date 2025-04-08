@@ -1,0 +1,60 @@
+name: "PingPong" # name of the machine
+machine_category: "unknown" # category of the machine
+machine_type: "unknown" # type of the machine
+machine_model: "unknown" # model of the machine
+description: "" # description of the machine
+root:
+  !!FolderNode
+  name: "PingPong"
+  description: ""
+  children:
+    - !!NumericalVariableNode
+      name: "count"
+      description: ""
+      measure_unit: "NoneMeasureUnits.NONE"
+      value: 0
+    - !!NumericalVariableNode
+      name: "pingsLeft"
+      description: ""
+      measure_unit: "NoneMeasureUnits.NONE"
+      value: 0
+    - !!BooleanVariableNode
+      name: "ok"
+      description: ""
+      value: False
+    - !!CompositeMethodNode
+      name: "operation"
+      description: ""
+      parameters:
+        - !!NumericalVariableNode
+          name: "pings"
+          description: ""
+          measure_unit: "NoneMeasureUnits.NONE"
+          value: 0
+      returns:
+        - !!NumericalVariableNode
+          name: "result"
+          description: ""
+          measure_unit: "NoneMeasureUnits.NONE"
+          value: 0
+      cfg:
+        - !!WriteVariableNode
+          variable: "PingPong/pingsLeft"
+          value: 10 
+        - !!WriteVariableNode
+          variable: "PingPong/count"
+          value: 0
+        - !!WaitConditionNode
+          variable: "PingPong/ok"
+          operator: "=="
+          rhs: True
+        - !!ReadVariableNode
+          variable: "PingPong/count"
+          store_as: "result"
+        - !!WriteVariableNode
+          variable: "PingPong/count"
+          value: 0
+        - !!WriteVariableNode
+          variable: "PingPong/ok"
+          value: False
+        

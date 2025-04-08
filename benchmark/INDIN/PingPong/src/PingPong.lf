@@ -1,0 +1,20 @@
+target Python 
+
+import GlacierMachine from "../../../../glacier/src/GlacierMachine.lf"
+
+reactor PingPong extends GlacierMachine{
+    state count = {= self.data_model.get_node("PingPong/count") =}
+    state pingsLeft = {= self.data_model.get_node("PingPong/pingsLeft") =}
+    state ok = {= self.data_model.get_node("PingPong/ok") =}
+
+    timer t(0 nsec, 1 nsec)
+
+    reaction(t){=
+        if self.pingsLeft.read() > 0:
+            self.pingsLeft.update(self.pingsLeft.read() - 1)
+            self.count.update(self.count.read() + 1)
+            if self.pingsLeft.read() == 0:
+                self.ok.update(True)
+    =}
+
+}
