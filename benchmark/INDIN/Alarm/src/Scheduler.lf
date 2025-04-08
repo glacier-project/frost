@@ -77,7 +77,7 @@ reactor Scheduler(recipe_path = "../Alarm/recipes/recipes/test.yaml",
             self.counter += 1            
             self.recipe = get_messages(self.recipe_path)
             self.recipe = self.recipe[2:4]
-            if self.counter == 1000:
+            if self.counter == 100:
                 request_stop()
     =}
 

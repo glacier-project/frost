@@ -78,7 +78,7 @@ reactor Scheduler(recipe_path = "../Ring/recipes/recipes/test.yaml",
             self.recipe = get_messages(self.recipe_path)
             self.conditions = get_conditions(self.condition_path)
             routine.schedule(NSEC(2))
-            if self.counter == 1000:
+            if self.counter == 100:
                 request_stop()
     =}
 
