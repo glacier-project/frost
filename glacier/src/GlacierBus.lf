@@ -20,7 +20,7 @@ reactor GlacierBus extends GlacierReactor{
             if msg.header.namespace == MsgNamespace.PROTOCOL and msg.header.msg_name == ProtocolMsgName.REGISTER:
                 self.register_machine(msg, index)
                 continue
-            assert msg.target in self.map, f"Target {message.target} not found in map"
+            assert msg.target in self.map, f"Target {msg.target} not found in map"
             self.messages_out[msg.target].append(msg)
     =}
 
