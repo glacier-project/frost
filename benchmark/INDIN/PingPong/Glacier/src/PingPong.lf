@@ -1,6 +1,6 @@
 target Python 
 
-import GlacierMachine from "../../../../glacier/src/GlacierMachine.lf"
+import GlacierMachine from "../../../../../glacier/src/GlacierMachine.lf"
 
 reactor PingPong extends GlacierMachine{
     state count = {= self.data_model.get_node("PingPong/count") =}

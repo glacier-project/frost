@@ -1,12 +1,12 @@
 target Python 
 
-import GlacierMachine from "../../../../glacier/src/GlacierMachine.lf"
+import GlacierMachine from "../../../../../glacier/src/GlacierMachine.lf"
 
 reactor Alarm extends GlacierMachine{
     state out = {= self.data_model.get_node("Alarm/out") =}
     state out2 = {= self.data_model.get_node("Alarm/out2") =}
     state fault = {= self.data_model.get_node("Alarm/fault") =}
-    logical action turnOff(500 msec)
+    logical action turnOff(2 sec)
     timer work(0 sec, 500 msec)
 
     reaction(work) -> turnOff {=

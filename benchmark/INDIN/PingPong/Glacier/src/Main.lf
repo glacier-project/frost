@@ -3,8 +3,8 @@ target Python{
     files: [../models/l_formatter.py, ../models/time_utils.py, ../models/singleton_meta.py],
 }
 
-import Alarm from "Alarm.lf"
-import GlacierBus from "../../../../glacier/src/GlacierBus.lf"
+import PingPong from "PingPong.lf"
+import GlacierBus from "../../../../../glacier/src/GlacierBus.lf"
 import Scheduler from "Scheduler.lf"
 
 preamble{=
@@ -43,10 +43,10 @@ main reactor{
         logger = logging.getLogger()
         logger.addHandler(handler)
     =}
-    alarm = new Alarm(model_path = "models/Alarm.yml", update_step = 250 msec)
+    PingPong = new PingPong(model_path = "models/PingPong.yml", update_step = 1nsec)
     scheduler = new Scheduler()
     bus = new GlacierBus(model_path = "models/Common_Bus.yml",width = 2)
     
-    alarm.channel_out, scheduler.channel_out -> bus.channel_in after 1 msec
-    bus.channel_out -> alarm.channel_in, scheduler.channel_in after 1 msec
+    PingPong.channel_out, scheduler.channel_out -> bus.channel_in after 0 nsec
+    bus.channel_out -> PingPong.channel_in, scheduler.channel_in after 0 nsec
 }
