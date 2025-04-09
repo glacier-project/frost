@@ -45,9 +45,9 @@ root:
           variable: "PingPong/count"
           value: 0
         - !!WaitConditionNode
-          variable: "PingPong/ok"
+          variable: "PingPong/count"
           operator: "=="
-          rhs: True
+          rhs: "$pings"
         - !!ReadVariableNode
           variable: "PingPong/count"
           store_as: "result"

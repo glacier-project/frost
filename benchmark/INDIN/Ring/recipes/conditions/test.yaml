@@ -1,6 +1,0 @@
-recipe: "Test"
-conditions:
-  - machine: "Ring"
-    header: METHOD
-    node: "out"
-    value: 5
