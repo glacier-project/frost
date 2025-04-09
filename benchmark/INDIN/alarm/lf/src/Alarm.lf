@@ -1,0 +1,44 @@
+target Python{
+    fast:True
+}
+
+reactor Controller {
+    
+    output out
+    output out2
+    state fault
+
+    logical action turnOff(2 sec)
+
+    reaction(startup) -> out, out2, turnOff {=
+        self.fault = 1
+
+        if (self.fault == 1):
+            turnOff.schedule(0, 1)
+            out.set(5)
+            out2.set(10)
+
+    =}
+    logical action turnOn(2 sec)
+    state counter = 0
+    reaction(turnOn) -> turnOff, out, out2{=
+        if (self.fault == 0):
+            self.fault = 1
+            out.set(5)
+            out2.set(10)
+            turnOff.schedule(0, 1)
+            self.counter += 1
+            if self.counter == 100:
+                lf.request_stop()
+    =}
+
+    reaction(turnOff) -> turnOn {=
+        if (turnOff.value == 1):
+            self.fault = 0
+            turnOn.schedule(0)
+    =}
+}
+
+main reactor {
+   c =  new Controller()
+}

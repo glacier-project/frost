@@ -1,0 +1,38 @@
+target Python{
+    fast:True,
+    timeout: 100s
+}
+
+reactor Controller {
+    output out1
+    output out2
+    reaction(t) -> out1, out2 {=
+      out1.set(1)
+      out2.set(2)
+    =}
+    timer t(0s, 1s)
+}
+
+reactor Train {
+    input ins
+    state received
+    reaction(ins) {=
+      self.received = ins.value
+    =}
+}
+
+reactor Door {
+    input ins
+    state received
+    reaction(ins) {=
+        self.received = ins.value
+    =}
+}
+
+main reactor {
+    c = new Controller()
+    t = new Train()
+    d = new Door()
+    c.out1 -> t.ins after 1 sec
+    c.out2 -> d.ins after 1 sec
+}

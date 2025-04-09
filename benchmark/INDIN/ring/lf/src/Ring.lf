@@ -1,40 +1,39 @@
 /**
  * There seems to be some problem with infinite feedback loops.
  */
- target C{
-    fast: True
+ target Python{
+    fast:True
  }
 
  reactor Source {
-    input in:int
-    output out:int
+    input ins
+    output out
     logical action start(1 nsec)
-    state received:int
-    state counter:int
+    state received
+    state counter
     reaction(startup) -> start {=
-        self->received = 0;
-        lf_schedule(start, 0);
-        self->counter = 0;
+        self.received = 0
+        start.schedule(0)
+        self.counter = 0
     =}
     reaction(start) -> out {=
-        lf_set(out, self->received);
+        out.set(self.received)
     =}
-     
-    reaction(in) -> start{=
-        self->received = in->value;
-        lf_schedule(start, 0);
-        self->counter = self->counter + 1;
-        if (self->counter == 100) {
-            lf_request_stop();
-        }
+    
+    reaction(ins) -> start{=
+        self.received = ins.value
+        start.schedule(0)
+        self.counter = self.counter + 1
+        if (self.counter == 1000):
+            lf.request_stop()        
     =}
  }
  
  reactor Node {
-    input in:int
-    output out:int
-    reaction(in) -> out {=
-        lf_set(out, in->value + 1);
+    input ins
+    output out
+    reaction(ins) -> out {=
+        out.set(ins.value + 1)
     =}
  }
  
@@ -45,10 +44,10 @@
     n3 = new Node()
     n4 = new Node()
     n5 = new Node()
-    s.out -> n1.in after 1 nsec
-    n1.out -> n2.in after 1 nsec
-    n2.out -> n3.in after 1 nsec
-    n3.out -> n4.in after 1 nsec
-    n4.out -> n5.in after 1 nsec
-    n5.out -> s.in after 1 nsec
+    s.out -> n1.ins after 1 nsec
+    n1.out -> n2.ins after 1 nsec
+    n2.out -> n3.ins after 1 nsec
+    n3.out -> n4.ins after 1 nsec
+    n4.out -> n5.ins after 1 nsec
+    n5.out -> s.ins after 1 nsec
  }

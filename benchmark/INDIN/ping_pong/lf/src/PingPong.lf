@@ -19,52 +19,50 @@
  * These are about an order of magnitude faster than anything reported in the
  * paper.
  */
- target C {
+ target Python {
     fast: true
 }
 
 reactor Ping {
-    input receive: int
-    output send: int
-    state pingsLeft: int = 10
+    input receive
+    output send
+    state pingsLeft = 10
     logical action serve(1 nsec)
-    state counter: int = 0;
+    state counter = 0
     reaction(startup) -> serve {=
-        lf_schedule(serve, 0);
+        serve.schedule(0)
     =}
 
     reaction(serve) -> send {=
-        lf_set(send, self->pingsLeft);
-        self->pingsLeft -= 1;
+        send.set(self.pingsLeft)
+        self.pingsLeft -= 1
     =}
     
     reaction(receive) -> serve {=
-        if (self->pingsLeft > 0) {
-            lf_schedule(serve, 0);
-        }
-        else if (self->pingsLeft == 0) {
-            self->pingsLeft = 10;
-            self->counter += 1;
-            if (self->counter == 100) {
-                lf_request_stop();
-            }
-            lf_schedule(serve, 0);
-        }
+        if (self.pingsLeft > 0):
+            serve.schedule(0)
+        elif (self.pingsLeft == 0):
+            self.pingsLeft = 10
+            self.counter += 1
+            if (self.counter == 100):
+                request_stop()
+            
+            serve.schedule(0)
     =}
 }
 
 reactor Pong {
-    input receive: int
-    output send: int
-    state count: int = 0
-    state expected: int = 10
+    input receive
+    output send
+    state count = 0
+    state expected = 10
 
     reaction(receive) -> send {=
-        if (receive->value == 10){
-            self->count = 0;
-        }
-        self->count += 1;
-        lf_set(send, receive->value);
+        if (receive.value == 10):
+            self.count = 0
+        
+        self.count += 1
+        send.set(receive.value)
     =}
 }
 
