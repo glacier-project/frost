@@ -43,7 +43,7 @@ class HistogramPlot(HistogramExporter):
 @BenchmarkRunner.exporters(TableExporter, HistogramPlot)
 @BenchmarkRunner.params(
     benchmark_dir=[
-        dir for dir in os.listdir(os.path.dirname(__file__)) if dir not in ['Empty', '.venv'] and os.path.isdir(os.path.join(os.path.dirname(__file__), dir))
+        dir for dir in os.listdir(os.path.dirname(__file__)) if dir not in ['empty', '.venv', 'config'] and os.path.isdir(os.path.join(os.path.dirname(__file__), dir))
     ]
 )
 class GlacierBenchmark:
@@ -57,16 +57,16 @@ class GlacierBenchmark:
 
     @BenchmarkRunner.overhead
     def overhead(self) -> subprocess.CompletedProcess:
-        return run_benchmark('Empty')
+        return run_benchmark('empty')
 
     @BenchmarkRunner.benchmark
     def glacier(self) -> subprocess.CompletedProcess:
-        return run_benchmark(self._benchmark_dir)
+        return run_benchmark(f"{self._benchmark_dir}/glacier")
     
-    # add here the execution of the original LF benchmarks
+    # uncomment to run lf benchmark
     # @BenchmarkRunner.benchmark
     # def lf(self) -> subprocess.CompletedProcess:
-    #     return run_benchmark(...)
+    #     return run_benchmark(f"{self._benchmark_dir}/lf")
     
 
 if __name__ == "__main__":

@@ -1,0 +1,36 @@
+target Python{
+    fast: True,
+    files: [
+        ../../config/utils/l_formatter.py, 
+        ../../config/utils/time_utils.py, 
+        ../../config/utils/singleton_meta.py, 
+        ../../config/utils/g_preamble.py, 
+        ../../config/utils/handle_recipe.py
+    ],
+}
+
+import Alarm from "Alarm.lf"
+import GlacierBus from "../../../../../glacier/src/GlacierBus.lf"
+import Scheduler from "Scheduler.lf"
+
+preamble{=
+    from g_preamble import *
+=}
+
+
+main reactor{
+
+    preamble{=
+        handler = logging.StreamHandler()
+        handler.setFormatter(LFormatter(lf.time.logical_elapsed, TimeFormat.MSECS))
+        logger = logging.getLogger()
+        logger.setLevel(logging.ERROR)
+        logger.addHandler(handler)
+    =}
+    alarm = new Alarm(model_path = "../../config/models/alarm.yml", update_step = 250 msec)
+    scheduler = new Scheduler()
+    bus = new GlacierBus(model_path = "../../config/models/bus.yml",width = 2)
+    
+    alarm.channel_out, scheduler.channel_out -> bus.channel_in after 1 msec
+    bus.channel_out -> alarm.channel_in, scheduler.channel_in after 1 msec
+}
