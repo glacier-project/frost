@@ -1,6 +1,6 @@
 target Python 
 
-import GlacierMachine from "../../../../glacier/src/GlacierMachine.lf"
+import GlacierMachine from "../../../../../glacier/src/GlacierMachine.lf"
 
 reactor TrafficLight extends GlacierMachine{
     state modality = {= self.data_model.get_node("TrafficLight/mode") =}

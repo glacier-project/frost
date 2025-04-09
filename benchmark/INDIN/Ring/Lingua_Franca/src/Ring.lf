@@ -1,7 +1,9 @@
 /**
  * There seems to be some problem with infinite feedback loops.
  */
- target C
+ target C{
+    fast: True
+ }
 
  reactor Source {
     input in:int

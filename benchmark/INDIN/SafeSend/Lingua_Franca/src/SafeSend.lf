@@ -11,7 +11,9 @@
  * and look at the trace alongside the dot model of the ACS.
  */
 
- target C;
+ target C{
+    fast: True
+ }
 
 reactor Client {
     input in:int;
@@ -22,6 +24,7 @@ reactor Client {
         // Sends a query
         self->req = 1; // 1 is valid. 0 is invalid.
         lf_set(out, self->req);
+        self->counter = 0;
     =}
  
     reaction(in) -> out {=
