@@ -22,7 +22,7 @@
         self->received = in->value;
         lf_schedule(start, 0);
         self->counter = self->counter + 1;
-        if (self->counter == 1000) {
+        if (self->counter == 100) {
             lf_request_stop();
         }
     =}

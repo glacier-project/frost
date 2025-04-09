@@ -4,7 +4,7 @@ target Python{
 }
 
 import SafeSend from "SafeSend.lf"
-import GlacierBus from "../../../../glacier/src/GlacierBus.lf"
+import GlacierBus from "../../../../../glacier/src/GlacierBus.lf"
 import Scheduler from "Scheduler.lf"
 
 preamble{=

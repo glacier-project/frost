@@ -1,6 +1,6 @@
 target Python 
 
-import GlacierMachine from "../../../../glacier/src/GlacierMachine.lf"
+import GlacierMachine from "../../../../../glacier/src/GlacierMachine.lf"
 
 reactor SafeSend extends GlacierMachine{
     state req = {= self.data_model.get_node("SafeSend/req") =}
