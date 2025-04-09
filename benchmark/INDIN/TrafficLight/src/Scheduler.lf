@@ -72,7 +72,7 @@ reactor Scheduler(recipe_path = "../TrafficLight/recipes/recipes/test.yaml",
                     self.counter += 1            
                     self.recipe = get_messages(self.recipe_path)
                     self.recipe = self.recipe[3:]
-                    if self.counter == 1000:
+                    if self.counter == 100:
                         request_stop()
                 routine.schedule(SEC(10))
     =}
