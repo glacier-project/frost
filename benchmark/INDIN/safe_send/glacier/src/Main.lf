@@ -28,7 +28,7 @@ main reactor{
         logger.setLevel(logging.ERROR)
         logger.addHandler(handler)
     =}
-    SafeSend = new SafeSend(model_path = "../../config/models/safe_send.yml")
+    SafeSend = new SafeSend(model_path = "../../config/models/safe_send.yml", update_step = 1nsec)
     scheduler = new Scheduler()
     bus = new GlacierBus(model_path = "../../config/models/bus.yml",width = 2)
     
