@@ -15,6 +15,7 @@ import Scheduler from "Scheduler.lf"
 
 preamble{=
     from g_preamble import *
+    import random
 =}
 
 
@@ -32,6 +33,6 @@ main reactor{
     scheduler = new Scheduler()
     bus = new GlacierBus(model_path = "../../config/models/bus.yml",width = 2)
     
-    traindoor.channel_out, scheduler.channel_out -> bus.channel_in after 1 msec
-    bus.channel_out -> traindoor.channel_in, scheduler.channel_in after 1 msec
+    traindoor.channel_out, scheduler.channel_out -> bus.channel_in after 0
+    bus.channel_out -> traindoor.channel_in, scheduler.channel_in after 0
 }

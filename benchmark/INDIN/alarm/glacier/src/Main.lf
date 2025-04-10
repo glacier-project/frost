@@ -28,10 +28,10 @@ main reactor{
         logger.setLevel(logging.ERROR)
         logger.addHandler(handler)
     =}
-    alarm = new Alarm(model_path = "../../config/models/alarm.yml", update_step = 250 msec)
+    alarm = new Alarm(model_path = "../../config/models/alarm.yml")
     scheduler = new Scheduler()
     bus = new GlacierBus(model_path = "../../config/models/bus.yml",width = 2)
     
-    alarm.channel_out, scheduler.channel_out -> bus.channel_in after 1 msec
-    bus.channel_out -> alarm.channel_in, scheduler.channel_in after 1 msec
+    alarm.channel_out, scheduler.channel_out -> bus.channel_in after 0 
+    bus.channel_out -> alarm.channel_in, scheduler.channel_in after 0
 }

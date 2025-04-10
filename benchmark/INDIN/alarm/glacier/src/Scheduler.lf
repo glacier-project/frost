@@ -40,7 +40,7 @@ reactor Scheduler(recipe_path = "recipes/recipe.yaml",
     reaction(startup)-> channel_out, routine{=
         channel_out.set(self.generate_bus_registration_message())
         self.logger = logging.getLogger("Scheduler")
-        routine.schedule(SEC(1))
+        routine.schedule(SEC(2))
     =}
 
     reaction(routine)-> channel_out{=
@@ -64,13 +64,11 @@ reactor Scheduler(recipe_path = "recipes/recipe.yaml",
 
             
         
-            if not (message.header.msg_name.value == "UPDATE"):
-                routine.schedule(SEC(1))
+            routine.schedule(SEC(2))
 
         if not self.recipe:
             self.counter += 1            
             self.recipe = get_messages(self.recipe_path)
-            self.recipe = self.recipe[2:4]
             if self.counter == NUM_RUNS:
                 request_stop()
     =}

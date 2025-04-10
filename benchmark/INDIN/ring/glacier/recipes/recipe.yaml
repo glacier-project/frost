@@ -11,14 +11,4 @@ steps:
     payload:
       node: "Ring/ring"
       args: [0]
-  - sender: "Scheduler"
-    target: "Ring"
-    header:
-      type: "REQUEST"
-      version: [1, 0, 0]
-      namespace: "VARIABLE"
-      msg_name: "READ"
-    payload:
-      node: "Ring/work"
-      value: True
   

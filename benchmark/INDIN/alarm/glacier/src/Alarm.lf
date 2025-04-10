@@ -7,7 +7,7 @@ reactor Alarm extends GlacierMachine{
     state out2 = {= self.data_model.get_node("Alarm/out2") =}
     state fault = {= self.data_model.get_node("Alarm/fault") =}
     logical action turnOff(2 sec)
-    timer work(0 sec, 500 msec)
+    timer work(0 sec, 1 sec)
 
     reaction(work) -> turnOff {=
         if self.fault.read() == True and self.out.read() == 0 and self.out2.read() == 0: 

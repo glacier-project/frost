@@ -11,6 +11,7 @@ target Python{
 
 preamble{=
     from g_preamble import *
+    import random
 =}
 
 reactor Controller {
@@ -28,14 +29,14 @@ reactor Controller {
 reactor Train {
     input ins
     output door
-    state timestamp
+    state timestamp = 0sec
     reaction(ins) -> door {=
         operation = ins.value
         if operation == "m":
             print("Motion detected!")
             self.timestamp = lf.time.logical_elapsed()
         elif operation == "o":
-            if self.timestamp == 0 or lf.time.logical_elapsed() - self.timestamp > SECS(2):
+            if self.timestamp == SEC(0) or (lf.time.logical_elapsed() - self.timestamp) > SECS(2):
                 door.set(True)
             
         elif operation == "c":

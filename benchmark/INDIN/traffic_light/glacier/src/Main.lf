@@ -30,6 +30,6 @@ main reactor{
     scheduler = new Scheduler()
     bus = new GlacierBus(model_path = "../../config/models/bus.yml",width = 2)
     
-    TrafficLight.channel_out, scheduler.channel_out -> bus.channel_in after 1 msec
-    bus.channel_out -> TrafficLight.channel_in, scheduler.channel_in after 1 msec
+    TrafficLight.channel_out, scheduler.channel_out -> bus.channel_in after 0 msec
+    bus.channel_out -> TrafficLight.channel_in, scheduler.channel_in after 0 msec
 }

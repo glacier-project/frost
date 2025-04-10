@@ -65,13 +65,12 @@ reactor Scheduler(recipe_path = "recipes/recipe.yaml",
                 current_condition = self.conditions[0]
                 if current_condition.check_condition(message):
                     self.conditions.pop(0)
-                    routine.schedule(NSEC(2))
+                    routine.schedule(NSEC(0))
 
         if not self.recipe and not self.conditions:
             self.counter += 1            
             self.recipe = get_messages(self.recipe_path)
             self.conditions = get_conditions(self.condition_path)
-            routine.schedule(NSEC(2))
             if self.counter == NUM_RUNS:
                 request_stop()
     =}

@@ -40,14 +40,14 @@ reactor Scheduler(recipe_path = "recipes/recipe.yaml",
     reaction(startup)-> channel_out, routine{=
         channel_out.set(self.generate_bus_registration_message())
         self.logger = logging.getLogger("Scheduler")
-        routine.schedule(SEC(10))
+        routine.schedule(SEC(1))
     =}
 
     reaction(routine)-> channel_out{=
         if self.recipe:
             channel_out.set(self.recipe.pop(0))
     =}
-    state counter = -3
+    state counter = 0
     reaction(channel_in) -> routine{=
         messages = channel_in.value
         assert isinstance(messages, list) and all(isinstance(item, Message) for item in messages), f"Received invalid messages: {messages}"
@@ -61,14 +61,12 @@ reactor Scheduler(recipe_path = "recipes/recipe.yaml",
             else:
                 self.logger.warning(f"{message.sender} to {message.target} with header {message.header} and payload {message.payload}\n")
         
-            if not (message.header.msg_name.value == "UPDATE"):
-                if not self.recipe:
-                    self.counter += 1            
-                    self.recipe = get_messages(self.recipe_path)
-                    self.recipe = self.recipe[3:]
-                    if self.counter == NUM_RUNS:
-                        request_stop()
-                routine.schedule(SEC(10))
+            if not self.recipe:
+                self.counter += 1            
+                self.recipe = get_messages(self.recipe_path)
+                if self.counter == NUM_RUNS:
+                    request_stop()
+            routine.schedule(SEC(10))
     =}
 
 }
