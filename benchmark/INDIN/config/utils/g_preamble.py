@@ -19,4 +19,4 @@ from time_utils import TimeUtils, TimeFormat, convert, f_convert
 from l_formatter import LFormatter
 from handle_recipe import *
 
-NUM_RUNS = 100
+NUM_RUNS = 500

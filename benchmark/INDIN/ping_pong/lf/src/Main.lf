@@ -19,9 +19,21 @@
  * These are about an order of magnitude faster than anything reported in the
  * paper.
  */
- target Python {
-    fast: true
+ target Python{
+    fast: True,
+    files: [
+        ../../config/utils/l_formatter.py, 
+        ../../config/utils/time_utils.py, 
+        ../../config/utils/singleton_meta.py, 
+        ../../config/utils/g_preamble.py, 
+        ../../config/utils/handle_recipe.py
+    ],
 }
+
+preamble{=
+    from g_preamble import *
+=}
+
 
 reactor Ping {
     input receive
@@ -44,7 +56,7 @@ reactor Ping {
         elif (self.pingsLeft == 0):
             self.pingsLeft = 10
             self.counter += 1
-            if (self.counter == 100):
+            if (self.counter == NUM_RUNS):
                 request_stop()
             
             serve.schedule(0)
@@ -66,7 +78,15 @@ reactor Pong {
     =}
 }
 
-main reactor PingPong {
+main reactor {
+
+    preamble{=
+        handler = logging.StreamHandler()
+        handler.setFormatter(LFormatter(lf.time.logical_elapsed, TimeFormat.MSECS))
+        logger = logging.getLogger()
+        logger.setLevel(logging.ERROR)
+        logger.addHandler(handler)
+    =}
     ping = new Ping()
     pong = new Pong()
     ping.send -> pong.receive

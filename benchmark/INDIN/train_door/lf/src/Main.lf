@@ -7,18 +7,40 @@ target Python{
         ../../config/utils/g_preamble.py, 
         ../../config/utils/handle_recipe.py
     ],
+    timeout: 100 ms
 }
-
-import TrainDoor from "TrainDoor.lf"
-import GlacierBus from "../../../../../glacier/src/GlacierBus.lf"
-import Scheduler from "Scheduler.lf"
 
 preamble{=
     from g_preamble import *
 =}
 
+reactor Controller {
+    output out1
+    output out2
+    reaction(t) -> out1, out2 {=
+      out1.set(1)
+      out2.set(2)
+    =}
+    timer t(0s, 1s)
+}
 
-main reactor{
+reactor Train {
+    input ins
+    state received
+    reaction(ins) {=
+      self.received = ins.value
+    =}
+}
+
+reactor Door {
+    input ins
+    state received
+    reaction(ins) {=
+        self.received = ins.value
+    =}
+}
+
+main reactor {
 
     preamble{=
         handler = logging.StreamHandler()
@@ -28,10 +50,9 @@ main reactor{
         logger.addHandler(handler)
     =}
     
-    traindoor = new TrainDoor(model_path = "../../config/models/train_door.yml")
-    scheduler = new Scheduler()
-    bus = new GlacierBus(model_path = "../../config/models/bus.yml",width = 2)
-    
-    traindoor.channel_out, scheduler.channel_out -> bus.channel_in after 1 msec
-    bus.channel_out -> traindoor.channel_in, scheduler.channel_in after 1 msec
+    c = new Controller()
+    t = new Train()
+    d = new Door()
+    c.out1 -> t.ins after 1 sec
+    c.out2 -> d.ins after 1 sec
 }

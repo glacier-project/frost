@@ -79,7 +79,7 @@ reactor Pedestrian {
     reaction(t) -> out {=
         out.set(1)
         self.count += 1
-        if (self.count == 100):
+        if (self.count == NUM_RUNS):
             lf.request_stop()
         
     =}

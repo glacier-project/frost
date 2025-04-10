@@ -1,6 +1,18 @@
 target Python{
-    fast:True
+    fast: True,
+    files: [
+        ../../config/utils/l_formatter.py, 
+        ../../config/utils/time_utils.py, 
+        ../../config/utils/singleton_meta.py, 
+        ../../config/utils/g_preamble.py, 
+        ../../config/utils/handle_recipe.py
+    ],
 }
+
+preamble{=
+    from g_preamble import *
+=}
+
 
 reactor Controller {
     
@@ -28,7 +40,7 @@ reactor Controller {
             out2.set(10)
             turnOff.schedule(0, 1)
             self.counter += 1
-            if self.counter == 100:
+            if self.counter == NUM_RUNS:
                 lf.request_stop()
     =}
 
@@ -40,5 +52,13 @@ reactor Controller {
 }
 
 main reactor {
+
+    preamble{=
+        handler = logging.StreamHandler()
+        handler.setFormatter(LFormatter(lf.time.logical_elapsed, TimeFormat.MSECS))
+        logger = logging.getLogger()
+        logger.setLevel(logging.ERROR)
+        logger.addHandler(handler)
+    =}
    c =  new Controller()
 }

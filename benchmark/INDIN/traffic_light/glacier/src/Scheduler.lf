@@ -66,7 +66,7 @@ reactor Scheduler(recipe_path = "recipes/recipe.yaml",
                     self.counter += 1            
                     self.recipe = get_messages(self.recipe_path)
                     self.recipe = self.recipe[3:]
-                    if self.counter == 100:
+                    if self.counter == NUM_RUNS:
                         request_stop()
                 routine.schedule(SEC(10))
     =}
