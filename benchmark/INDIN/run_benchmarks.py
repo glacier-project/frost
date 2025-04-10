@@ -50,7 +50,7 @@ class HistogramPlot(HistogramExporter):
         'ring',
         'safe_read',
         'traffic_light',
-        # 'train_door',
+        'train_door',
     ]
 )
 class GlacierBenchmark:
@@ -70,19 +70,19 @@ class GlacierBenchmark:
     def lf(self) -> subprocess.CompletedProcess:
         return run_benchmark(f"{self._benchmark_dir}/lf")
     
-    @BenchmarkRunner.iteration_cleanup
-    def sleep(self) -> dict:
-        time.sleep(0.1)
-        return {}
+    # @BenchmarkRunner.iteration_cleanup
+    # def sleep(self) -> dict:
+    #     time.sleep(0.1)
+    #     return {}
     
 
 if __name__ == "__main__":
     import sys
 
     # build all the benchmarks
-    print("Building all benchmarks...")
-    run_cmd(['bash build_all_benchmarks.sh'])
-    print("Benchmarks built successfully.")
+    # print("Building all benchmarks...")
+    # run_cmd(['bash build_all_benchmarks.sh'])
+    # print("Benchmarks built successfully.")
     
     config = BenchmarkConfig(
         time_counter=TimedeltaCounter(wall_time=True),
@@ -91,8 +91,8 @@ if __name__ == "__main__":
         pilot_max_iteration_count=0,
         warmup_min_iteration_count=0,
         warmup_max_iteration_count=0,
-        bench_min_iteration_count=100,
-        bench_max_iteration_count=100,
+        bench_min_iteration_count=50,
+        bench_max_iteration_count=50,
     )
 
     results = BenchmarkRunner.run_benchmarks_in_executor(GlacierBenchmark, config=config)

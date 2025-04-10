@@ -6,8 +6,7 @@ target Python{
         ../../config/utils/singleton_meta.py, 
         ../../config/utils/g_preamble.py, 
         ../../config/utils/handle_recipe.py
-    ],
-    timeout: 100 ms
+    ]
 }
 
 preamble{=
@@ -15,28 +14,48 @@ preamble{=
 =}
 
 reactor Controller {
-    output out1
-    output out2
-    reaction(t) -> out1, out2 {=
-      out1.set(1)
-      out2.set(2)
-    =}
     timer t(0s, 1s)
+    output out
+    state counter = 0
+    reaction(t) -> out {=
+        self.counter += 1
+        if self.counter == NUM_RUNS:
+            lf.request_stop()
+        out.set(random.choice(["m", "o", "c"]))
+    =}    
 }
 
 reactor Train {
     input ins
-    state received
-    reaction(ins) {=
-      self.received = ins.value
+    output door
+    state timestamp
+    reaction(ins) -> door {=
+        operation = ins.value
+        if operation == "m":
+            print("Motion detected!")
+            self.timestamp = lf.time.logical_elapsed()
+        elif operation == "o":
+            if self.timestamp == 0 or lf.time.logical_elapsed() - self.timestamp > SECS(2):
+                door.set(True)
+            
+        elif operation == "c":
+            door.set(False)
+            print("Closing the door")
     =}
 }
 
 reactor Door {
     input ins
-    state received
+    state opened
     reaction(ins) {=
-        self.received = ins.value
+        if ins.value == True:
+            if self.opened:
+                print("The door is already open")
+            else:
+                print("Opening the door.")
+                self.opened = True    
+        else:
+            self.opened = False
     =}
 }
 
@@ -53,6 +72,5 @@ main reactor {
     c = new Controller()
     t = new Train()
     d = new Door()
-    c.out1 -> t.ins after 1 sec
-    c.out2 -> d.ins after 1 sec
+    c.out, t.door -> t.ins, d.ins after 1 sec
 }
