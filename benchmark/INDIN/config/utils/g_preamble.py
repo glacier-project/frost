@@ -1,5 +1,6 @@
 import yaml
 import math 
+import os
 from enum import Enum
 from machine_data_model.protocols.glacier_v1.glacier_message import GlacierMessage
 from machine_data_model.protocols.glacier_v1.glacier_header import MsgType, MsgNamespace, ProtocolMsgName, GlacierHeader
@@ -19,4 +20,4 @@ from time_utils import TimeUtils, TimeFormat, convert, f_convert
 from l_formatter import LFormatter
 from handle_recipe import *
 
-NUM_RUNS = 100
+NUM_RUNS = int(os.environ.get("NUM_RUNS", None))
