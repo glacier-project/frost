@@ -80,9 +80,9 @@ if __name__ == "__main__":
     import sys
 
     # build all the benchmarks
-    # print("Building all benchmarks...")
-    # run_cmd(['bash build_all_benchmarks.sh'])
-    # print("Benchmarks built successfully.")
+    print("Building all benchmarks...")
+    run_cmd(['bash build_all_benchmarks.sh'])
+    print("Benchmarks built successfully.")
     
     config = BenchmarkConfig(
         time_counter=TimedeltaCounter(wall_time=True),

@@ -9,7 +9,7 @@ steps:
       namespace: "METHOD"
       msg_name: "INVOKE"
     payload:
-      node: "PingPong/call"
+      node: "SafeSend/call"
       args: [1]
 
   
