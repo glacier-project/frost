@@ -8,8 +8,33 @@ reactor Scheduler(recipe_path = "recipes/recipe.yaml",
     input channel_in
     output channel_out
     state name = {="Scheduler"=}
-    state recipe = {=get_messages(self.recipe_path)=}  
-    state conditions = {=get_conditions(self.condition_path)=}  
+    state recipe = {=[
+        GlacierMessage(
+            sender=self.name,
+            target="Alarm",
+            identifier=str(uuid.uuid4()),
+            header=GlacierHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.VARIABLE,
+                msg_name=VariableMsgName.WRITE,
+            ),
+            payload=VariablePayload(node = "Alarm/fault", value = True)
+        ),        
+        GlacierMessage(
+            sender=self.name,
+            target="Alarm",
+            identifier=str(uuid.uuid4()),
+            header=GlacierHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.VARIABLE,
+                msg_name=VariableMsgName.WRITE,
+            ),
+            payload=VariablePayload(node = "Alarm/fault", value = False)
+        )
+    ]=}  
+    state conditions = {=[]=}  
 
     logical action routine
 
@@ -36,7 +61,7 @@ reactor Scheduler(recipe_path = "recipes/recipe.yaml",
             payload=ProtocolPayload(),
         )
     =}
-
+    state i = 0
     reaction(startup)-> channel_out, routine{=
         channel_out.set(self.generate_bus_registration_message())
         self.logger = logging.getLogger("Scheduler")
@@ -45,8 +70,9 @@ reactor Scheduler(recipe_path = "recipes/recipe.yaml",
 
     reaction(routine)-> channel_out{=
         if self.recipe:
-            self.logger.warning(f"Scheduler: {self.name} is sending {self.recipe[0]}")
-            channel_out.set(self.recipe.pop(0))
+            self.logger.warning(f"Scheduler: {self.name} is sending {self.recipe[self.i]}")
+            channel_out.set(self.recipe[self.i])
+            self.i += 1
     =}
     state counter = 0
     reaction(channel_in) -> routine{=
@@ -66,9 +92,9 @@ reactor Scheduler(recipe_path = "recipes/recipe.yaml",
         
             routine.schedule(SEC(2))
 
-        if not self.recipe:
-            self.counter += 1            
-            self.recipe = get_messages(self.recipe_path)
+        if self.i == 2:
+            self.counter += 1 
+            self.i = 0           
             if self.counter == NUM_RUNS:
                 request_stop()
     =}
