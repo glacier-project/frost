@@ -8,6 +8,7 @@ reactor SafeSend extends GlacierMachine{
     state c = {= self.data_model.get_node("SafeSend/call") =}
     
     method call(ins){=
+        self.logger.info("Received: %s", ins)
         if ins == 0:
             self.error.update(1)               
         else:

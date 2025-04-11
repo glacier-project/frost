@@ -19,6 +19,9 @@ function compile_lf_prj() {
 # compile the empty project
 compile_lf_prj "empty"
 
+# compile the ICE project
+compile_lf_prj "../../examples/ICE/"
+
 # compile the all the benchmark projects
 for dir in */; do
     # check if the directory is not .venv, config or empty dirs

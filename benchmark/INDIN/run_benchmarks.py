@@ -36,14 +36,10 @@ class HistogramPlot(HistogramExporter):
         ax.legend()
         return fig, ax
 
-
 @BenchmarkRunner.columns(StatisticalColumn(columns=[StatisticalColumnValue.ERROR, StatisticalColumnValue.MEDIAN, StatisticalColumnValue.STD_DEV, StatisticalColumnValue.MAX, StatisticalColumnValue.MIN], remove_outliers=True))
 @BenchmarkRunner.exporters(TableExporter, HistogramPlot)
 @BenchmarkRunner.params(
     benchmark_dir=
-    # [
-    #     dir for dir in os.listdir(os.path.dirname(__file__)) if dir not in ['empty', '.venv', 'config'] and os.path.isdir(os.path.join(os.path.dirname(__file__), dir))
-    # ]
     [
         'ping_pong',
         'alarm',
@@ -57,24 +53,32 @@ class GlacierBenchmark:
 
     def __init__(self, benchmark_dir:str):
         self._benchmark_dir = benchmark_dir
-
-    # @BenchmarkRunner.overhead
-    # def overhead(self) -> subprocess.CompletedProcess:
-    #     return run_benchmark('empty')
     
     @BenchmarkRunner.benchmark
     def glacier(self) -> subprocess.CompletedProcess:
         return run_benchmark(f"{self._benchmark_dir}/glacier")
     
+    @BenchmarkRunner.baseline
     @BenchmarkRunner.benchmark
     def lf(self) -> subprocess.CompletedProcess:
         return run_benchmark(f"{self._benchmark_dir}/lf")
-    
-    # @BenchmarkRunner.iteration_cleanup
-    # def sleep(self) -> dict:
-    #     time.sleep(0.1)
-    #     return {}
-    
+
+@BenchmarkRunner.columns(StatisticalColumn(columns=[StatisticalColumnValue.ERROR, StatisticalColumnValue.MEDIAN, StatisticalColumnValue.STD_DEV, StatisticalColumnValue.MAX, StatisticalColumnValue.MIN], remove_outliers=True))
+@BenchmarkRunner.exporters(TableExporter, HistogramPlot)
+@BenchmarkRunner.params(
+    benchmark_dir=
+    [
+        '../../examples/ICE/',
+    ]
+)
+class ICEBenchmark:
+
+    def __init__(self, benchmark_dir:str):
+        self._benchmark_dir = benchmark_dir
+
+    @BenchmarkRunner.benchmark
+    def glacier(self) -> subprocess.CompletedProcess:
+        return run_benchmark(f"{self._benchmark_dir}")    
 
 if __name__ == "__main__":
     import sys
@@ -95,9 +99,14 @@ if __name__ == "__main__":
         bench_max_iteration_count=50,
     )
 
+    results = BenchmarkRunner.run_benchmarks_in_executor(ICEBenchmark, config=config)
+    results.plot()
+    df_res = results.get_results()
+    # uncomment this line to save the results in a csv file
+    # df_res.to_csv(output_path)
+
     results = BenchmarkRunner.run_benchmarks_in_executor(GlacierBenchmark, config=config)
     results.plot()
-
     df_res = results.get_results()
     # uncomment this line to save the results in a csv file
     # df_res.to_csv(output_path)

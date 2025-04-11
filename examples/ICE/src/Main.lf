@@ -50,6 +50,7 @@ main reactor{
         handler = logging.StreamHandler()
         handler.setFormatter(LFormatter(lf.time.logical_elapsed, TIME_FORMAT))
         logger = logging.getLogger()
+        logger.setLevel(logging.ERROR)
         logger.addHandler(handler)
     =}
 

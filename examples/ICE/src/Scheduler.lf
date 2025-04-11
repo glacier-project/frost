@@ -79,7 +79,7 @@ reactor Scheduler(recipe_path = "../ICE/recipes/test_recipe.yaml",
             self.counter += 1            
             self.recipe = get_messages(self.recipe_path)
             self.conditions = get_conditions(self.condition_path)
-            print(self.counter)
+            self.logger.info(self.counter)
     =}
 
 }
