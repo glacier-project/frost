@@ -8,8 +8,20 @@ reactor Scheduler(recipe_path = "recipes/recipe.yaml",
     input channel_in
     output channel_out
     state name = {="Scheduler"=}
-    state recipe = {=get_messages(self.recipe_path)=}  
-    state conditions = {=get_conditions(self.condition_path)=}  
+    state recipe = {=[
+        GlacierMessage(
+            sender=self.name,
+            target="TrainDoor",
+            identifier=str(uuid.uuid4()),
+            header=GlacierHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.METHOD,
+                msg_name=MethodMsgName.INVOKE,
+            ),
+            payload=MethodPayload(node = "TrainDoor/operation", args = ["c"])
+        )]=}  
+    state conditions = {=[]=}  
 
     logical action routine
 
@@ -42,11 +54,13 @@ reactor Scheduler(recipe_path = "recipes/recipe.yaml",
         self.logger = logging.getLogger("Scheduler")
         routine.schedule(SEC(0))
     =}
-
+    state i = 0
     reaction(routine)-> channel_out{=
         if self.recipe:
             self.recipe[0].payload.args = random.choice(["m", "o", "c"])
-            channel_out.set(self.recipe.pop(0))
+            self.logger.warning(f"Scheduler: {self.name} is sending {self.recipe[self.i]}")
+            channel_out.set(self.recipe[self.i])
+            self.i += 1
     =}
     state counter = 0
     reaction(channel_in) -> routine{=
@@ -64,10 +78,9 @@ reactor Scheduler(recipe_path = "recipes/recipe.yaml",
 
             routine.schedule(SEC(1))
 
-        if not self.recipe and not self.conditions:
+        if self.i == 1:
             self.counter += 1            
-            self.recipe = get_messages(self.recipe_path)
-            self.conditions = get_conditions(self.condition_path)
+            self.i = 0
             if self.counter == NUM_RUNS:
                 request_stop()
     =}
