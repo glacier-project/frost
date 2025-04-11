@@ -1,4 +1,4 @@
-name: "Kairos" # name of the machine
+name: "RBKairos" # name of the machine
 machine_category: "Mobile Robot" # category of the machine
 machine_type: "unknown" # type of the machine
 machine_model: "unknown" # model of the machine
