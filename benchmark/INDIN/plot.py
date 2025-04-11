@@ -12,7 +12,7 @@ scalability_template = """
     width=9cm, height=6cm,
     legend style={
         fill=none, draw=none,
-        anchor=south, at={(0.5,1.0)},
+        anchor=south, at={(0.5,1.2)},
         legend columns=-1 % Align the legend items horizontally
     },
     footnotesize,
@@ -27,7 +27,7 @@ scalability_template = """
     ymajorgrids=true,
     grid style=dashed]
 {% for benchmark in benchmark_data %}
-    \\nextgroupplot
+    \\nextgroupplot[title={{ benchmark }}]
         \\addplot[smooth,mark=*,blue!40] plot coordinates {
 {% for num_runs in benchmark_data[benchmark]['glacier'] %}
             ({{ num_runs }}, {{ benchmark_data[benchmark]['glacier'][num_runs] }})
