@@ -21,3 +21,5 @@ from l_formatter import LFormatter
 from handle_recipe import *
 
 NUM_RUNS = int(os.environ.get("NUM_RUNS", None))
+RECIPE_PATH = os.environ.get("RECIPE_PATH")
+CONDITIONS_PATH = os.environ.get("CONDITIONS_PATH")

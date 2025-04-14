@@ -81,7 +81,7 @@ def main():
     env = Environment()
     template = env.from_string(scalability_template)
     rendered = template.render(xticks=xticks, benchmark_data=benchmark_data)
-    with open("output.tex", "w") as f:
+    with open("scalability_benchmarks.tex", "w") as f:
         f.write(rendered)
 
 if __name__ == "__main__":
