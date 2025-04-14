@@ -52,6 +52,8 @@ def main():
     xticks = scalability_df["num_runs"].unique()
     xticks.sort()
     xticks = xticks.tolist()
+    # keep only 5 ticks
+    xticks = xticks[::int(len(xticks)/5)]
 
     colors = ["blue", "green", "orange", "purple", "yellow", "brown"]
     color_map = {}
@@ -59,10 +61,11 @@ def main():
     # group the dataframe by benchmark_dir and Bench name
     benchmark_data = {}
     i = 0
-    for key, group in scalability_df.groupby(["benchmark_dir", "Bench name"]):
+    for key, group in scalability_df.groupby(["benchmark", "Bench name"]):
         bench_name = key[1]
-        benchmark_dir = key[0]     
-        benchmark_dir = benchmark_dir.replace("_", " ").title()
+        benchmark = key[0]     
+        benchmark = benchmark.split("'")[1]
+        benchmark_dir = benchmark.replace("_", " ").title()
 
         if benchmark_dir not in color_map:
             color_map[benchmark_dir] = colors[i%len(colors)]
