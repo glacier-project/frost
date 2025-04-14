@@ -1,6 +1,6 @@
 import os.path
 import time
-import subprocess
+import subprocess, resource
 
 from matplotlib import pyplot as plt
 from pybenchmark.exporters.table_exporter import TableExporter
@@ -22,6 +22,12 @@ def run_cmd(cmd: list[str]) -> subprocess.CompletedProcess:
 
 def run_benchmark(benchmark_dir: str, num_runs:int, recipe_path:str, conditions_path:str) -> subprocess.CompletedProcess:
     return run_cmd([f"bash run_benchmark.sh {benchmark_dir} {num_runs} {recipe_path} {conditions_path}"])
+
+def time_benchmark(benchmark_dir: str, num_runs:int, recipe_path:str, conditions_path:str)  -> float:
+    usage_start = resource.getrusage(resource.RUSAGE_CHILDREN)
+    run_benchmark(benchmark_dir, num_runs, recipe_path, conditions_path)
+    usage_end = resource.getrusage(resource.RUSAGE_CHILDREN)
+    return usage_end.ru_utime - usage_start.ru_utime
 
 class LineExporter(Exporter):
     def __init__(self, name: str = "Line Exporter"):
@@ -76,7 +82,7 @@ class HistogramPlot(HistogramExporter):
         ax.legend()
         return fig, ax
 
-@BenchmarkRunner.columns(StatisticalColumn(columns=[StatisticalColumnValue.ERROR, StatisticalColumnValue.MEDIAN, StatisticalColumnValue.STD_DEV, StatisticalColumnValue.MAX, StatisticalColumnValue.MIN]))#, remove_outliers=True))
+@BenchmarkRunner.columns(StatisticalColumn(columns=[StatisticalColumnValue.ERROR, StatisticalColumnValue.MEDIAN, StatisticalColumnValue.STD_DEV, StatisticalColumnValue.MAX, StatisticalColumnValue.MIN], remove_outliers=True))
 @BenchmarkRunner.exporters(TableExporter)#, SimpleLineExporter)
 @BenchmarkRunner.params(
     benchmark=
@@ -102,14 +108,25 @@ class GlacierBenchmark:
     
     @BenchmarkRunner.benchmark
     def glacier(self) -> subprocess.CompletedProcess:
-        return run_benchmark(f"{self._benchmark_dir}/glacier", self._num_runs, self._recipe_path, self._conditions_path)
+        self._last_glacier_time = time_benchmark(f"{self._benchmark_dir}/glacier", self._num_runs, self._recipe_path, self._conditions_path)
+        return self._last_glacier_time
+    
+    @BenchmarkRunner.iteration_cleanup(benchmarks=[glacier])
+    def glacier_cleanup(self) -> dict:
+        return {col_time: self._last_glacier_time}
     
     @BenchmarkRunner.baseline
     @BenchmarkRunner.benchmark
     def lf(self) -> subprocess.CompletedProcess:
-        return run_benchmark(f"{self._benchmark_dir}/lf", self._num_runs, self._recipe_path, self._conditions_path)
+        self._last_lf_time = time_benchmark(f"{self._benchmark_dir}/lf", self._num_runs, self._recipe_path, self._conditions_path)
+        return self._last_lf_time
+    
+    @BenchmarkRunner.iteration_cleanup(benchmarks=[lf])
+    def lf_cleanup(self) -> dict:
+        return {col_time: self._last_lf_time}
+    
 
-@BenchmarkRunner.columns(StatisticalColumn(columns=[StatisticalColumnValue.ERROR, StatisticalColumnValue.MEDIAN, StatisticalColumnValue.STD_DEV, StatisticalColumnValue.MAX, StatisticalColumnValue.MIN]))#, remove_outliers=True))
+@BenchmarkRunner.columns(StatisticalColumn(columns=[StatisticalColumnValue.ERROR, StatisticalColumnValue.MEDIAN, StatisticalColumnValue.STD_DEV, StatisticalColumnValue.MAX, StatisticalColumnValue.MIN], remove_outliers=True))
 @BenchmarkRunner.exporters(TableExporter)#, HistogramPlot)
 @BenchmarkRunner.params(
     benchmark=
@@ -129,16 +146,20 @@ class ICEBenchmark:
 
     @BenchmarkRunner.benchmark
     def glacier(self) -> subprocess.CompletedProcess:
-        return run_benchmark(f"{self._benchmark_dir}", 1, self._recipe_path, self._conditions_path)
+        self._last_glacier_time = time_benchmark(f"{self._benchmark_dir}", 1, self._recipe_path, self._conditions_path)
+    
+    @BenchmarkRunner.iteration_cleanup(benchmarks=[glacier])
+    def glacier_cleanup(self) -> dict:
+        return {col_time: self._last_glacier_time}
 
 
 if __name__ == "__main__":
     import sys
 
     # build all the benchmarks
-    # print("Building all benchmarks...")
-    # run_cmd(["bash build_all_benchmarks.sh"])
-    # print("Benchmarks built successfully.")
+    print("Building all benchmarks...")
+    run_cmd(["bash build_all_benchmarks.sh"])
+    print("Benchmarks built successfully.")
     # import scienceplots
 
     # plt.style.use(["ieee", "science"])
@@ -150,8 +171,8 @@ if __name__ == "__main__":
         pilot_max_iteration_count=0,
         warmup_min_iteration_count=0,
         warmup_max_iteration_count=0,
-        bench_min_iteration_count=100,
-        bench_max_iteration_count=100,
+        bench_min_iteration_count=50,
+        bench_max_iteration_count=50,
     )
 
     results = BenchmarkRunner.run_benchmarks_in_executor(ICEBenchmark, config=config)
@@ -159,6 +180,17 @@ if __name__ == "__main__":
     df_res = results.get_results()
     # uncomment this line to save the results in a csv file
     df_res.to_csv("ice.csv")
+
+    config = BenchmarkConfig(
+        time_counter=TimedeltaCounter(wall_time=True),
+        jitting=False,
+        pilot_min_iteration_count=0,
+        pilot_max_iteration_count=0,
+        warmup_min_iteration_count=0,
+        warmup_max_iteration_count=0,
+        bench_min_iteration_count=100,
+        bench_max_iteration_count=100,
+    )
 
     results = BenchmarkRunner.run_benchmarks_in_executor(GlacierBenchmark, config=config)
     results.plot()

@@ -17,7 +17,7 @@ scalability_template = """
     },
     footnotesize,
     xlabel={Num Runs},
-    ylabel={Mean execution time [ms]},
+    ylabel={Mean Execution Time [ms]},
     xtick={
         {%- for tick in xticks -%}{{- tick -}}{%- if not loop.last -%},{% endif %}{%- endfor -%}
         },
@@ -27,7 +27,7 @@ scalability_template = """
     ymajorgrids=true,
     grid style=dashed]
 {% for benchmark in benchmark_data %}
-    \\nextgroupplot[title={{ benchmark }}]
+    \\nextgroupplot[title=\\textbf{ {{- benchmark -}} }]
         \\addplot[name path={{- benchmark -}}_glacier_upper,forget plot,draw=none,blue!20] coordinates {
 {% for num_runs in benchmark_data[benchmark]['glacier'] %}
             ({{ num_runs }}, {{- benchmark_data[benchmark]['glacier'][num_runs][0] + benchmark_data[benchmark]['glacier'][num_runs][1] -}})
@@ -59,7 +59,6 @@ scalability_template = """
         };
         \\addplot[fill=red!20,opacity=0.4,forget plot] fill between[of={{- benchmark -}}_lf_upper and {{ benchmark -}}_lf_lower];
 
-
         \\addplot[dashed,mark=*,red!60] plot coordinates {
 {% for num_runs in benchmark_data[benchmark]['lf'] %}
             ({{ num_runs }}, {{ benchmark_data[benchmark]['lf'][num_runs][0] }})
@@ -68,7 +67,6 @@ scalability_template = """
 {% if loop.index == 2 %}        \\addlegendentry{\\gls{lf}}{% endif %}
 {%- endfor -%}
 \\end{groupplot}
-
 \\end{tikzpicture}%
 """
 
