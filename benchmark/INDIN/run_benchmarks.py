@@ -76,7 +76,7 @@ class HistogramPlot(HistogramExporter):
         ax.legend()
         return fig, ax
 
-@BenchmarkRunner.columns(StatisticalColumn(columns=[StatisticalColumnValue.ERROR, StatisticalColumnValue.MEDIAN, StatisticalColumnValue.STD_DEV, StatisticalColumnValue.MAX, StatisticalColumnValue.MIN], remove_outliers=True))
+@BenchmarkRunner.columns(StatisticalColumn(columns=[StatisticalColumnValue.ERROR, StatisticalColumnValue.MEDIAN, StatisticalColumnValue.STD_DEV, StatisticalColumnValue.MAX, StatisticalColumnValue.MIN]))#, remove_outliers=True))
 @BenchmarkRunner.exporters(TableExporter)#, SimpleLineExporter)
 @BenchmarkRunner.params(
     benchmark=
@@ -109,7 +109,7 @@ class GlacierBenchmark:
     def lf(self) -> subprocess.CompletedProcess:
         return run_benchmark(f"{self._benchmark_dir}/lf", self._num_runs, self._recipe_path, self._conditions_path)
 
-@BenchmarkRunner.columns(StatisticalColumn(columns=[StatisticalColumnValue.ERROR, StatisticalColumnValue.MEDIAN, StatisticalColumnValue.STD_DEV, StatisticalColumnValue.MAX, StatisticalColumnValue.MIN], remove_outliers=True))
+@BenchmarkRunner.columns(StatisticalColumn(columns=[StatisticalColumnValue.ERROR, StatisticalColumnValue.MEDIAN, StatisticalColumnValue.STD_DEV, StatisticalColumnValue.MAX, StatisticalColumnValue.MIN]))#, remove_outliers=True))
 @BenchmarkRunner.exporters(TableExporter)#, HistogramPlot)
 @BenchmarkRunner.params(
     benchmark=
@@ -136,9 +136,9 @@ if __name__ == "__main__":
     import sys
 
     # build all the benchmarks
-    print("Building all benchmarks...")
-    run_cmd(["bash build_all_benchmarks.sh"])
-    print("Benchmarks built successfully.")
+    # print("Building all benchmarks...")
+    # run_cmd(["bash build_all_benchmarks.sh"])
+    # print("Benchmarks built successfully.")
     # import scienceplots
 
     # plt.style.use(["ieee", "science"])
