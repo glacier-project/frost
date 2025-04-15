@@ -50,7 +50,7 @@ main reactor{
         handler = logging.StreamHandler()
         handler.setFormatter(LFormatter(lf.time.logical_elapsed, TIME_FORMAT))
         logger = logging.getLogger()
-        logger.setLevel(logging.ERROR)
+        logger.setLevel(logging.INFO)
         logger.addHandler(handler)
     =}
 
@@ -62,7 +62,7 @@ main reactor{
     warehouse = new Warehouse(model_path = "models/Warehouse.yml")
     kairos_aa = new Kairos(model_path = "models/RBKairos.yml")
     conveyor = new Cell_Conveyor(model_path= "models/Cell_Conveyor.yml")
-    scheduler = new Scheduler(recipe_path = "../ICE/recipes/recipes/4_machines_recipe.yaml", condition_path = "../ICE/recipes/conditions/4_machines_conditions.yaml")
+    scheduler = new Scheduler(recipe_path = "../ICE/recipes/recipes/test_recipe.yaml", condition_path = "../ICE/recipes/conditions/test_conditions.yaml")
     bus = new GlacierBus(model_path = "models/Common_Bus.yml",width = 8)
     
     #Full demo

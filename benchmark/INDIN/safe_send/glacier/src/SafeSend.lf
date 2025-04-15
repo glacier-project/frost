@@ -10,9 +10,9 @@ reactor SafeSend extends GlacierMachine{
     method call(ins){=
         self.logger.info("Received: %s", ins)
         if ins == 0:
-            self.error.update(1)               
+            self.error.value = 1      
         else:
-            self.req.update(0)
+            self.req.value = 0
         return ins
     =}
 

@@ -13,12 +13,12 @@ reactor Ring(node_number = 5) extends GlacierMachine{
 
     timer t(0 nsec, 1 nsec)
     reaction(t) -> work{=
-        if self.w.read() == True:
+        if self.w.value == True:
             work.schedule(NSEC(self.num))
-            self.w.update(False)
+            self.w.value = False
     =}
 
     reaction(work){=
-        self.out.update(self.received.read() + self.num)
+        self.out.value = self.received.value + self.num
     =}
 }

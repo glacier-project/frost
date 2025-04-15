@@ -22,25 +22,25 @@ reactor Kairos extends GlacierMachine{
     =}
 
     method startMission(){=
-        self.ongoing_mission_name.update("")
-        self.missions_call_counter.update(self.missions_call_counter.read() + 1)
-        self.last_mission_result.update(True)
-        self.control_busy.update(False)        
+        self.ongoing_mission_name.value = ""
+        self.missions_call_counter.value = self.missions_call_counter.value + 1
+        self.last_mission_result.value = True
+        self.control_busy.value = False    
     =}
 
     method preemptMission(){=
-        if not self.control_busy.read():
+        if not self.control_busy.value:
             return False
 
-        self.control_busy.update(False)
-        self.ongoing_mission_feedback.update("Mission aborted")
-        self.last_mission_result.update(False)
-        self.ongoing_mission_name.update("")
+        self.control_busy.value = False 
+        self.ongoing_mission_feedback.value = "Mission aborted"
+        self.last_mission_result.value = False 
+        self.ongoing_mission_name.value = ""
         return True
     =}
 
     reaction(work)-> delay{=
-        if self.control_busy.read():
+        if self.control_busy.value:
             delay.schedule(SEC(20), [self.startMission])
     =}
 

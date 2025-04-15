@@ -12,37 +12,37 @@ reactor TrafficLight extends GlacierMachine{
     timer t(0, 1sec)
 
     reaction(t) {=
-        if (self.modality.read() == 0):  # Mode 0: Red light
-            if self.count.read() >= 60:
-                self.sigY.update(True)  # Yellow light for transition
-                self.count.update(0)  # Reset count
-                self.modality.update(2)
-            self.count.update(self.count.read() + 1)
+        if (self.modality.value == 0):  # Mode 0: Red light
+            if self.count.value >= 60:
+                self.sigY.vlaue = True  # Yellow light for transition
+                self.count.value = 0  # Reset count
+                self.modality.value = 2
+            self.count.value = (self.count.value + 1)
 
-        elif (self.modality.read() == 1):  # Mode 1: Green light
-            if self.pedestrian.read():  # Pedestrian button pressed
-                if self.count.read() >= 60:
-                    self.sigY.update(True)  # Yellow light for transition
-                    self.count.update(0)  # Reset count
-                    self.modality.update(2)
+        elif (self.modality.value == 1):  # Mode 1: Green light
+            if self.pedestrian.value:  # Pedestrian button pressed
+                if self.count.value >= 60:
+                    self.sigY.value = True # Yellow light for transition
+                    self.count.value = 0  # Reset count
+                    self.modality.value = 2
 
-            self.count.update(self.count.read() + 1)
-            self.pedestrian.update(False)  # Reset pedestrian button
+            self.count.value = (self.count.value + 1)
+            self.pedestrian.value = False  # Reset pedestrian button
 
-        elif (self.modality.read() == 2):  # Mode 2: Flashing red light
-            if self.count.read() >= 5:
-                self.modality.update(3)  # Switch to green light 
-                self.count.update(0)  # Reset count
+        elif (self.modality.value == 2):  # Mode 2: Flashing red light
+            if self.count.value >= 5:
+                self.modality.value = 3  # Switch to green light 
+                self.count.value = 0  # Reset count
             else:
-                self.count.update(self.count.read() + 1)
+                self.count.value = (self.count.value + 1)
         else:            
-            if self.sigR.read() == True:
-                self.sigR.update(False)  # Turn off red light
-                self.sigG.update(True)
-                self.modality.update(1)  # Switch to green light
-            elif self.sigG.read() == True:
-                self.sigG.update(False)
-                self.sigR.update(True)
-                self.modality.update(0)  # Switch to red light
+            if self.sigR.value == True:
+                self.sigR.value = False  # Turn off red light
+                self.sigG.value = True
+                self.modality.value = 1  # Switch to green light
+            elif self.sigG.value == True:
+                self.sigG.value = False
+                self.sigR.value = True
+                self.modality.value = 0  # Switch to red light
     =}
 }

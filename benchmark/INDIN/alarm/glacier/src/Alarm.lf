@@ -10,18 +10,18 @@ reactor Alarm extends GlacierMachine{
     timer work(0 sec, 1 sec)
 
     reaction(work) -> turnOff {=
-        if self.fault.read() == True and self.out.read() == 0 and self.out2.read() == 0: 
+        if self.fault.value == True and self.out.value == 0 and self.out2.value == 0: 
             turnOff.schedule(0, False)
-            self.out.update(5)
-            self.out2.update(10)            
-        elif self.fault.read() == False and self.out.read() != 0 and self.out2.read() != 0:
-            self.out.update(0)
-            self.out2.update(0) 
+            self.out.value = 5
+            self.out2.value = 10         
+        elif self.fault.value == False and self.out.value != 0 and self.out2.value != 0:
+            self.out.value = 0
+            self.out2.value = 0
     =}
 
     reaction(turnOff) {=
         if (turnOff.value == True):
-            self.fault.udpate(False) 
+            self.fault.value = False
     =}
 
 

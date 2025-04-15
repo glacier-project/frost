@@ -22,24 +22,24 @@ reactor Cell1 extends GlacierMachine{
     =}
     
     reaction(work) -> delay{=
-        if self.busy.read():
-            if self.current_mission.read() == "BoardIn":
-                if self.board.read() != "electronic":
-                    self.board.update("")
-                    self.last_result.update(False)
-                    self.busy.update(False)
-                    self.current_mission.update("")
+        if self.busy.value:
+            if self.current_mission.value == "BoardIn":
+                if self.board.value != "electronic":
+                    self.board.value = ""
+                    self.last_result.value = False
+                    self.busy.value = False
+                    self.current_mission.value = ""
                     return
                 delay.schedule(SEC(5))
-            elif self.current_mission.read() == "BoardOut":                
+            elif self.current_mission.value == "BoardOut":                
                 delay.schedule(SEC(5))
-            elif self.current_mission.read() == "StartTest":
+            elif self.current_mission.value == "StartTest":
                 delay.schedule(SEC(10))
     =}
 
     reaction(delay){=
-        self.last_result.update(True)
-        self.current_mission.update("")
-        self.busy.update(False)
+        self.last_result.value = True
+        self.current_mission.value = ""
+        self.busy.value = False
     =}
 }

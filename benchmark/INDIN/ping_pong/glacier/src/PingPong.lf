@@ -10,11 +10,11 @@ reactor PingPong extends GlacierMachine{
     timer t(0 nsec, 1 nsec)
 
     reaction(t){=
-        if self.pingsLeft.read() > 0:
-            self.pingsLeft.update(self.pingsLeft.read() - 1)
-            self.count.update(self.count.read() + 1)
-            if self.pingsLeft.read() == 0:
-                self.ok.update(True)
+        if self.pingsLeft.value > 0:
+            self.pingsLeft.vlaue = self.pingsLeft.value - 1
+            self.count.value = self.count.value + 1
+            if self.pingsLeft.value == 0:
+                self.ok.value = True
     =}
 
 }

@@ -17,25 +17,25 @@ reactor Cell2 extends GlacierMachine{
     timer work(0ms, 1000ms)
     logical action delay
     reaction(work) -> delay{=
-        if self.busy.read():
-            if self.current_mission.read() == "TakeBoard":
-                if not self.board.read():
-                    self.board.update(True)               
+        if self.busy.value:
+            if self.current_mission.value == "TakeBoard":
+                if not self.board.value:
+                    self.board.value = True           
                     delay.schedule(SEC(10))
-            elif self.current_mission.read() == "engraveText":
-                if not self.text.read() == "":
-                    self.text.update("")
+            elif self.current_mission.value == "engraveText":
+                if not self.text.value == "":
+                    self.text.value = ""
                     delay.schedule(SEC(40))
-            elif self.current_mission.read() == "TakeBoardOut":
-                if self.board.read():
-                    self.board.update(False)
+            elif self.current_mission.value == "TakeBoardOut":
+                if self.board.value:
+                    self.board.value = False
                     delay.schedule(SEC(10))
     =}
 
     reaction(delay){=
-        self.last_result.update(True)
-        self.current_mission.update("")
-        self.busy.update(False)        
+        self.last_result.value = True
+        self.current_mission.value = ""
+        self.busy.value = False
     =}
 
 }
