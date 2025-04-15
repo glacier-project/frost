@@ -30,7 +30,7 @@ main reactor{
     =}
     
     traindoor = new TrainDoor(model_path = "../../config/models/train_door.yml")
-    scheduler = new Scheduler()
+    scheduler = new Scheduler(recipe_path = {=RECIPE_PATH=}, condition_path= {=CONDITIONS_PATH=})
     bus = new GlacierBus(model_path = "../../config/models/bus.yml",width = 2)
     
     traindoor.channel_out, scheduler.channel_out -> bus.channel_in after 0

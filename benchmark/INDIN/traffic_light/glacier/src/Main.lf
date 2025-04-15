@@ -27,7 +27,7 @@ main reactor{
         logger.addHandler(handler)
     =}
     TrafficLight = new TrafficLight(model_path = "../../config/models/traffic_light.yml", update_step = 1 sec)
-    scheduler = new Scheduler()
+    scheduler = new Scheduler(recipe_path = {=RECIPE_PATH=}, condition_path= {=CONDITIONS_PATH=})
     bus = new GlacierBus(model_path = "../../config/models/bus.yml",width = 2)
     
     TrafficLight.channel_out, scheduler.channel_out -> bus.channel_in after 0 msec

@@ -19,6 +19,7 @@ import Scheduler from "Scheduler.lf"
 preamble{=
     import yaml
     import math 
+    import os 
     from enum import Enum
     CONFIG_PATH = "models/configuration.yaml"
     from machine_data_model.protocols.glacier_v1.glacier_message import GlacierMessage
@@ -37,6 +38,8 @@ preamble{=
     from enum import IntEnum
     from time_utils import TimeUtils, TimeFormat, convert, f_convert
     from l_formatter import LFormatter    
+    RECIPE_PATH = os.environ.get("RECIPE_PATH")
+    CONDITIONS_PATH = os.environ.get("CONDITIONS_PATH")
 =}
 
 
@@ -52,8 +55,9 @@ main reactor{
         logger = logging.getLogger()
         logger.setLevel(logging.INFO)
         logger.addHandler(handler)
+        recipe_path = os.environ.get("RECIPE_PATH")
+        conditions_path = os.environ.get("CONDITIONS_PATH")
     =}
-
 
     cell1 = new Cell1(model_path = "models/Cell1.yml")
     cell2 = new Cell2(model_path = "models/Cell2.yml")
@@ -62,7 +66,7 @@ main reactor{
     warehouse = new Warehouse(model_path = "models/Warehouse.yml")
     kairos_aa = new Kairos(model_path = "models/RBKairos.yml")
     conveyor = new Cell_Conveyor(model_path= "models/Cell_Conveyor.yml")
-    scheduler = new Scheduler(recipe_path = "../ICE/recipes/recipes/test_recipe.yaml", condition_path = "../ICE/recipes/conditions/test_conditions.yaml")
+    scheduler = new Scheduler(recipe_path = {=RECIPE_PATH=}, condition_path= {=CONDITIONS_PATH=})
     bus = new GlacierBus(model_path = "models/Common_Bus.yml",width = 8)
     
     #Full demo

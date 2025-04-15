@@ -29,7 +29,7 @@ main reactor{
         logger.addHandler(handler)
     =}
     alarm = new Alarm(model_path = "../../config/models/alarm.yml")
-    scheduler = new Scheduler()
+    scheduler = new Scheduler(recipe_path = {=RECIPE_PATH=}, condition_path= {=CONDITIONS_PATH=})
     bus = new GlacierBus(model_path = "../../config/models/bus.yml",width = 2)
     
     alarm.channel_out, scheduler.channel_out -> bus.channel_in after 0 

@@ -28,7 +28,7 @@ main reactor{
         logger.addHandler(handler)
     =}
     PingPong = new PingPong(model_path = "../../config/models/ping_pong.yml", update_step = 1nsec)
-    scheduler = new Scheduler()
+    scheduler = new Scheduler(recipe_path = {=RECIPE_PATH=}, condition_path= {=CONDITIONS_PATH=})
     bus = new GlacierBus(model_path = "../../config/models/bus.yml",width = 2)
     
     PingPong.channel_out, scheduler.channel_out -> bus.channel_in after 0 nsec
