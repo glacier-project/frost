@@ -1,0 +1,25 @@
+target Python
+
+
+reactor GlacierReactor(model_path = "", width = 1){
+    input[width]  channel_in
+    output[width] channel_out
+
+    state logger
+    state path = model_path
+    state data_model = {= DataModelBuilder().get_data_model(self.path) =}
+    state name = {= self.data_model.name =}
+    state protocol_mng = {= GlacierProtocolMng(self.data_model) =}
+    state message_queue = {= [GlacierMessage] =}
+
+
+    reaction(startup)-> channel_out{=
+        '''
+        Initialize the model and internal variables
+        Send an initial registered_to_bus message to the bus
+        '''
+        self.message_queue = []
+        self.logger = logging.getLogger(self.name)
+    =}
+
+}

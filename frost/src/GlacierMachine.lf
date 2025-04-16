@@ -1,0 +1,105 @@
+target Python
+
+import GlacierReactor from "GlacierReactor.lf"
+
+reactor GlacierMachine(update_step = 1000 msec) extends GlacierReactor{
+
+    state registered_to_bus = False
+    state custom_node
+    state time_step = 1
+    timer check_update(0, update_step)
+    logical action check_bus_registration
+
+
+    method generate_bus_registration_message(){=
+        """
+        Generates a `REGISTER` message to initiate the registration process with the CommonBus.
+
+        This method constructs a `GlacierMessage` that requests registration in the 
+        communication system. The message is addressed to the `"CommonBus"` and follows 
+        the `PROTOCOL` namespace with the `REGISTER` message name.
+
+        :return: A `GlacierMessage` representing the registration request.
+        """
+        return GlacierMessage(
+            sender=self.name,
+            target="Common_Bus",
+            identifier=str(uuid.uuid4()),
+            header=GlacierHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.PROTOCOL,
+                msg_name=ProtocolMsgName.REGISTER,
+            ),
+            payload=ProtocolPayload(),
+        )
+    =}
+
+    reaction(check_bus_registration)->channel_out,check_bus_registration{=
+        '''
+        If the registered_to_bus is not completed, send a registered_to_bus message to the bus
+        After 9 seconds, raise an exception
+        '''
+        if not self.registered_to_bus:
+            if lf.time.logical_elapsed() > SEC(9):
+                raise Exception(f"Handshake failed:{self.name} unable to connect to the bus")
+            # Generate and send the bus registration message.
+            channel_out[0].set(self.generate_bus_registration_message())
+            # Re-schedule the check in 3 seconds.
+            check_bus_registration.schedule(SEC(3))
+    =}
+
+    reaction(startup)-> channel_out,check_bus_registration{=
+        '''
+        Initialize the model and internal variables
+        Send an initial registered_to_bus message to the bus
+        '''
+        # Generate and send the bus registration message.
+        channel_out[0].set(self.generate_bus_registration_message())
+        # Schedule the check in 3 seconds.
+        check_bus_registration.schedule(SEC(3))
+        self.custom_node = FolderNode(name = "custom_node")
+        self.data_model.add_child(parent_id = self.data_model.root, child = self.custom_node)
+    =}
+
+    reaction(channel_in)->channel_out,check_bus_registration{=
+        '''
+        Handle incoming messages from the bus
+        First check if the message is a durable method, if so, schedule it to be executed
+        Second check if the message is an update message, if so, schedule it to be handled
+        Otherwise, handle the message and generate a response (This one used for most of the cases)
+        Once the response is generated, append it to the message queue
+        Send the message queue to the bus
+        '''
+        messages = channel_in[0].value
+        assert isinstance(messages, list) and all(isinstance(item, Message) for item in messages), f"Received invalid messages: {messages}"
+        
+        for message in messages:
+            if isinstance(message, GlacierMessage):
+
+                if message.header.matches(MsgType.RESPONSE, MsgNamespace.PROTOCOL, ProtocolMsgName.REGISTER):
+                    self.logger.debug(f"Machine {self.name}, correctly registered with the CommonBus.")
+                    self.registered_to_bus = True
+    
+                else:
+                    response_message = self.protocol_mng.handle_message(message)
+                    self.message_queue.append(response_message)
+
+        if self.message_queue:
+            channel_out[0].set(self.message_queue)
+            self.message_queue = []
+        
+    =}
+
+    reaction(check_update)-> channel_out{=
+        '''
+        Check if there are any changes in the data model and send an update message to the bus
+        '''
+        update_messages = list(self.protocol_mng.get_update_messages())
+        if update_messages:  
+            channel_out[0].set(update_messages)
+            self.protocol_mng.clear_update_messages()
+            
+    =}
+
+}

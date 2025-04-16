@@ -1,0 +1,108 @@
+target Python
+
+import GlacierReactor from "GlacierReactor.lf"
+
+reactor GlacierBus extends GlacierReactor{
+    state map = {={str: int}=}
+    state messages_out = {={}=}
+
+    state bus_node = {=  self.data_model.get_node("Bus")  =}
+    state number_of_machines = {= self.data_model.get_node("Bus/number_of_machines") =}
+    state machine_nodes = {=[]=}
+
+    method list_of_Message(messages, index){=
+        '''
+        Handle a list of messages:
+        - Check if the target is in the map
+        - Append the message to the corresponding target
+        '''
+        for msg in messages:
+            if msg.header.namespace == MsgNamespace.PROTOCOL and msg.header.msg_name == ProtocolMsgName.REGISTER:
+                self.register_machine(msg, index)
+                continue
+            assert msg.target in self.map, f"Target {msg.target} not found in map"
+            self.messages_out[msg.target].append(msg)
+    =}
+
+    method register_machine(message, index){=
+        '''
+        Handles machines that register to the bus (`REGISTER` request).
+
+        - Validates that the message is a proper `PROTOCOL REGISTER` request.
+        - Registers the sender in the communication map.
+        - Ensures the sender has an output queue.
+        - Sends a `REGISTER` response to acknowledge the handshake.
+
+        :param message: The incoming handshake message.
+        :param index: The index representing the sender in the communication list.
+        '''
+        assert message.header.matches(MsgType.REQUEST, MsgNamespace.PROTOCOL, ProtocolMsgName.REGISTER), (
+            f"Invalid header: {message.header}"
+        )
+        # Register sender to the map.
+        self.map[message.sender] = index
+        # Ensure sender has an output queue.
+        if message.sender not in self.messages_out:
+            self.messages_out[message.sender] = []
+        # Generate the correct response.
+        response = GlacierMessage(
+            sender=self.name,
+            target=message.sender,
+            identifier=str(uuid.uuid4()),
+            header=GlacierHeader(
+                type=MsgType.RESPONSE,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.PROTOCOL,
+                msg_name=ProtocolMsgName.REGISTER,
+            ),
+            payload=ProtocolPayload(),
+        )
+        # Store the response in the sender's queue.
+        self.messages_out[message.sender].append(response)
+        new_node = NumericalVariableNode(name = message.sender, value = index)
+        self.machine_nodes.append(new_node)
+        # Log the registrer operation.
+        logging.debug(f"CommonBus register machine {message.sender}, with index {index}.")
+    =}
+
+    reaction(channel_in)-> channel_out{=
+        '''
+        Handle incoming messages from the machines:
+        - Check if the message is a special message
+        - Check if the target is in the map
+        - Append the message to the corresponding target
+        - Send the messages to the corresponding machine
+        '''
+        for i, port in enumerate(channel_in):
+            if not port.is_present:
+                continue
+
+            message = port.value
+            assert isinstance(message, list) or isinstance(message, Message), "Expected a list of Message instances"
+            if isinstance(message, list):
+                self.list_of_Message(message, i)
+                continue
+            else:
+                if message.header.namespace == MsgNamespace.PROTOCOL and message.header.msg_name == ProtocolMsgName.REGISTER:
+                    self.register_machine(message, i)
+                    continue
+
+            assert message.target in self.map, f"Target {message.target} not found in the neighborhood"
+            self.messages_out[message.target].append(message)
+
+
+        for target, messages in self.messages_out.items():
+            if not messages:
+                continue
+            out = messages.copy()
+            channel_out[self.map[target]].set(out)
+            logging.debug(f"CommonBus routed {len(messages)} message{'s' if len(messages) > 1 else ''} to {target}")
+            self.messages_out[target] = []
+
+    =}
+
+    reaction(startup) {=
+        self.number_of_machines.value = self.width
+    =}
+
+}
