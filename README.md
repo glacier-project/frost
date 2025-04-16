@@ -4,25 +4,24 @@ It enables fast modeling of machineries and simple deployment on the infrastruct
 
 Frost is built on top of the Lingua Franca framework [(LF)](https://www.lf-lang.org/), which ensures deterministic execution, enhancing the reliability of soft-ware prototyping and testing. 
 
-
 ## Frost components
 The platform pillars are Frost Machine and Frost Bus. The former implements an empty model that provides an interface between the Frost platform and the new model behavior. 
 The latter implements the message broker that forwards messages to the target component.
 
-### Frost Reactor
+### Frost Reactor 🧱
 
 It is the brick of our platform. It instatiates the multiports for communication, the data model, message manager and so on.
 
 It just has one reaction that is used for setting up the logger.
 
-### Frost Bus
+### Frost Bus 🌐
 
 It serves as message broker and connects all the machine in the simulation.
 
 It forwards any message to its target destination. At the start, it receives a series of registration messages from all the neighbours and stores their port in a map.
 In this way, the map doesn't need to be implemented by hand and the you may change the link among ports without any worry.
 
-### Frost Machine
+### Frost Machine ⚙️
 Frost Machine is a Lingua Franca reactor that extends Frost Reactor and instantiates a set of procedures for variable update handling, message incoming, answering and connecting to the Bus.
 
 This reactor creates a virtual environment where the new user can extend this reactor and set up its machine behavior without carying about communication and synchronization.
