@@ -71,7 +71,7 @@ reaction(t) -> work{=
 ## Examples
 
 In the repository `example/ICE` you can find a project representing the ICE laboratory of Verona, Italy [(ICE)](https://www.icelab.di.univr.it/).
-The entire plant is represented through Frost and a Scheduler triggers each machine for performing operations. The Scheduler prepares a set of Frost Messages (see [Frost Messages](https://www.icelab.di.univr.it/)) that replicates an industrial recipe used in the real laboratory.
+The entire plant is represented through Frost and a Scheduler triggers each machine for performing operations. The Scheduler prepares a set of Frost Messages (see [Frost Messages](https://github.com/esd-univr/machine-data-model/tree/feature/beta-release-0.0.1/machine_data_model/protocols/frost_v1)) that replicates an industrial recipe used in the real laboratory.
 
 ## Prerequisites
 This project exploits the data model built through Machine Data Model [(link)](https://github.com/esd-univr/frost-machine-data-model.git).
