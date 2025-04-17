@@ -1,8 +1,8 @@
 target Python 
 
-import GlacierMachine from "../../../glacier/src/GlacierMachine.lf"
+import FrostMachine from "../../../frost/src/FrostMachine.lf"
 
-reactor Cell1 extends GlacierMachine{
+reactor Cell1 extends FrostMachine{
     //METHOD
     state show_message = {= self.data_model.get_node("Cell1/FlyingProbeTester/ShowMessage") =}
     //VARIABLE

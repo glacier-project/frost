@@ -1,8 +1,8 @@
 target Python
 
-import GlacierReactor from "GlacierReactor.lf"
+import FrostReactor from "FrostReactor.lf"
 
-reactor GlacierMachine(update_step = 1000 msec) extends GlacierReactor{
+reactor FrostMachine(update_step = 1000 msec) extends FrostReactor{
 
     state registered_to_bus = False
     state custom_node
@@ -15,17 +15,17 @@ reactor GlacierMachine(update_step = 1000 msec) extends GlacierReactor{
         """
         Generates a `REGISTER` message to initiate the registration process with the CommonBus.
 
-        This method constructs a `GlacierMessage` that requests registration in the 
+        This method constructs a `FrostMessage` that requests registration in the 
         communication system. The message is addressed to the `"CommonBus"` and follows 
         the `PROTOCOL` namespace with the `REGISTER` message name.
 
-        :return: A `GlacierMessage` representing the registration request.
+        :return: A `FrostMessage` representing the registration request.
         """
-        return GlacierMessage(
+        return FrostMessage(
             sender=self.name,
             target="Common_Bus",
             identifier=str(uuid.uuid4()),
-            header=GlacierHeader(
+            header=FrostHeader(
                 type=MsgType.REQUEST,
                 version=(1, 0, 0),
                 namespace=MsgNamespace.PROTOCOL,
@@ -75,14 +75,14 @@ reactor GlacierMachine(update_step = 1000 msec) extends GlacierReactor{
         assert isinstance(messages, list) and all(isinstance(item, Message) for item in messages), f"Received invalid messages: {messages}"
         
         for message in messages:
-            if isinstance(message, GlacierMessage):
+            if isinstance(message, FrostMessage):
 
                 if message.header.matches(MsgType.RESPONSE, MsgNamespace.PROTOCOL, ProtocolMsgName.REGISTER):
                     self.logger.debug(f"Machine {self.name}, correctly registered with the CommonBus.")
                     self.registered_to_bus = True
     
                 else:
-                    response_message = self.protocol_mng.handle_message(message)
+                    response_message = self.protocol_mng.handle_request(message)
                     self.message_queue.append(response_message)
 
         if self.message_queue:

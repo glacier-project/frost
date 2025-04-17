@@ -1,8 +1,8 @@
 target Python 
 
-import GlacierMachine from "../../../../../glacier/src/GlacierMachine.lf"
+import FrostMachine from "../../../../../frost/src/FrostMachine.lf"
 
-reactor SafeSend extends GlacierMachine{
+reactor SafeSend extends FrostMachine{
     state req = {= self.data_model.get_node("SafeSend/req") =}
     state error = {= self.data_model.get_node("SafeSend/error") =}  
     state c = {= self.data_model.get_node("SafeSend/call") =}

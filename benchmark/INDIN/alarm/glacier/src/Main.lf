@@ -11,7 +11,7 @@ target Python{
 }
 
 import Alarm from "Alarm.lf"
-import GlacierBus from "../../../../../glacier/src/GlacierBus.lf"
+import FrostBus from "../../../../../glacier/src/FrostBus.lf"
 import Scheduler from "Scheduler.lf"
 
 preamble{=
@@ -30,7 +30,7 @@ main reactor{
     =}
     alarm = new Alarm(model_path = "../../config/models/alarm.yml")
     scheduler = new Scheduler(recipe_path = {=RECIPE_PATH=}, condition_path= {=CONDITIONS_PATH=})
-    bus = new GlacierBus(model_path = "../../config/models/bus.yml",width = 2)
+    bus = new FrostBus(model_path = "../../config/models/bus.yml",width = 2)
     
     alarm.channel_out, scheduler.channel_out -> bus.channel_in after 0 
     bus.channel_out -> alarm.channel_in, scheduler.channel_in after 0

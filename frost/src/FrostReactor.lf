@@ -1,7 +1,7 @@
 target Python
 
 
-reactor GlacierReactor(model_path = "", width = 1){
+reactor FrostReactor(model_path = "", width = 1){
     input[width]  channel_in
     output[width] channel_out
 
@@ -9,8 +9,8 @@ reactor GlacierReactor(model_path = "", width = 1){
     state path = model_path
     state data_model = {= DataModelBuilder().get_data_model(self.path) =}
     state name = {= self.data_model.name =}
-    state protocol_mng = {= GlacierProtocolMng(self.data_model) =}
-    state message_queue = {= [GlacierMessage] =}
+    state protocol_mng = {= FrostProtocolMng(self.data_model) =}
+    state message_queue = {= [FrostMessage] =}
 
 
     reaction(startup)-> channel_out{=

@@ -1,8 +1,8 @@
 target Python 
 
-import GlacierMachine from "../../../../../glacier/src/GlacierMachine.lf"
+import FrostMachine from "../../../../../frost/src/FrostMachine.lf"
 
-reactor Alarm extends GlacierMachine{
+reactor Alarm extends FrostMachine{
     state out = {= self.data_model.get_node("Alarm/out") =}
     state out2 = {= self.data_model.get_node("Alarm/out2") =}
     state fault = {= self.data_model.get_node("Alarm/fault") =}

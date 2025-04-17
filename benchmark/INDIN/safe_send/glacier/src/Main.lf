@@ -10,7 +10,7 @@ target Python{
 }
 
 import SafeSend from "SafeSend.lf"
-import GlacierBus from "../../../../../glacier/src/GlacierBus.lf"
+import FrostBus from "../../../../../frost/src/FrostBus.lf"
 import Scheduler from "Scheduler.lf"
 
 
@@ -30,7 +30,7 @@ main reactor{
     =}
     SafeSend = new SafeSend(model_path = "../../config/models/safe_send.yml", update_step = 1nsec)
     scheduler = new Scheduler(recipe_path = {=RECIPE_PATH=}, condition_path= {=CONDITIONS_PATH=})
-    bus = new GlacierBus(model_path = "../../config/models/bus.yml",width = 2)
+    bus = new FrostBus(model_path = "../../config/models/bus.yml",width = 2)
     
     SafeSend.channel_out, scheduler.channel_out -> bus.channel_in after 0 nsec
     bus.channel_out -> SafeSend.channel_in, scheduler.channel_in after 0 nsec

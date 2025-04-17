@@ -1,8 +1,8 @@
 target Python 
 
-import GlacierMachine from "../../../../../glacier/src/GlacierMachine.lf"
+import FrostMachine from "../../../../../frost/src/FrostMachine.lf"
 
-reactor TrafficLight extends GlacierMachine{
+reactor TrafficLight extends FrostMachine{
     state modality = {= self.data_model.get_node("TrafficLight/mode") =}
     state count = {= self.data_model.get_node("TrafficLight/count") =}
     state sigR = {= self.data_model.get_node("TrafficLight/sigR") =}

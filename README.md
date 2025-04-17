@@ -32,7 +32,7 @@ The development is summarized in the following step:
 
 1) Extend *Frost Machine* reactor.
 ```python
-reactor TrafficLight extends GlacierMachine
+reactor TrafficLight extends FrostMachine
 ```
 2) initialize Lingua Franca states with the nodes you need.
 ```python

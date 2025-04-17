@@ -10,7 +10,7 @@ target Python{
 }
 
 import Ring from "Ring.lf"
-import GlacierBus from "../../../../../glacier/src/GlacierBus.lf"
+import FrostBus from "../../../../../frost/src/FrostBus.lf"
 import Scheduler from "Scheduler.lf"
 
 preamble{=
@@ -29,7 +29,7 @@ main reactor{
     =}
     Ring = new Ring(model_path = "../../config/models/ring.yml", update_step  = 1 nsec)
     scheduler = new Scheduler(recipe_path = {=RECIPE_PATH=}, condition_path= {=CONDITIONS_PATH=})
-    bus = new GlacierBus(model_path = "../../config/models/bus.yml",width = 2)
+    bus = new FrostBus(model_path = "../../config/models/bus.yml",width = 2)
     
     Ring.channel_out, scheduler.channel_out -> bus.channel_in after 0 nsec
     bus.channel_out -> Ring.channel_in, scheduler.channel_in after 0 nsec

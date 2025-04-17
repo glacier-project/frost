@@ -13,7 +13,7 @@ import Warehouse from "Warehouse.lf"
 import Kairos from "Kairos.lf"
 import Cell_Conveyor from "Cell_Conveyor.lf"
 
-import GlacierBus from "../../../glacier/src/GlacierBus.lf"
+import FrostBus from "../../../frost/src/FrostBus.lf"
 import Scheduler from "Scheduler.lf"
 
 preamble{=
@@ -22,10 +22,10 @@ preamble{=
     import os 
     from enum import Enum
     CONFIG_PATH = "models/configuration.yaml"
-    from machine_data_model.protocols.glacier_v1.glacier_message import GlacierMessage
-    from machine_data_model.protocols.glacier_v1.glacier_header import MsgType, MsgNamespace, ProtocolMsgName, GlacierHeader
-    from machine_data_model.protocols.glacier_v1.glacier_payload import VariablePayload, ProtocolPayload, MethodPayload 
-    from machine_data_model.protocols.glacier_v1.glacier_protocol_mng import GlacierProtocolMng
+    from machine_data_model.protocols.frost_v1.frost_message import FrostMessage
+    from machine_data_model.protocols.frost_v1.frost_header import MsgType, MsgNamespace, ProtocolMsgName, FrostHeader
+    from machine_data_model.protocols.frost_v1.frost_payload import VariablePayload, ProtocolPayload, MethodPayload 
+    from machine_data_model.protocols.frost_v1.frost_protocol_mng import FrostProtocolMng
     from machine_data_model.builder.data_model_builder import DataModelBuilder
     from machine_data_model.protocols.protocol_mng import Message
     from machine_data_model.nodes.method_node import MethodNode, AsyncMethodNode
@@ -67,7 +67,7 @@ main reactor{
     kairos_aa = new Kairos(model_path = "models/RBKairos.yml")
     conveyor = new Cell_Conveyor(model_path= "models/Cell_Conveyor.yml")
     scheduler = new Scheduler(recipe_path = {=RECIPE_PATH=}, condition_path= {=CONDITIONS_PATH=})
-    bus = new GlacierBus(model_path = "models/Common_Bus.yml",width = 8)
+    bus = new FrostBus(model_path = "models/Common_Bus.yml",width = 8)
     
     #Full demo
     cell1.channel_out, cell2.channel_out, cell5.channel_out, warehouse.channel_out, scheduler.channel_out, kairos_aa.channel_out, conveyor.channel_out, cell4.channel_out -> bus.channel_in after 1 msec

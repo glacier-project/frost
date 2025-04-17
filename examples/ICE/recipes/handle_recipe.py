@@ -1,9 +1,9 @@
 import yaml
 import uuid
 import sys
-from machine_data_model.protocols.glacier_v1.glacier_message import GlacierMessage
-from machine_data_model.protocols.glacier_v1.glacier_header import *
-from machine_data_model.protocols.glacier_v1.glacier_payload import VariablePayload, MethodPayload
+from machine_data_model.protocols.frost_v1.frost_message import FrostMessage
+from machine_data_model.protocols.frost_v1.frost_header import *
+from machine_data_model.protocols.frost_v1.frost_payload import VariablePayload, MethodPayload
 
 class Condition:
     def __init__(self, machine: str, header: str, node: str, value: str):
@@ -21,7 +21,7 @@ class Condition:
     def check_condition(self, machine: str, header: str, node: str, value: str):
         return self.machine == machine and self.header == header and self.node == node and self.value == value
 
-    def check_condition(self, message: GlacierMessage) -> bool:
+    def check_condition(self, message: FrostMessage) -> bool:
         if self.machine != message.sender:
             return False
 
@@ -61,11 +61,11 @@ def get_conditions(path: str) -> list:
 
 def get_messages(path: str) -> list:
     '''
-    This function reads a YAML file and returns a list of GlacierMessage objects
+    This function reads a YAML file and returns a list of FrostMessage objects
     Args:
         path (str): The path to the YAML file
     Returns:
-        list: A list of GlacierMessage messages
+        list: A list of FrostMessage messages
     '''
     list_of_messages = []
     with open(path, 'r') as file:
@@ -76,7 +76,7 @@ def get_messages(path: str) -> list:
             sender = item["sender"]
             target = item["target"]
             identifier = uuid.uuid4()
-            header = GlacierHeader(
+            header = FrostHeader(
                 type=MsgType[item["header"]["type"]],
                 version=tuple(item["header"]["version"]),
                 namespace=MsgNamespace[item["header"]["namespace"]],
@@ -104,7 +104,7 @@ def get_messages(path: str) -> list:
                     )
             else:
                 payload = None
-            message = GlacierMessage(
+            message = FrostMessage(
                 sender=sender,
                 target=target,
                 identifier=identifier,

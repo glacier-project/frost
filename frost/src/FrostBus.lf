@@ -1,8 +1,8 @@
 target Python
 
-import GlacierReactor from "GlacierReactor.lf"
+import FrostReactor from "FrostReactor.lf"
 
-reactor GlacierBus extends GlacierReactor{
+reactor FrostBus extends FrostReactor{
     state map = {={str: int}=}
     state messages_out = {={}=}
 
@@ -45,11 +45,11 @@ reactor GlacierBus extends GlacierReactor{
         if message.sender not in self.messages_out:
             self.messages_out[message.sender] = []
         # Generate the correct response.
-        response = GlacierMessage(
+        response = FrostMessage(
             sender=self.name,
             target=message.sender,
             identifier=str(uuid.uuid4()),
-            header=GlacierHeader(
+            header=FrostHeader(
                 type=MsgType.RESPONSE,
                 version=(1, 0, 0),
                 namespace=MsgNamespace.PROTOCOL,

@@ -1,8 +1,8 @@
 target Python 
 
-import GlacierMachine from "../../../../../glacier/src/GlacierMachine.lf"
+import FrostMachine from "../../../../../frost/src/FrostMachine.lf"
 
-reactor PingPong extends GlacierMachine{
+reactor PingPong extends FrostMachine{
     state count = {= self.data_model.get_node("PingPong/count") =}
     state pingsLeft = {= self.data_model.get_node("PingPong/pingsLeft") =}
     state ok = {= self.data_model.get_node("PingPong/ok") =}

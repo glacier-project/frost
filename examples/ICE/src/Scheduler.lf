@@ -10,7 +10,6 @@ preamble{=
 reactor Scheduler(recipe_path = "../ICE/recipes/test_recipe.yaml",
                 condition_path = "../ICE/recipes/test_conditions.yaml"
 ){
-
     input channel_in
     output channel_out
     state name = {="Scheduler"=}
@@ -23,17 +22,17 @@ reactor Scheduler(recipe_path = "../ICE/recipes/test_recipe.yaml",
         """
         Generates a `REGISTER` message to initiate the registration process with the CommonBus.
 
-        This method constructs a `GlacierMessage` that requests registration in the 
+        This method constructs a `FrostMessage` that requests registration in the 
         communication system. The message is addressed to the `"CommonBus"` and follows 
         the `PROTOCOL` namespace with the `REGISTER` message name.
 
-        :return: A `GlacierMessage` representing the registration request.
+        :return: A `FrostMessage` representing the registration request.
         """
-        return GlacierMessage(
+        return FrostMessage(
             sender=self.name,
             target="CommonBus",
             identifier=str(uuid.uuid4()),
-            header=GlacierHeader(
+            header=FrostHeader(
                 type=MsgType.REQUEST,
                 version=(1, 0, 0),
                 namespace=MsgNamespace.PROTOCOL,
