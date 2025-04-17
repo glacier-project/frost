@@ -12,25 +12,25 @@ root:
       name: "count"
       description: ""
       measure_unit: "NoneMeasureUnits.NONE"
-      value: 0
+      initial_value: 0
     - !!NumericalVariableNode
       name: "mode"
       description: ""
       measure_unit: "NoneMeasureUnits.NONE"
-      value: 0
+      initial_value: 0
     - !!BooleanVariableNode
       name: "sigR"
       description: ""
-      value: True  
+      initial_value: True  
     - !!BooleanVariableNode
       name: "sigY"
       description: ""
-      value: False 
+      initial_value: False 
     - !!BooleanVariableNode
       name: "sigG"
       description: ""
-      value: False 
+      initial_value: False 
     - !!BooleanVariableNode
       name: "pedestrian"
       description: ""
-      value: False
+      initial_value: False

@@ -15,7 +15,7 @@ root:
           - !!BooleanVariableNode
             name: "Board"
             description: ""
-            value: False
+            initial_value: False
           - !!FolderNode
             name: "Methods"
             description: "Methods"
@@ -27,12 +27,11 @@ root:
                   - !!StringVariableNode
                     name: "mission_name"
                     description: ""
-                    value: "default"
+                    default_value: "default"
                 returns:
                   - !!BooleanVariableNode
                     name: "accepted"
                     description: ""
-                    value: True
                 cfg:
                   - !!WriteVariableNode
                     variable: "Cell2/MES/CurrentMission"
@@ -54,12 +53,11 @@ root:
                   - !!StringVariableNode
                     name: "text"
                     description: ""
-                    value: "default"
+                    default_value: "default"
                 returns:
                   - !!BooleanVariableNode
                     name: "Done"
                     description: ""
-                    value: True
                 cfg:
                   - !!WriteVariableNode
                     variable: "Cell2/MES/CurrentMission"
@@ -80,16 +78,16 @@ root:
           - !!BooleanVariableNode
             name: "MESBusy"
             description: "Busy"
-            value: False
+            initial_value: False
           - !!BooleanVariableNode
             name: "MESLastResult"
             description: ""
-            value: False
+            initial_value: False
           - !!StringVariableNode
             name: "CurrentMission"
             description: "Current mission"
-            value: "default"
+            initial_value: "default"
           - !!StringVariableNode
             name: "TextToWrite"
             description: "Last text written"
-            value: ""
+            initial_value: ""

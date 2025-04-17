@@ -12,17 +12,17 @@ root:
       name: "timestamp"
       description: ""
       measure_unit: "NoneMeasureUnits.NONE"
-      value: 0
+      initial_value: 0
     - !!BooleanVariableNode
       name: "opened"
       description: ""
       measure_unit: "NoneMeasureUnits.NONE"
-      value: False
+      initial_value: False
     - !!BooleanVariableNode
       name: "requested"
       description: ""
       measure_unit: "NoneMeasureUnits.NONE"
-      value: False
+      initial_value: False
     - !!AsyncMethodNode
       name: "operation"
       description: ""
@@ -30,9 +30,8 @@ root:
         - !!StringVariableNode
           name: "operation"
           description: ""
-          value: "c"
+          default_value: "c"
       returns:
         - !!StringVariableNode
           name: "result"
           description: ""
-          value: ""

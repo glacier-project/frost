@@ -12,16 +12,16 @@ root:
       name: "count"
       description: ""
       measure_unit: "NoneMeasureUnits.NONE"
-      value: 0
+      initial_value: 0
     - !!NumericalVariableNode
       name: "pingsLeft"
       description: ""
       measure_unit: "NoneMeasureUnits.NONE"
-      value: 0
+      initial_value: 0
     - !!BooleanVariableNode
       name: "ok"
       description: ""
-      value: False
+      initial_value: False
     - !!CompositeMethodNode
       name: "operation"
       description: ""
@@ -30,13 +30,12 @@ root:
           name: "pings"
           description: ""
           measure_unit: "NoneMeasureUnits.NONE"
-          value: 0
+          default_value: 0
       returns:
         - !!NumericalVariableNode
           name: "result"
           description: ""
           measure_unit: "NoneMeasureUnits.NONE"
-          value: 0
       cfg:
         - !!WriteVariableNode
           variable: "PingPong/pingsLeft"

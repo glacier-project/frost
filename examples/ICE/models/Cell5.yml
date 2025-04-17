@@ -19,12 +19,11 @@ root:
             - !!StringVariableNode
               name: "color"
               description: "Cover color"
-              value: ""
+              default_value: ""
           returns:
             - !!BooleanVariableNode
               name: "result"
               description: "QualityCover"
-              value: True
         - !!AsyncMethodNode
           name: "CheckQualityLego"
           description: "Checks quality"
@@ -33,22 +32,21 @@ root:
               name: "shape1"
               description: "Quality of the Lego"
               measure_unit: "NoneMeasureUnits.NONE"
-              value: 0
+              default_value: 0
             - !!NumericalVariableNode
               name: "shape2"
               description: "Lego image"
               measure_unit: "NoneMeasureUnits.NONE"
-              value: 0
+              default_value: 0
             - !!NumericalVariableNode
               name: "shape3"
               description: "Lego image"
               measure_unit: "NoneMeasureUnits.NONE"
-              value: 0
+              default_value: 0
           returns:
             - !!BooleanVariableNode
               name: "result"
               description: "Quality of the Lego"
-              value: True
     - !!FolderNode
       name: "Status"
       description: "Variables"
@@ -57,16 +55,16 @@ root:
           name: "Busy"
           description: "Lego image"
           measure_unit: "LengthUnits.Meter"
-          value: False
+          initial_value: False
         - !!StringVariableNode
           name: "CurrentMission"
           description: "Lego image"
-          value: ""
+          initial_value: ""
         - !!BooleanVariableNode
           name: "LastResult"
           description: "Lego image"
           measure_unit: "LengthUnits.Meter"
-          value: False   
+          initial_value: False   
     - !!FolderNode
       name: "Statistics"
       description: "Contains statistics of the Lego analyzed"
@@ -75,31 +73,31 @@ root:
           name: "ChecksGadget"
           description: ""
           measure_unit: "NoneMeasureUnits.NONE"
-          value: 0
+          initial_value: 0
         - !!NumericalVariableNode
           name: "ChecksLego"
           description: ""
           measure_unit: "NoneMeasureUnits.NONE"
-          value: 0
+          initial_value: 0
         - !!NumericalVariableNode
           name: "ChecksTotal"
           description: ""
           measure_unit: "NoneMeasureUnits.NONE"
-          value: 0
+          initial_value: 0
         - !!NumericalVariableNode
           name: "FaultsGadget"
           description: ""
           measure_unit: "NoneMeasureUnits.NONE"
-          value: 0
+          initial_value: 0
         - !!NumericalVariableNode
           name: "FaultsLego"
           description: ""
           measure_unit: "NoneMeasureUnits.NONE"
-          value: 0
+          initial_value: 0
         - !!NumericalVariableNode
           name: "FaultsTotal"
           description: "Number of faults"
           measure_unit: "NoneMeasureUnits.NONE"
-          value: 0
+          initial_value: 0
 
     

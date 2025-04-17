@@ -2,27 +2,27 @@
 Frost is an open source Digital Twin development Platform supporting early manufacturing software validation and testing.
 It enables fast modeling of machineries and simple deployment on the infrastructure.
 
-Frost is built on top of the Lingua Franca framework [(LF)](https://www.lf-lang.org/), which ensures deterministic execution, enhancing the reliability of soft-ware prototyping and testing. 
+Frost is built on top of the Lingua Franca framework [(LF)](https://www.lf-lang.org/), which ensures deterministic execution, enhancing the reliability of soft-ware prototyping and testing.
 
 ## Frost components
-The platform pillars are Frost Machine and Frost Bus. The former implements an empty model that provides an interface between the Frost platform and the new model behavior. 
+The platform pillars are *FrostMachine* and *FrostBus*. The former implements an empty model that provides an interface between the Frost platform and the new model behavior. 
 The latter implements the message broker that forwards messages to the target component.
 
-### Frost Reactor 🧱
+### 🧱 Frost Reactor 
 
 It is the brick of our platform. It instatiates the multiports for communication, the data model, message manager and so on.
 
 It just has one reaction that is used for setting up the logger.
 
-### Frost Bus 🌐
+### 🌐 Frost Bus 
 
-It serves as message broker and connects all the machine in the simulation.
+It serves as message broker and connects all the machine in execution.
 
 It forwards any message to its target destination. At the start, it receives a series of registration messages from all the neighbours and stores their port in a map.
 In this way, the map doesn't need to be implemented by hand and the you may change the link among ports without any worry.
 
-### Frost Machine ⚙️
-Frost Machine is a Lingua Franca reactor that extends Frost Reactor and instantiates a set of procedures for variable update handling, message incoming, answering and connecting to the Bus.
+### ⚙️ Frost Machine 
+Frost Machine is a Lingua Franca reactor that extends *FrostReactor* and instantiates a set of procedures for variable update handling, message incoming, answering and connecting to the Bus.
 
 This reactor creates a virtual environment where the new user can extend this reactor and set up its machine behavior without carying about communication and synchronization.
 
@@ -30,11 +30,11 @@ This reactor creates a virtual environment where the new user can extend this re
 
 The development is summarized in the following step:
 
-1) Extend Frost Machine reactor.
+1) Extend *Frost Machine* reactor.
 ```python
 reactor TrafficLight extends GlacierMachine
 ```
-2) initialize Lingua Franca states with the nodes you need in the simulation.
+2) initialize Lingua Franca states with the nodes you need.
 ```python
 state modality = {= self.data_model.get_node("TrafficLight/mode")=}
 ```
@@ -50,7 +50,8 @@ method call(ins){=
 =}
 
 reaction(startup){=
-    self.c.callback = self.call
+    f = {= self.data_model.get_node("TrafficLight/f")=}
+    f.callback = self.call
 =}  
 ```
 4) Implement timely behavior through timers, logical actions or by implementing specific reaction for MethodNodes.
@@ -68,3 +69,6 @@ reaction(t) -> work{=
 
 In the repository `example/ICE` you can find a project representing the ICE laboratory of Verona, Italy [(ICE)](https://www.icelab.di.univr.it/).
 In that project we developed the entire plant and a Scheduler that triggers each machine for performing operations. The Scheduler prepares a set of Frost Messages (see [Frost Messages](https://www.icelab.di.univr.it/)) that replicates an industrial recipe used in the real laboratory.
+
+## Prerequisites
+This project exploits the data model built through Frost Machine Data Model [(link)](https://github.com/esd-univr/frost-machine-data-model.git).

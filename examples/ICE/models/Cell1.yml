@@ -11,7 +11,7 @@ root:
     - !!StringVariableNode
       name: "Board"
       description: "Board"
-      value: ""
+      initial_value: ""
     - !!FolderNode
       name: "FlyingProbeTester"
       description: "Flying Probe Tester"
@@ -23,12 +23,11 @@ root:
             - !!StringVariableNode
               name: "board"
               description: ""
-              value: "electronic"
+              default_value: "electronic"
           returns:
             - !!BooleanVariableNode
               name: "accepted"
               description: ""
-              value: True
           cfg:
             - !!WriteVariableNode
               variable: "Cell1/Board"
@@ -53,7 +52,6 @@ root:
             - !!BooleanVariableNode
               name: "boardOut"
               description: ""
-              value: True    
           cfg:
             - !!WriteVariableNode
               variable: "Cell1/FlyingProbeTester/Busy"
@@ -71,15 +69,15 @@ root:
         - !!BooleanVariableNode
           name: "Busy"
           description: "Testing"
-          value: False
+          initial_value: False
         - !!StringVariableNode
           name: "CurrentMission"
           description: "Name of the mission"
-          value: "default"
+          initial_value: "default"
         - !!BooleanVariableNode
           name: "LastResult"
           description: ""
-          value: False
+          initial_value: False
         - !!MethodNode
           name: "ShowMessage"
           description: "Start mission"
@@ -87,12 +85,11 @@ root:
             - !!StringVariableNode
               name: "text"
               description: ""
-              value: "default"
+              default_value: "default"
           returns:
             - !!BooleanVariableNode
               name: "accepted"
               description: ""
-              value: True
         - !!CompositeMethodNode
           name: "StartTest"
           description: ""
@@ -100,12 +97,11 @@ root:
             - !!StringVariableNode
               name: "serialNumber"
               description: ""
-              value: "default"
+              default_value: "default"
           returns:
             - !!BooleanVariableNode
               name: "accepted"
               description: ""
-              value: True
           cfg:
             - !!WriteVariableNode
               variable: "Cell1/FlyingProbeTester/Busy"

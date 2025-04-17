@@ -12,12 +12,12 @@ root:
       name: "error"
       description: ""
       measure_unit: "NoneMeasureUnits.NONE"
-      value: 0
+      initial_value: 0
     - !!NumericalVariableNode
       name: "req"
       description: ""
       measure_unit: "NoneMeasureUnits.NONE"
-      value: 1
+      initial_value: 1
     - !!AsyncMethodNode
       name: "call"
       description: ""
@@ -26,10 +26,9 @@ root:
           name: "ins"
           description: ""
           measure_unit: "NoneMeasureUnits.NONE"
-          value: 0
+          default_value: 0
       returns:
         - !!NumericalVariableNode
           name: "out"
           description: ""
           measure_unit: "NoneMeasureUnits.NONE"
-          value: 0

@@ -19,12 +19,11 @@ root:
             - !!StringVariableNode
               name: "name"
               description: "Destination"
-              value: "default"
+              default_value: "default"
           returns:
             - !!BooleanVariableNode
               name: "Result"
               description: ""
-              value: True
           cfg:
             - !!WriteVariableNode
               variable: "RBKairos/Mission_Methods/Ongoing_Mission_Name"
@@ -46,26 +45,25 @@ root:
             - !!BooleanVariableNode
               name: "accepted"
               description: ""
-              value: True
         - !!BooleanVariableNode
           name: "Control_Busy"
           description: ""
-          value: False
+          initial_value: False
         - !!BooleanVariableNode
           name: "Last_Mission_Result"
           description: ""
-          value: False
+          initial_value: False
         - !!NumericalVariableNode
           name: "Missions_Call_Counter"
           description: "Number of calls"
           measure_unit: "NoneMeasureUnits.NONE"
-          value: 0
+          initial_value: 0
         - !!StringVariableNode
-            name: "Ongoing_Mission_Feedback"
-            description: "control"
-            value: "default"
+          name: "Ongoing_Mission_Feedback"
+          description: "control"
+          initial_value: "default"
         - !!StringVariableNode
-            name: "Ongoing_Mission_Name"
-            description: "control"
-            value: "default"
+          name: "Ongoing_Mission_Name"
+          description: "control"
+          initial_value: "default"
     

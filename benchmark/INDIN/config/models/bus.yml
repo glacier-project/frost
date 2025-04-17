@@ -12,7 +12,7 @@ root:
       name: "number_of_machines"
       description: ""
       measure_unit: "NoneMeasureUnits.NONE"
-      value: 0
+      initial_value: 0
     - !!MethodNode
       name: "add_machine"
       description: ""
@@ -21,4 +21,3 @@ root:
           name: "number_of_machines_connected"
           description: ""
           measure_unit: "NoneMeasureUnits.NONE"
-          value: 0

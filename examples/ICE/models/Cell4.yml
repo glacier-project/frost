@@ -26,28 +26,26 @@ root:
                 - !!NumericalVariableNode
                   name: "posPickOnPallet"
                   description: ""
-                  value: 0
+                  default_value: 0
                 - !!NumericalVariableNode
                   name: "posPlaceOnPallet"
                   description: ""
-                  value: 0
+                  default_value: 0
                 - !!NumericalVariableNode
                   name: "posPickOnBuffer"
                   description: ""
-                  value: 0
+                  default_value: 0
                 - !!NumericalVariableNode
                   name: "posPlaceFromBufferToPallet"
                   description: ""
-                  value: 0
+                  default_value: 0
               returns:
                 - !!BooleanVariableNode
                   name: "result"
                   description: ""
-                  value: True
                 - !!NumericalVariableNode
                   name: "errorCode"
                   description: ""
-                  value: 0
             - !!MethodNode
               name: "OPC_UA_MOVE_OVER_PALLET_DB"
               description: ""
@@ -55,20 +53,18 @@ root:
                 - !!NumericalVariableNode
                   name: "posPick"
                   description: ""
-                  value: 0
+                  default_value: 0
                 - !!NumericalVariableNode
                   name: "posPlace"
                   description: ""
-                  value: 0
+                  default_value: 0
               returns:
                 - !!BooleanVariableNode
                   name: "result"
                   description: ""
-                  value: True
                 - !!NumericalVariableNode
                   name: "errorCode"
                   description: ""
-                  value: 0
             - !!MethodNode
               name: "OPC_UA_PICK_FROM_PALLET_DB"
               description: ""
@@ -76,24 +72,21 @@ root:
                 - !!NumericalVariableNode
                   name: "posPick"
                   description: ""
-                  value: 0
+                  default_value: 0
                 - !!NumericalVariableNode
                   name: "itemShape"
                   description: ""
-                  value: 0
+                  default_value: 0
               returns:
                 - !!BooleanVariableNode
                   name: "result"
                   description: ""
-                  value: True
                 - !!NumericalVariableNode
                   name: "palletPosition"
                   description: ""
-                  value: 0
                 - !!NumericalVariableNode
                   name: "errorCode"
                   description: ""
-                  value: 0
             - !!MethodNode
               name: "OPC_UA_PLACE_TO_PALLET_DB"
               description: ""
@@ -101,20 +94,18 @@ root:
                 - !!NumericalVariableNode
                   name: "posPickOnBuffer"
                   description: ""
-                  value: 0
+                  default_value: 0
                 - !!NumericalVariableNode
                   name: "posPlaceOnPallet"
                   description: ""
-                  value: 0
+                  default_value: 0
               returns:
                 - !!BooleanVariableNode
                   name: "result"
                   description: ""
-                  value: True
                 - !!NumericalVariableNode
                   name: "errorCode"
                   description: ""
-                  value: 0
             - !!MethodNode
               name: "OPC_UA_SUBMIT_ROBOT_OPERATION_DB"
               description: ""
@@ -122,48 +113,46 @@ root:
                 - !!NumericalVariableNode
                   name: "programID"
                   description: ""
-                  value: 0
+                  default_value: 0
                 - !!NumericalVariableNode
                   name: "robotID"
                   description: ""
-                  value: 0
+                  default_value: 0
                 - !!NumericalVariableNode
                   name: "srcAreaId"
                   description: ""
-                  value: 0
+                  default_value: 0
                 - !!NumericalVariableNode
                   name: "srcAreaPosX"
                   description: ""
-                  value: 0
+                  default_value: 0
                 - !!NumericalVariableNode
                   name: "srcAreaPosY"
                   description: ""
-                  value: 0
+                  default_value: 0
                 - !!NumericalVariableNode
                   name: "dstAreaId"
                   description: ""
-                  value: 0
+                  default_value: 0
                 - !!NumericalVariableNode
                   name: "dstAreaPosX"
                   description: ""
-                  value: 0
+                  default_value: 0
                 - !!NumericalVariableNode
                   name: "dstAreaPosY"
                   description: ""
-                  value: 0
+                  default_value: 0
                 - !!NumericalVariableNode
                   name: "argExtra"
                   description: ""
-                  value: 0
+                  default_value: 0
               returns:
                 - !!BooleanVariableNode
                   name: "result"
                   description: ""
-                  value: True
                 - !!NumericalVariableNode
                   name: "errorCode"
                   description: ""
-                  value: 0
             - !!MethodNode
               name: "OPC_UA_ABB_PICK_BOARD_FROM_PALLET_DB"
               description: ""
@@ -171,15 +160,12 @@ root:
                 - !!BooleanVariableNode
                   name: "result"
                   description: ""
-                  value: True
                 - !!NumericalVariableNode
                   name: "boardPosition"
                   description: ""
-                  value: 0
                 - !!NumericalVariableNode
                   name: "errorCode"
                   description: ""
-                  value: 0
             - !!MethodNode
               name: "OPC_UA_GADGET_ASSEMBLY_DB"
               description: ""
@@ -187,20 +173,18 @@ root:
                 - !!NumericalVariableNode
                   name: "phaseNumber"
                   description: ""
-                  value: 0
+                  default_value: 0
                 - !!NumericalVariableNode
                   name: "boardPosition"
                   description: ""
-                  value: 0
+                  default_value: 0
               returns:
                 - !!BooleanVariableNode
                   name: "result"
                   description: ""
-                  value: True
                 - !!NumericalVariableNode
                   name: "errorCode"
                   description: ""
-                  value: 0
         - !!FolderNode
           name: "DataBlocksGlobal"
           description: "DataBlocksInstance"
@@ -212,15 +196,15 @@ root:
                 - !!BooleanVariableNode
                   name: "plcOperationRunning"
                   description: ice_data_cell4_control
-                  value: False
+                  initial_value: False
                 - !!BooleanVariableNode
                   name: "plcOperationDone"
                   description: ice_data_cell4_control
-                  value: False
+                  initial_value: False
                 - !!BooleanVariableNode
                   name: "plcOperationError"
                   description: ice_data_cell4_control
-                  value: False
+                  initial_value: False
                 - !!FolderNode
                   name: "ABB"
                   description: "ABB"
@@ -228,7 +212,7 @@ root:
                     - !!BooleanVariableNode
                       name: "programRunning"
                       description: "program"
-                      value: False
+                      initial_value: False
                 - !!FolderNode
                   name: "Kuka"
                   description: "Kuka"
@@ -236,7 +220,7 @@ root:
                     - !!BooleanVariableNode
                       name: "programRunning"
                       description: "ice_data_cell4_state"
-                      value: False
+                      initial_value: False
             - !!FolderNode
               name: "DB_OPCUA"
               description: "DB_OPCUA"
@@ -248,7 +232,7 @@ root:
                     - !!BooleanVariableNode
                       name: "cellInitialized"
                       description: "ice_data_cell4_control"
-                      value: True
+                      initial_value: True
             - !!FolderNode
               name: "DB_BUFFER"
               description: "DB_BUFFER"
@@ -261,32 +245,32 @@ root:
                       name: "0"
                       description: "ice_data_cell4_state"
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "1"
                       description: "ice_data_cell4_state"
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "2"
                       description: "ice_data_cell4_state"
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "3"
                       description: "ice_data_cell4_state"
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "4"
                       description: "ice_data_cell4_state"
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "5"
                       description: "ice_data_cell4_state"
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                 - !!FolderNode
                   name: "ABBRightPositions"
                   description: "ABBRightPositions"
@@ -295,17 +279,17 @@ root:
                       name: "0"
                       description: "ice_data_cell4_state"
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "1"
                       description: "ice_data_cell4_state"
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "2"
                       description: "ice_data_cell4_state"
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                 - !!FolderNode
                   name: "KUKAPositions"
                   description: "KUKAPositions"
@@ -314,32 +298,32 @@ root:
                       name: "0"
                       description: "ice_data_cell4_state"
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "1"
                       description: "ice_data_cell4_state"
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "2"
                       description: "ice_data_cell4_state"
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "3"
                       description: "ice_data_cell4_state"
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "4"
                       description: "ice_data_cell4_state"
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "5"
                       description: "ice_data_cell4_state"
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
             - !!FolderNode
               name: "DB_STATISTICS"
               description: "DB_STATISTICS"
@@ -348,12 +332,12 @@ root:
                   name: "ABB_TASK_COUNT"
                   description: "ice_data_cell4_kpi"
                   measure_unit: "NoneMeasureUnits.NONE"
-                  value: 0
+                  initial_value: 0
                 - !!NumericalVariableNode
                   name: "KUKA_TASK_COUNT"
                   description: "ice_data_cell4_kpi"
                   measure_unit: "NoneMeasureUnits.NONE"
-                  value: 0
+                  initial_value: 0
         - !!FolderNode
           name: "Outputs"
           description: "Outputs"
@@ -362,69 +346,69 @@ root:
               name: "ABB_programID"
               description: ""
               measure_unit: "NoneMeasureUnits.NONE"
-              value: 0
+              initial_value: 0
             - !!NumericalVariableNode
               name: "ABB_pickAreaID"
               description: ""
               measure_unit: "NoneMeasureUnits.NONE"
-              value: 0
+              initial_value: 0
             - !!NumericalVariableNode
               name: "ABB_pickPosX"
               description: ""
               measure_unit: "NoneMeasureUnits.NONE"
-              value: 0
+              initial_value: 0
             - !!NumericalVariableNode
               name: "ABB_pickPosY"
               description: ""
               measure_unit: "NoneMeasureUnits.NONE"
-              value: 0
+              initial_value: 0
             - !!NumericalVariableNode
               name: "ABB_itemColorID"
               description: ""
               measure_unit: "NoneMeasureUnits.NONE"
-              value: 0
+              initial_value: 0
             - !!NumericalVariableNode
               name: "KUKA_programID"
               description: ""
               measure_unit: "NoneMeasureUnits.NONE"
-              value: 0
+              initial_value: 0
             - !!NumericalVariableNode
               name: "KUKA_pickAreaID"
               description: ""
               measure_unit: "NoneMeasureUnits.NONE"
-              value: 0
+              initial_value: 0
             - !!NumericalVariableNode
               name: "KUKA_pickPosX"
               description: ""
               measure_unit: "NoneMeasureUnits.NONE"
-              value: 0
+              initial_value: 0
             - !!NumericalVariableNode
               name: "KUKA_pickPosY"
               description: ""
               measure_unit: "NoneMeasureUnits.NONE"
-              value: 0
+              initial_value: 0
             - !!NumericalVariableNode
               name: "KUKA_placeAreaID"
               description: ""
               measure_unit: "NoneMeasureUnits.NONE"
-              value: 0
+              initial_value: 0
             - !!NumericalVariableNode
               name: "KUKA_placePosX"
               description: ""
               measure_unit: "NoneMeasureUnits.NONE"
-              value: 0
+              initial_value: 0
             - !!NumericalVariableNode
               name: "KUKA_placePosY"
               description: ""
               measure_unit: "NoneMeasureUnits.NONE"
-              value: 0
+              initial_value: 0
             - !!NumericalVariableNode
               name: "KUKA_appStart"
               description: ""
               measure_unit: "NoneMeasureUnits.NONE"
-              value: 0
+              initial_value: 0
             - !!NumericalVariableNode
               name: "KUKA_appEnable"
               description: ""
               measure_unit: "NoneMeasureUnits.NONE"
-              value: 0
+              initial_value: 0

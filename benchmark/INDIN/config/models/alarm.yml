@@ -12,14 +12,14 @@ root:
       name: "out"
       description: ""
       measure_unit: "NoneMeasureUnits.NONE"
-      value: 0
+      initial_value: 0
     - !!NumericalVariableNode
       name: "out2"
       description: ""
       measure_unit: "NoneMeasureUnits.NONE"
-      value: 0
+      initial_value: 0
     - !!NumericalVariableNode
       name: "fault"
       description: ""
       measure_unit: "NoneMeasureUnits.NONE"
-      value: False  
+      initial_value: False  
