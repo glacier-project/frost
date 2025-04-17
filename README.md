@@ -4,6 +4,9 @@ It enables fast modeling of machineries and simple deployment on the infrastruct
 
 Frost is built on top of the Lingua Franca framework [(LF)](https://www.lf-lang.org/), which ensures deterministic execution, enhancing the reliability of soft-ware prototyping and testing.
 
+Frost belongs to the [Glacier project](https://esd-univr.github.io/glacier-website/). 
+
+
 ## Frost components
 The platform pillars are *FrostMachine* and *FrostBus*. The former implements an empty model that provides an interface between the Frost platform and the new model behavior. 
 The latter implements the message broker that forwards messages to the target component.
