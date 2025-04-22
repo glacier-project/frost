@@ -1,6 +1,7 @@
 target Python 
 
 import FrostMachine from "../../../frost/src/FrostMachine.lf"
+import Conveyor from "Conveyor/conveyor.lf"
 
 preamble{=
     from enum import Enum
@@ -13,6 +14,8 @@ preamble{=
 =}
 
 reactor Cell_Conveyor extends FrostMachine{
+
+    conveyor = new Conveyor()
     //PALLETS
     state pallet_1 = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet1") =}
     state pallet_2 = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet2") =}
@@ -74,7 +77,6 @@ reactor Cell_Conveyor extends FrostMachine{
                         6:21,
                         7:11
                     } =}
-    timer work(0ms, 1000ms)
     logical action delay
 
     
@@ -181,8 +183,8 @@ reactor Cell_Conveyor extends FrostMachine{
 
     method move_interchanges(delay){=    
         for seg_num, segment in enumerate(self.segments):
-            if self.dict_bay[seg_num] in self.bay_out:
-                
+            #Shall any pallet go out of the bays?
+            if self.dict_bay[seg_num] in self.bay_out:                
                 next_segment = None
                 if seg_num == 7:
                     next_segment = self.segments[0]
@@ -207,9 +209,9 @@ reactor Cell_Conveyor extends FrostMachine{
                     next_segment.get_property("FIFO").get_property("size").write(next_segment.get_property("FIFO").get_property("size").value + 1)
                     self.pallets[palletNumber-1].get_property("destination").write(0)
                     self.bay_out.remove(self.dict_bay[seg_num])
-                    delay.schedule(SEC(5))
+                    self.out.value = True
                 continue
-
+            #Shall any pallet go to the bays?
             size_of_seg = segment.get_property("FIFO").get_property("size")
             first_pos = segment.get_property("FIFO").get_property("item0")
             first_pos_value = first_pos.value
@@ -222,7 +224,7 @@ reactor Cell_Conveyor extends FrostMachine{
                     first_pos.write(0)
                     size_of_seg.write(size_of_seg.value - 1)
                     continue
-                
+            #Move current pallet to next segment
             next_segment = None
             if seg_num == 7:
                 next_segment = self.segments[0]
@@ -273,27 +275,34 @@ reactor Cell_Conveyor extends FrostMachine{
         (self.Segment1.get_property("FIFO")).get_property("size").write(10)
     =}
 
-    reaction(work){=
+    //Timers for making segments moving
+    timer first_ring(0ms, 970ms)
+    reaction(first_ring){=
         self.move_pallets(1, self.Segment2)
         self.move_pallets(6, self.Segment7)
     =}    
 
-    timer half_time(0ms, 500ms)
-    reaction(half_time){=
-        self.move_pallets(0, self.Segment1)
-        self.move_pallets(2, self.Segment3)
-        self.move_pallets(5, self.Segment6)
+    timer second_ring(0ms, 570ms)
+    reaction(second_ring){=
+        self.move_pallets(0, self.Segment1)        
         self.move_pallets(7, self.Segment8)
     =}
 
-    timer hh_time(0ms, 2500ms)
-    reaction(hh_time){=
+    timer third_ring(0ms, 540ms)
+    reaction(third_ring){=
+        self.move_pallets(2, self.Segment3)
+        self.move_pallets(5, self.Segment6)
+    =}
+
+    timer fourth_ring(0ms, 300ms)
+    reaction(fourth_ring){=
         self.move_pallets(3, self.Segment4)
         self.move_pallets(4, self.Segment5)
     =}  
 
-    timer interchanges(0, 5s)
-    reaction(interchanges)-> delay{=
+    //Timers for making interchanges moving
+    timer move_bay(0, 5s)
+    reaction(move_bay)-> delay{=
         self.move_interchanges(delay)
     =}
 

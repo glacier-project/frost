@@ -1,0 +1,103 @@
+target Python{
+    files: [source_folder/pallet.py, source_folder/material.py]
+};
+
+preamble{=
+    from pallet import Pallet 
+    from material import Material
+=}
+
+reactor Bay_Switch(param = "default"){
+    //Internal variables
+    state name = param   
+
+    //Physical links
+    input IN
+    output OUT
+    input CROSS_IN
+    output CROSS
+    
+
+    //Controller Links
+    input command
+    output ask
+
+    //Current Pallet
+    state pallet
+    
+    reaction(startup){=
+        self.pallet = None
+    =}
+
+    '''This reaction is triggered when a pallet arrives at the bay switch.
+    Similarly to the switch it checks the pallet has reached its destination.
+    If so, it sends a message to the main reactor to inform the pallet has arrived.
+    Otherwise, it asks the controller for the pallet route.
+    '''
+    reaction(IN)-> ask{=
+        if IN.value is not None:
+            self.pallet = IN.value
+
+            #Update pallet position
+            position_list = list(self.pallet.position)
+            position_list[1] = self.name
+            self.pallet.position = "".join(position_list)
+            
+            #Check if pallet has reached its destination. If not ask controller for route
+            if self.pallet.looping:
+                ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
+            elif self.pallet.destination[0] in ["N","O","P"] and self.pallet.destination[1] == self.name:
+                ask.set(["_pallet_arrived", self.pallet.pallet_id])                
+            else:
+                ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
+    =}
+
+    '''This reaction is triggered when the controller sends a command to the bay switch.
+    If the command is to create a pallet, the bay switch stores the pallet 
+    and asks the controller for the pallet route.
+    If the command is to move a pallet, the bay switch sends the pallet to appropriate port.
+    '''
+    reaction(command) -> ask, OUT, CROSS{=
+        if command.value[0] == "Create":
+            self.pallet = command.value[1]
+            ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
+        
+        elif command.value[0] == "Move" and self.pallet is not None:
+            if command.value[2] == "CROSS":
+                CROSS.set(self.pallet)             
+
+            elif command.value[2] == "OUT":
+                OUT.set(self.pallet)
+
+            self.pallet = None
+        elif command.value[0] == "giveWorkpiece":
+            if isinstance(command.value[2], Material):
+                ask.set(["giveWorkpiece", "Controller", True])
+                self.pallet.object = command.value[2]
+            elif isinstance(command.value[2], str):
+                ask.set(["giveWorkpiece", command.value[2], self.pallet.object])
+                self.pallet.object = None
+    =}
+
+    '''This reaction is triggered when a pallet arrives at the cross switch.
+    As before, it checks if the pallet has reached its destination, and if not,
+    it asks the controller for the pallet route.
+    '''
+    reaction(CROSS_IN)-> ask{=
+        if CROSS_IN.value is not None:
+            self.pallet = CROSS_IN.value
+
+            #Update pallet position
+            position_list = list(self.pallet.position)
+            position_list[1] = self.name
+            self.pallet.position = "".join(position_list)
+
+            #Check if pallet has reached its destination. If not ask controller for route
+            if self.pallet.looping:
+                ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
+            elif not (self.pallet.destination[0] in ["N","O","P"] and self.pallet.destination[1] == self.name):
+                ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
+            else:
+                ask.set(["_pallet_arrived", self.pallet.pallet_id])
+    =}
+}

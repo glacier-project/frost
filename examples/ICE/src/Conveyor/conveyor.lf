@@ -1,0 +1,131 @@
+target Python
+
+import Switch from "switch.lf"
+import Mutex from "mutex.lf"
+import Interchange from "interchange.lf"
+import Controller from "controller.lf"
+import Bay from "bay.lf"
+import Segment from "segment.lf"
+import Bay_Z from "bay_z.lf"
+import bay_G from "bay_g.lf"
+
+reactor Conveyor{
+    //First ring instantiation
+    M = new Switch(param = "M")
+    L = new Switch(param = "L")
+    D = new Switch(param = "D")
+    E = new Switch(param = "E")
+    EM = new Mutex(param = "EM")
+    LD = new Interchange(param = "LD")
+    
+    //Links among segments
+    ML = new Segment(param = "ML")
+    M.OUT ->  ML.IN after 5722 msec
+    ML.OUT ->  L.IN
+    DE = new Segment(param = "DE")
+    DE.OUT -> E.IN
+    D.OUT -> DE.IN after 5722 msec
+    
+    //Links among interchanges
+    L.CROSS, D.CROSS -> LD.IN_UP, LD.IN_DOWN after 7000msec  
+    LD.OUT_UP, LD.OUT_DOWN -> L.CROSS_IN, D.CROSS_IN  
+    //Links among mutexes
+    E.OUT -> EM.IN after 7000msec
+    EM.OUT -> M.IN
+    
+    //Second ring instantiation
+    I = new Switch(param = "I")
+    C = new Switch(param = "C")
+    IC = new Interchange(param = "IC")
+
+    //Links among segments
+    LI = new Segment(param = "LI")
+    L.OUT -> LI.IN after 9722 msec
+    LI.OUT -> I.IN
+    CD = new Segment(param = "CD")
+    CD.OUT -> D.IN
+    C.OUT -> CD.IN after 9722 msec
+
+    //Links among interchange
+    I.CROSS, C.CROSS -> IC.IN_UP, IC.IN_DOWN after 7000msec
+    IC.OUT_UP, IC.OUT_DOWN -> I.CROSS_IN, C.CROSS_IN
+    
+    //Third ring instantiation
+    H = new Switch(param = "H")
+    B = new Switch(param = "B")
+    HB = new Interchange(param = "HB")
+
+    //Links among segments
+    IH = new Segment(param = "IH")
+    I.OUT -> IH.IN after 5416 msec
+    IH.OUT -> H.IN
+    BC = new Segment(param = "BC")
+    BC.OUT -> C.IN
+    B.OUT -> BC.IN after 5416 msec
+
+    //Links among interchange
+    H.CROSS, B.CROSS -> HB.IN_UP, HB.IN_DOWN after 7000msec
+    HB.OUT_UP, HB.OUT_DOWN -> H.CROSS_IN, B.CROSS_IN
+    
+    //G instantiation
+    G = new bay_G(param = "G")
+    HG = new Segment(param = "HG")
+    H.OUT, HG.OUT -> HG.IN, G.IN
+
+    //Fourth ring instantiation
+    F = new Switch(param = "F")   
+    A = new Switch(param = "A")    
+    FA = new Mutex(param = "FA")
+
+    //Links among bays
+    F.OUT -> FA.IN after 7000 msec
+    FA.OUT -> A.IN
+    
+    //Segment
+    GF = new Segment(param = "GF")
+    G.OUT -> GF.IN after 2100 msec
+    GF.OUT -> F.IN after 611msec
+    AB = new Segment(param = "AB")
+    AB.OUT -> B.IN
+    A.OUT -> AB.IN after 3333 msec
+
+    //Links bays to P O N Z
+    P = new Bay(param = "P")
+    O = new Bay(param = "O")
+    N = new Bay(param = "N")
+    Z = new Bay_Z(param = "Z1")
+    
+    PL = new Interchange(param = "PL")
+    OE = new Interchange(param = "OE")
+    NH = new Interchange(param = "NH")
+    MZ = new Interchange(param = "MZ")
+
+    //Links to bays
+    L.BAY_OUT, I.BAY_OUT, H.BAY_OUT -> PL.IN_DOWN, OE.IN_DOWN, NH.IN_DOWN after 5000msec
+    PL.OUT_UP, OE.OUT_UP, NH.OUT_UP-> P.IN, O.IN, N.IN
+    P.OUT, O.OUT, N.OUT-> PL.IN_UP, OE.IN_UP, NH.IN_UP after 5000msec
+    PL.OUT_DOWN, OE.OUT_DOWN, NH.OUT_DOWN -> L.BAY_IN, I.BAY_IN, H.BAY_IN
+
+    //Links between MZ and Z
+    M.BAY_OUT -> MZ.IN_DOWN after 5000msec
+    MZ.OUT_UP -> Z.IN
+    Z.OUT -> MZ.IN_UP after 5000msec
+    MZ.OUT_DOWN -> M.BAY_IN
+
+    
+    //Controller instantiation
+    Controller = new Controller()
+    //SWITCHES CONNECTIONS
+    A.ask, B.ask, C.ask, D.ask, E.ask, F.ask, H.ask, I.ask, L.ask, M.ask -> Controller.A_IN, Controller.B_IN , Controller.C_IN, Controller.D_IN, Controller.E_IN, Controller.F_IN, Controller.H_IN, Controller.I_IN, Controller.L_IN, Controller.M_IN after 0msec
+    Controller.OUT, Controller.OUT, Controller.OUT, Controller.OUT, Controller.OUT, Controller.OUT, Controller.OUT, Controller.OUT, Controller.OUT, Controller.OUT -> A.command, B.command, C.command, D.command, E.command, F.command, H.command, I.command, L.command, M.command after 0msec
+    //BAYS CONNECTIONS
+    P.ask, O.ask, N.ask, Z.ask -> Controller.BAY_P_IN, Controller.BAY_O_IN, Controller.BAY_N_IN, Controller.BAY_Z_IN after 0msec
+    Controller.BAY_OUT, Controller.BAY_OUT, Controller.BAY_OUT, Controller.BAY_Z_OUT -> P.command, O.command, N.command, Z.command after 0msec
+    //SEGMENTS CONNECTIONS
+    AB.ask, BC.ask, CD.ask, DE.ask, GF.ask, HG.ask, IH.ask, LI.ask, ML.ask -> Controller.SEG_AB, Controller.SEG_BC, Controller.SEG_CD, Controller.SEG_DE, Controller.SEG_GF, Controller.SEG_HG, Controller.SEG_IH, Controller.SEG_LI, Controller.SEG_ML after 0msec
+    Controller.SEG_OUT, Controller.SEG_OUT, Controller.SEG_OUT, Controller.SEG_OUT, Controller.SEG_OUT, Controller.SEG_OUT, Controller.SEG_OUT, Controller.SEG_OUT, Controller.SEG_OUT -> AB.command, BC.command, CD.command, DE.command, GF.command, HG.command, IH.command, LI.command, ML.command after 0msec
+    
+    //CONNECTIONS TO THE G BAY
+    Controller.to_G -> G.command after 0msec
+    G.ask -> Controller.from_G
+}

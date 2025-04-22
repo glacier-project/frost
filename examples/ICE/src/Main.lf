@@ -66,12 +66,12 @@ main reactor{
     warehouse = new Warehouse(model_path = "models/Warehouse.yml")
     kairos_aa = new Kairos(model_path = "models/RBKairos.yml")
     conveyor = new Cell_Conveyor(model_path= "models/Cell_Conveyor.yml")
-    scheduler = new Scheduler(recipe_path = {=RECIPE_PATH=}, condition_path= {=CONDITIONS_PATH=})
+    scheduler = new Scheduler()
     bus = new FrostBus(model_path = "models/Common_Bus.yml",width = 8)
     
     #Full demo
-    cell1.channel_out, cell2.channel_out, cell5.channel_out, warehouse.channel_out, scheduler.channel_out, kairos_aa.channel_out, conveyor.channel_out, cell4.channel_out -> bus.channel_in after 1 msec
-    bus.channel_out -> cell1.channel_in, cell2.channel_in, cell5.channel_in, warehouse.channel_in, scheduler.channel_in, kairos_aa.channel_in, conveyor.channel_in, cell4.channel_in after 1 msec
+    cell1.channel_out, cell2.channel_out, cell5.channel_out, warehouse.channel_out, scheduler.channel_out, kairos_aa.channel_out, conveyor.channel_out, cell4.channel_out -> bus.channel_in after 0
+    bus.channel_out -> cell1.channel_in, cell2.channel_in, cell5.channel_in, warehouse.channel_in, scheduler.channel_in, kairos_aa.channel_in, conveyor.channel_in, cell4.channel_in after 0
 
     #Demo with 2 machine recipe
     //warehouse.channel_out, kairos_aa.channel_out, scheduler.channel_out -> bus.channel_in after 1 msec

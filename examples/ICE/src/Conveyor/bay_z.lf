@@ -1,0 +1,53 @@
+target Python{
+    files: [source_folder/pallet.py, source_folder/material.py]
+};
+
+preamble{=
+    from pallet import Pallet 
+    from material import Material
+=}
+
+reactor Bay_Z(param = "default"){
+    //Internal variables
+    state name = param   
+    state pallet
+    input IN
+    output OUT
+    input command
+    output ask
+
+    reaction(startup){=
+        self.pallet = None
+    =}
+
+    reaction(IN) -> ask{=
+        self.pallet = IN.value
+        self.pallet.position = self.name
+        if self.pallet.destination == self.name:
+            y = "_pallet_arrived", self.pallet.pallet_id
+            ask.set(y)  
+    =}
+
+    reaction(command) -> OUT, ask{=
+        if isinstance(command.value[0], Material):
+            self.pallet.object = command.value[0]
+            ask.set(["giveWorkpiece", "Conveyor", True])
+
+        elif command.value[0] == "Create":
+            self.pallet = command.value[1]
+            if self.pallet.destination != self.name:
+                ask.set(["Move"])
+
+        elif command.value[0] == "Move":
+            if len(command.value) > 1 and command.value[1] == "OUT":
+                OUT.set(self.pallet)
+                self.pallet = None
+                
+            else:
+                y = "Move", self.name, self.pallet
+                ask.set(y)
+        elif command.value[0] == "SPEA":
+            ask.set(["giveWorkpiece", "SPEA", self.pallet.object])
+            self.pallet.object = None
+    =}
+}
