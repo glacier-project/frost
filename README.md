@@ -1,8 +1,11 @@
-# Frost 💠
+# 💠 Frost
 Frost is an open source Digital Twin development Platform supporting early manufacturing software validation and testing.
 It enables fast modeling of machineries and simple deployment on the infrastructure.
 
 Frost is built on top of the Lingua Franca framework [(LF)](https://www.lf-lang.org/), which ensures deterministic execution, enhancing the reliability of soft-ware prototyping and testing.
+
+Frost belongs to the [Glacier project](https://esd-univr.github.io/glacier-website/). 
+
 
 ## Frost components
 The platform pillars are *FrostMachine* and *FrostBus*. The former implements an empty model that provides an interface between the Frost platform and the new model behavior. 
@@ -68,7 +71,7 @@ reaction(t) -> work{=
 ## Examples
 
 In the repository `example/ICE` you can find a project representing the ICE laboratory of Verona, Italy [(ICE)](https://www.icelab.di.univr.it/).
-In that project we developed the entire plant and a Scheduler that triggers each machine for performing operations. The Scheduler prepares a set of Frost Messages (see [Frost Messages](https://www.icelab.di.univr.it/)) that replicates an industrial recipe used in the real laboratory.
+The entire plant is represented through Frost and a Scheduler triggers each machine for performing operations. The Scheduler prepares a set of Frost Messages (see [Frost Messages](https://github.com/esd-univr/machine-data-model/tree/feature/beta-release-0.0.1/machine_data_model/protocols/frost_v1)) that replicates an industrial recipe used in the real laboratory.
 
 ## Prerequisites
-This project exploits the data model built through Frost Machine Data Model [(link)](https://github.com/esd-univr/frost-machine-data-model.git).
+This project exploits the data model built through Machine Data Model [(link)](https://github.com/esd-univr/frost-machine-data-model.git).
