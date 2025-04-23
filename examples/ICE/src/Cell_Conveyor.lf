@@ -14,8 +14,6 @@ preamble{=
 =}
 
 reactor Cell_Conveyor extends FrostMachine{
-
-    conveyor = new Conveyor()
     //PALLETS
     state pallet_1 = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet1") =}
     state pallet_2 = {= self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet2") =}
@@ -77,8 +75,30 @@ reactor Cell_Conveyor extends FrostMachine{
                         6:21,
                         7:11
                     } =}
-    logical action delay
 
+    conveyor = new Conveyor()
+    logical action check
+    state dict_bay_conveyor = {= {
+                        1:"Z",
+                        2:"P", 
+                        3:"O", 
+                        4:"N",
+                        5:"G",
+                    } =}
+    logical action delay
+    state messages_to_conveyor = {=[]=}
+    reaction(check) -> conveyor.from_frost{=
+        if self.messages_to_conveyor:
+            conveyor.from_frost.set(self.messages_to_conveyor.pop(0))
+            check.schedule(0)
+        else:
+            check.schedule(SEC(1))
+    =}
+
+    reaction(conveyor.to_frost){=
+        
+        self.out.value = True
+    =}
     
     method setPalletDest(palletNumber, destination){=
         pallet = self.pallets[palletNumber-1]
@@ -92,6 +112,14 @@ reactor Cell_Conveyor extends FrostMachine{
         else:
             self.command.write("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_" + str(destination))
 
+        temp1 = destination
+        temp2 = ""
+        if temp1 != 5:
+            temp1 = destination / 10
+            temp2 = str(destination % 10)
+        letter = self.dict_bay_conveyor[int(temp1)]
+        self.messages_to_conveyor.append([1, [palletNumber, str(letter + temp2)]]
+        )
         return res
     =}
     
@@ -105,6 +133,8 @@ reactor Cell_Conveyor extends FrostMachine{
             self.command.write("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_" + res)
         else:
             self.command.write("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_" + str(dest))
+
+        self.messages_to_conveyor.append([7, [palletNumber]])
         return True
     =}
 
@@ -259,7 +289,8 @@ reactor Cell_Conveyor extends FrostMachine{
                 next_pos.write(0)
     =}
 
-    reaction(startup){=
+    reaction(startup)-> check{=
+        check.schedule(SEC(1))
         self.setPalletDestination.callback = self.setPalletDest
         self.release.callback = self.releaseP
         (self.Segment1.get_property("FIFO")).get_property("item0").write(1)
@@ -274,7 +305,7 @@ reactor Cell_Conveyor extends FrostMachine{
         (self.Segment1.get_property("FIFO")).get_property("item9").write(10)
         (self.Segment1.get_property("FIFO")).get_property("size").write(10)
     =}
-
+    '''
     //Timers for making segments moving
     timer first_ring(0ms, 970ms)
     reaction(first_ring){=
@@ -309,5 +340,5 @@ reactor Cell_Conveyor extends FrostMachine{
     reaction(delay){=
         self.out.value = True
     =}
-
+    '''
 }

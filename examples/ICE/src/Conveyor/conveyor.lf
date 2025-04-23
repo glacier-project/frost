@@ -96,7 +96,7 @@ reactor Conveyor{
     Z = new Bay_Z(param = "Z1")
     
     PL = new Interchange(param = "PL")
-    OE = new Interchange(param = "OE")
+    OE = new Interchange(param = "OI")
     NH = new Interchange(param = "NH")
     MZ = new Interchange(param = "MZ")
 
@@ -128,4 +128,15 @@ reactor Conveyor{
     //CONNECTIONS TO THE G BAY
     Controller.to_G -> G.command after 0msec
     G.ask -> Controller.from_G
+
+    output to_frost
+    input from_frost
+
+    reaction(from_frost) -> Controller.FROST_IN{=
+        Controller.FROST_IN.set(from_frost.value)
+    =}
+
+    reaction(Controller.FROST_OUT) -> to_frost{=
+        to_frost.set(Controller.FROST_OUT.value)
+    =}
 }

@@ -60,7 +60,7 @@ reactor Bay(param = "default"){
     Create is used for creating a new pallet on the bay
     Move is used for moving a pallet from the current position to the next one
     Release is used for releasing a pallet from the bay to the conveyor belt'''
-    reaction(command) -> Plat1.command, Plat2.command, Plat3.command, OUT{=
+    reaction(command) -> Plat1.command, Plat2.command, Plat3.command, OUT, ask{=
         temp = command.value
         if temp[0] == "Create":
             if temp[2][0] == self.name:
@@ -83,6 +83,7 @@ reactor Bay(param = "default"){
         elif temp[0] == "Release":
             OUT.set(self.crossing_pallet)
             self.crossing_pallet = None
+            ask.set("Pallet_outgoing")
 
         elif temp[0] == "giveWorkpiece":
             if temp[1][0] == self.name:

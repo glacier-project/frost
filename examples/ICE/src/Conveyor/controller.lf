@@ -75,8 +75,8 @@ reactor Controller{
     output to_G
     input from_G
     //INDIRECT COMMUNICATION PORT
-    input frost_IN
-    output frost_OUT
+    input FROST_IN
+    output FROST_OUT
 
     //ACTIONS
     logical action control_AF
@@ -117,8 +117,6 @@ reactor Controller{
 
     reaction(shutdown){=
         logging.info(f"Conveyor state: {self.conveyor}")
-        '''for pallet_id, pallet in self.pallets.items():
-            logging.info(f"Pallet {pallet_id} position: {pallet.position}")'''
     =}
 
     reaction (startup)-> OUT, BAY_OUT, create_pallet{=
@@ -172,7 +170,10 @@ reactor Controller{
             if y != None:
                 temp = None
                 if y != "BOTH":
-                    temp = self.BH_buffers[y][0]
+                    if y == "BAY":
+                        temp = self.BH_buffers[y]
+                    else:
+                        temp = self.BH_buffers[y][0]
                 if temp != None and temp.action == "OUT":
                     if y == "IN_UP" and self.conveyor["H"] == True:
                         self.BH_buffers["IN_UP"].pop(0)
@@ -215,7 +216,10 @@ reactor Controller{
             if y != None:
                 temp = None
                 if y != "BOTH":
-                    temp = self.CI_buffers[y][0]
+                    if y == "BAY":
+                        temp = self.CI_buffers[y]   
+                    else:
+                        temp = self.CI_buffers[y][0]
                 if temp != None and temp.action == "OUT":
                     if y == "IN_UP" and self.conveyor["I"] == True:
                         self.CI_buffers["IN_UP"].pop(0)
@@ -258,7 +262,11 @@ reactor Controller{
             if y != None:
                 temp = None
                 if y != "BOTH":
-                    temp = self.DL_buffers[y][0]
+                    if y == "BAY":
+                        temp = self.DL_buffers[y]
+                    else:
+                        temp = self.DL_buffers[y][0]
+                    
                 if temp != None and temp.action == "OUT":
                     if y == "IN_UP" and self.conveyor["L"] == True:
                         self.DL_buffers["IN_UP"].pop(0)
@@ -651,13 +659,13 @@ reactor Controller{
     =}
 
     ############################## FROST ##############################
-    reaction(frost_IN)-> OUT, BAY_OUT, BAY_Z_OUT, to_G, notify_frost{=
-        command = frost_IN.value[0]
-        args = frost_IN.value[1]
-        if frost_IN.value[0] == 1:
-            temp = self.pallets[frost_IN.value[1][0]]
+    reaction(FROST_IN)-> OUT, BAY_OUT, BAY_Z_OUT, to_G, notify_frost{=
+        command = FROST_IN.value[0]
+        args = FROST_IN.value[1]
+        if FROST_IN.value[0] == 1:
+            temp = self.pallets[FROST_IN.value[1][0]]
             length_pos = len(temp.position)
-            dest = frost_IN.value[1][1]
+            dest = FROST_IN.value[1][1]
             route = New_Destination(temp.position, dest, length_pos)
             temp.looping = route[0]
             temp.bay = route[1]
@@ -672,6 +680,7 @@ reactor Controller{
             elif temp.position == "G":
                 y = "Move", "OUT"
                 to_G.set(y)
+            
         elif command == 7:
             temp = self.pallets[args[0]]
             temp.looping = True
@@ -692,8 +701,8 @@ reactor Controller{
                         BAY_OUT.set(["Move", pos, "OUT"])
                     elif pos[0] == "P":
                         BAY_OUT.set(["Move", pos, "OUT"])
-            notify_frost.schedule(0, [True])
-        
+            notify_frost.schedule(0, [True]) 
+        print(FROST_IN.value)  
     =}
 
 
@@ -701,13 +710,14 @@ reactor Controller{
     reaction(from_G) -> notify_frost, to_G{=
         if from_G.value[0] == self.Events.pallet_arrived.value:
             self.pallet_on_G = True           
-            notify_frost.schedule(0,  from_G.value[1:])
+            notify_frost.schedule(0,[5, from_G.value[1]])
+            print("Pallet arrived to G", from_G.value[1])
         else:
             notify_frost.schedule(0, from_G.value)
     =}
 
-    reaction(notify_frost) -> frost_OUT{=
+    reaction(notify_frost) -> FROST_OUT{=
         temp = notify_frost.value
-        frost_OUT.set(temp)
+        FROST_OUT.set(temp)
     =}
 }
