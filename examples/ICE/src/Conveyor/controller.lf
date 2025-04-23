@@ -529,6 +529,8 @@ reactor Controller{
             self.BH_buffers["BAY"] = BAY_N_IN.value[1]
             control_BH.schedule(0)
 
+        elif pallet_
+
     =}
 
     reaction(BAY_Z_IN) -> BAY_Z_OUT, notify_frost, SEG_OUT, control_EM{=
@@ -687,6 +689,7 @@ reactor Controller{
             temp.bay = None
             temp.destination = None
             pos = temp.position
+            out_data = []
             if pos == "G":
                 self.pallet_on_G = False
                 y = "Move", "OUT"
@@ -701,8 +704,7 @@ reactor Controller{
                         BAY_OUT.set(["Move", pos, "OUT"])
                     elif pos[0] == "P":
                         BAY_OUT.set(["Move", pos, "OUT"])
-            notify_frost.schedule(0, [True]) 
-        print(FROST_IN.value)  
+            
     =}
 
 
@@ -710,8 +712,7 @@ reactor Controller{
     reaction(from_G) -> notify_frost, to_G{=
         if from_G.value[0] == self.Events.pallet_arrived.value:
             self.pallet_on_G = True           
-            notify_frost.schedule(0,[5, from_G.value[1]])
-            print("Pallet arrived to G", from_G.value[1])
+            notify_frost.schedule(0,[1, [from_G.value[1], "G"]])
         else:
             notify_frost.schedule(0, from_G.value)
     =}
