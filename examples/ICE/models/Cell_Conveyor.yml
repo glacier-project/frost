@@ -65,13 +65,10 @@ root:
                           measure_unit: "NoneMeasureUnits.NONE"
                           default_value: 0
                       returns:
-                        - !!NumericalVariableNode
+                        - !!BooleanVariableNode
                           name: "result"
                           description: ""
                       cfg:
-                        - !!WriteVariableNode
-                          variable: "Cell_Conveyor/output"
-                          value: False
                         - !!CallMethodNode
                           method: "Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setDestination"
                           args: 
@@ -81,9 +78,9 @@ root:
                           variable: "Cell_Conveyor/command"
                           store_as: "seekingnode"
                         - !!WaitConditionNode
-                          variable: "Cell_Conveyor/output"
+                          variable: $seekingnode
                           operator: "=="
-                          rhs: True
+                          rhs: $palletNumber
                         - !!ReadVariableNode
                           variable: "Cell_Conveyor/output"
                           store_as: "result"
@@ -231,9 +228,6 @@ root:
                           name: "result"
                           description: ""
                       cfg:
-                        - !!WriteVariableNode
-                          variable: "Cell_Conveyor/output"
-                          value: False
                         - !!CallMethodNode
                           method: "Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/release"
                           args: 
@@ -242,9 +236,9 @@ root:
                           variable: "Cell_Conveyor/command"
                           store_as: "seekingnode"
                         - !!WaitConditionNode
-                          variable: "Cell_Conveyor/output"
+                          variable: $seekingnode
                           operator: "=="
-                          rhs: True
+                          rhs: 0
                         - !!ReadVariableNode
                           variable: "Cell_Conveyor/output"
                           store_as: "result"

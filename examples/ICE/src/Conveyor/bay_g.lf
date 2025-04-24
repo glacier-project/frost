@@ -40,7 +40,7 @@ reactor bay_G(param = "default"){
             self.pallet.position = self.name
 
             if self.pallet.destination == self.name:
-                y = "_pallet_arrived", True
+                y = "_pallet_arrived", self.pallet.pallet_id
                 ask.set(y)
                 
             else: 
