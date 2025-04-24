@@ -9,7 +9,6 @@ scalability_template = """
         xlabels at=edge bottom,
         ylabels at=edge left,
     },
-    width=9cm, height=6cm,
     legend style={
         fill=none, draw=none,
         anchor=south, at={(0.5,1.2)},
@@ -27,44 +26,52 @@ scalability_template = """
     ymajorgrids=true,
     grid style=dashed]
 {% for benchmark in benchmark_data %}
-    \\nextgroupplot[title=\\textbf{ {{- benchmark -}} }]
-        \\addplot[name path={{- benchmark -}}_glacier_upper,forget plot,draw=none,blue!20] coordinates {
+    \\nextgroupplot[title=\\textbf{ {{- benchmark -}} },width=6cm, height=4cm,xlabel style={font=\\footnotesize},ylabel style={font=\\footnotesize, yshift=-0.1cm}]
+
+        \\addplot[name path={{- benchmark -}}_lf_upper,forget plot,draw=none,blue!20] coordinates {
+{% for num_runs in benchmark_data[benchmark]['lf'] %}
+            ({{ num_runs }}, {{- benchmark_data[benchmark]['lf'][num_runs][0] + benchmark_data[benchmark]['lf'][num_runs][1] -}})
+{%- endfor -%}
+        };
+        \\addplot[name path={{- benchmark -}}_lf_lower,forget plot,draw=none,blue!20] coordinates {
+{% for num_runs in benchmark_data[benchmark]['lf'] %}
+            ({{ num_runs }}, {{- benchmark_data[benchmark]['lf'][num_runs][0] - benchmark_data[benchmark]['lf'][num_runs][1] -}})
+{%- endfor -%}
+        };
+        \\addplot[fill=blue!20,opacity=0.4,forget plot] fill between[of={{- benchmark -}}_lf_upper and {{ benchmark -}}_lf_lower];
+
+        \\addplot[dashed,mark=*,blue!60] plot coordinates {
+{% for num_runs in benchmark_data[benchmark]['lf'] %}
+            ({{ num_runs }}, {{ benchmark_data[benchmark]['lf'][num_runs][0] }})
+{%- endfor -%}
+        };
+{% if loop.index == 2 %}        \\addlegendentry{Lingua Franca (Baseline)}{% endif %}
+
+
+        \\addplot[name path={{- benchmark -}}_glacier_upper,forget plot,draw=none,red!20] coordinates {
 {% for num_runs in benchmark_data[benchmark]['glacier'] %}
             ({{ num_runs }}, {{- benchmark_data[benchmark]['glacier'][num_runs][0] + benchmark_data[benchmark]['glacier'][num_runs][1] -}})
 {%- endfor -%}
         };
-        \\addplot[name path={{- benchmark -}}_glacier_lower,forget plot,draw=none,blue!20] coordinates {
+        \\addplot[name path={{- benchmark -}}_glacier_lower,forget plot,draw=none,red!20] coordinates {
 {% for num_runs in benchmark_data[benchmark]['glacier'] %}
             ({{ num_runs }}, {{- benchmark_data[benchmark]['glacier'][num_runs][0] - benchmark_data[benchmark]['glacier'][num_runs][1] -}})
 {%- endfor -%}
         };
-        \\addplot[fill=blue!20,forget plot,opacity=0.4] fill between[of={{- benchmark -}}_glacier_upper and {{ benchmark -}}_glacier_lower];
+        \\addplot[fill=red!20,forget plot,opacity=0.4] fill between[of={{- benchmark -}}_glacier_upper and {{ benchmark -}}_glacier_lower];
 
-        \\addplot[smooth,mark=*,blue!60] plot coordinates {
+        \\addplot[smooth,mark=*,red!60] plot coordinates {
 {% for num_runs in benchmark_data[benchmark]['glacier'] %}
             ({{ num_runs }}, {{ benchmark_data[benchmark]['glacier'][num_runs][0] }})
 {%- endfor -%}
         };
 {% if loop.index == 2 %}        \\addlegendentry{\\toolname{}}{% endif %}
 
-        \\addplot[name path={{- benchmark -}}_lf_upper,forget plot,draw=none,red!20] coordinates {
-{% for num_runs in benchmark_data[benchmark]['lf'] %}
-            ({{ num_runs }}, {{- benchmark_data[benchmark]['lf'][num_runs][0] + benchmark_data[benchmark]['lf'][num_runs][1] -}})
-{%- endfor -%}
-        };
-        \\addplot[name path={{- benchmark -}}_lf_lower,forget plot,draw=none,red!20] coordinates {
-{% for num_runs in benchmark_data[benchmark]['lf'] %}
-            ({{ num_runs }}, {{- benchmark_data[benchmark]['lf'][num_runs][0] - benchmark_data[benchmark]['lf'][num_runs][1] -}})
-{%- endfor -%}
-        };
-        \\addplot[fill=red!20,opacity=0.4,forget plot] fill between[of={{- benchmark -}}_lf_upper and {{ benchmark -}}_lf_lower];
 
-        \\addplot[dashed,mark=*,red!60] plot coordinates {
-{% for num_runs in benchmark_data[benchmark]['lf'] %}
-            ({{ num_runs }}, {{ benchmark_data[benchmark]['lf'][num_runs][0] }})
-{%- endfor -%}
-        };
-{% if loop.index == 2 %}        \\addlegendentry{\\gls{lf}}{% endif %}
+
+
+
+
 {%- endfor -%}
 \\end{groupplot}
 \\end{tikzpicture}%

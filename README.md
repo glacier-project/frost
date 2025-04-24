@@ -1,77 +1,76 @@
 # 💠 Frost
-Frost is an open source Digital Twin development Platform supporting early manufacturing software validation and testing.
-It enables fast modeling of machineries and simple deployment on the infrastructure.
 
-Frost is built on top of the Lingua Franca framework [(LF)](https://www.lf-lang.org/), which ensures deterministic execution, enhancing the reliability of soft-ware prototyping and testing.
+Frost is an open-source framework for the development, testing, and deployment of software applications for controlling and supervising industrial machines. The focus of the framework is on implementing a unified and extensible interface for the development of machine control software, which can be used in different industrial contexts.
 
-Frost belongs to the [Glacier project](https://esd-univr.github.io/glacier-website/). 
+Frost enables the development and testing of software applications in a virtual environment (i.e., a Digital Twin) before deploying them on the actual machine. Once the software is validated in the virtual environment, it can be deployed on the real system with minimal/no changes.
 
+Frost is built on top of the [Lingua Franca framework (LF)](https://www.lf-lang.org/), which ensures deterministic execution, enhancing the reliability of soft-ware prototyping and testing.
+Frost is part of the [Glacier project](https://esd-univr.github.io/glacier-website/). 
 
 ## Frost components
-The platform pillars are *FrostMachine* and *FrostBus*. The former implements an empty model that provides an interface between the Frost platform and the new model behavior. 
-The latter implements the message broker that forwards messages to the target component.
 
-### 🧱 Frost Reactor 
+*FrostMachine* and *FrostBus* are the main components of the Frost framework. 
+The former implements a ready-to-use reactor that can be extended to implement the machine behavior, while the latter implements a message broker that connects all the components of the system being represented.
+Both components extend the base class *FrostReactor*, which implements some basic functionalities such as logging and message handling.
+The *FrostReactor* relies on the [data model library](https://github.com/esd-univr/machine-data-model) to implement the component interfaces.
+Custom components can be developed by extending the *FrostReactor* class and implementing the desired behavior.
 
-It is the brick of our platform. It instatiates the multiports for communication, the data model, message manager and so on.
-
-It just has one reaction that is used for setting up the logger.
-
-### 🌐 Frost Bus 
-
-It serves as message broker and connects all the machine in execution.
-
-It forwards any message to its target destination. At the start, it receives a series of registration messages from all the neighbours and stores their port in a map.
-In this way, the map doesn't need to be implemented by hand and the you may change the link among ports without any worry.
-
-### ⚙️ Frost Machine 
-Frost Machine is a Lingua Franca reactor that extends *FrostReactor* and instantiates a set of procedures for variable update handling, message incoming, answering and connecting to the Bus.
-
-This reactor creates a virtual environment where the new user can extend this reactor and set up its machine behavior without carying about communication and synchronization.
-
-## How to develop new models?
+## How to develop new machine interfaces?
 
 The development is summarized in the following step:
 
 1) Extend *Frost Machine* reactor.
-```python
-reactor TrafficLight extends FrostMachine
-```
-2) initialize Lingua Franca states with the nodes you need.
-```python
-state modality = {= self.data_model.get_node("TrafficLight/mode")=}
-```
-3) Implement and pass callbacks.
-```python
-method call(ins){=
-    self.logger.info("Received: %s", ins)
-    if ins == 0:
-        self.error.value = 1      
-    else:
-        self.req.value = 0
-    return ins
-=}
+2) Definite the state variables of the machine and link them to the data model nodes.
+3) Define the logic implementing the machine behavior.
+4) Instantiate the reactor in the main file and run it.
 
-reaction(startup){=
-    f = {= self.data_model.get_node("TrafficLight/f")=}
-    f.callback = self.call
-=}  
-```
-4) Implement timely behavior through timers, logical actions or by implementing specific reaction for MethodNodes.
 ```python
-timer t(0 nsec, 1 nsec)
-reaction(t) -> work{=
-    if self.w.value == True:
-        work.schedule(NSEC(self.num))
-        self.w.value = False
-=}
+# Extend the FrostMachine reactor
+reactor TrafficLight extends FrostMachine{
+
+    # State variables of the machine 
+    state mode
+
+    # Method for implementing the machine behavior
+    method m(ins){=
+        self.logger.info("Received: %s", ins)
+        if ins == 0:
+            self.error.value = 1      
+        else:
+            self.req.value = 0
+        return ins
+    =}
+
+    # Link the state variables to the data model nodes
+    # and set the method as callback  
+    reaction(startup){=
+        self.mode = self.data_model.get_node("TrafficLight/Mode")
+        method_node = self.data_model.get_node("TrafficLight/")
+        method_node.callback = self.m
+    =}  
+
+    # Custom logic updating the state variables
+    timer t(0 s, 1 s)
+    reaction(t) -> work{=
+        if self.mode.value == LIGHT_GREEN:
+            self.mode.value = LIGHT_RED
+        else:
+            self.mode.value = LIGHT_GREEN
+    =}
+}
 ```
-5) Add the new reactor to the Main one and prepare some message for testing its functionalities.
+
+Then instantiate the following reactor with:
+
+```python
+import TrafficLight from "TrafficLight.lf"
+
+main reactor{
+    tl = TrafficLight(model_path="path/to/model.yaml")
+    ...
+}
+```
 
 ## Examples
 
-In the repository `example/ICE` you can find a project representing the ICE laboratory of Verona, Italy [(ICE)](https://www.icelab.di.univr.it/).
-The entire plant is represented through Frost and a Scheduler triggers each machine for performing operations. The Scheduler prepares a set of Frost Messages (see [Frost Messages](https://github.com/esd-univr/machine-data-model/tree/feature/beta-release-0.0.1/machine_data_model/protocols/frost_v1)) that replicates an industrial recipe used in the real laboratory.
-
-## Prerequisites
-This project exploits the data model built through Machine Data Model [(link)](https://github.com/esd-univr/frost-machine-data-model.git).
+- [ICE Laboratory](examples/ICE): The directory contains an implementation of the production line of the [ICE Laboratory](https://www.icelab.di.univr.it/) of Verona, Italy. A Scheduler controls the production by sending requests to the different machines of the plant The example is still under development and will be updated soon.

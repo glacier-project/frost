@@ -157,29 +157,29 @@ if __name__ == "__main__":
     import sys
 
     # build all the benchmarks
-    print("Building all benchmarks...")
-    run_cmd(["bash build_all_benchmarks.sh"])
-    print("Benchmarks built successfully.")
+    # print("Building all benchmarks...")
+    # run_cmd(["bash build_all_benchmarks.sh"])
+    # print("Benchmarks built successfully.")
     # import scienceplots
 
     # plt.style.use(["ieee", "science"])
 
-    config = BenchmarkConfig(
-        time_counter=TimedeltaCounter(wall_time=True),
-        jitting=False,
-        pilot_min_iteration_count=0,
-        pilot_max_iteration_count=0,
-        warmup_min_iteration_count=0,
-        warmup_max_iteration_count=0,
-        bench_min_iteration_count=50,
-        bench_max_iteration_count=50,
-    )
+    # config = BenchmarkConfig(
+    #     time_counter=TimedeltaCounter(wall_time=True),
+    #     jitting=False,
+    #     pilot_min_iteration_count=0,
+    #     pilot_max_iteration_count=0,
+    #     warmup_min_iteration_count=0,
+    #     warmup_max_iteration_count=0,
+    #     bench_min_iteration_count=50,
+    #     bench_max_iteration_count=50,
+    # )
 
-    results = BenchmarkRunner.run_benchmarks_in_executor(ICEBenchmark, config=config)
-    results.plot()
-    df_res = results.get_results()
-    # uncomment this line to save the results in a csv file
-    df_res.to_csv("ice.csv")
+    # results = BenchmarkRunner.run_benchmarks_in_executor(ICEBenchmark, config=config)
+    # results.plot()
+    # df_res = results.get_results()
+    # # uncomment this line to save the results in a csv file
+    # df_res.to_csv("ice.csv")
 
     config = BenchmarkConfig(
         time_counter=TimedeltaCounter(wall_time=True),
