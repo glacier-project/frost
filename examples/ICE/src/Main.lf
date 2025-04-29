@@ -21,7 +21,7 @@ preamble{=
     import math 
     import os 
     from enum import Enum
-    CONFIG_PATH = "models/configuration.yaml"
+    CONFIG_PATH = "examples/ICE/models/configuration.yaml"
     from machine_data_model.protocols.frost_v1.frost_message import FrostMessage
     from machine_data_model.protocols.frost_v1.frost_header import MsgType, MsgNamespace, ProtocolMsgName, FrostHeader
     from machine_data_model.protocols.frost_v1.frost_payload import VariablePayload, ProtocolPayload, MethodPayload 
@@ -53,21 +53,21 @@ main reactor{
         handler = logging.StreamHandler()
         handler.setFormatter(LFormatter(lf.time.logical_elapsed, TIME_FORMAT))
         logger = logging.getLogger()
-        logger.setLevel(logging.INFO)
+        logger.setLevel(logging.ERROR)
         logger.addHandler(handler)
         recipe_path = os.environ.get("RECIPE_PATH")
         conditions_path = os.environ.get("CONDITIONS_PATH")
     =}
 
-    cell1 = new Cell1(model_path = "models/Cell1.yml")
-    cell2 = new Cell2(model_path = "models/Cell2.yml")
-    cell4 = new Cell4(model_path = "models/Cell4.yml")
-    cell5 = new Cell5(model_path = "models/Cell5.yml")
-    warehouse = new Warehouse(model_path = "models/Warehouse.yml")
-    kairos_aa = new Kairos(model_path = "models/RBKairos.yml")
-    conveyor = new Cell_Conveyor(model_path= "models/Cell_Conveyor.yml")
+    cell1 = new Cell1(model_path = "examples/ICE/models/Cell1.yml")
+    cell2 = new Cell2(model_path = "examples/ICE/models/Cell2.yml")
+    cell4 = new Cell4(model_path = "examples/ICE/models/Cell4.yml")
+    cell5 = new Cell5(model_path = "examples/ICE/models/Cell5.yml")
+    warehouse = new Warehouse(model_path = "examples/ICE/models/Warehouse.yml")
+    kairos_aa = new Kairos(model_path = "examples/ICE/models/RBKairos.yml")
+    conveyor = new Cell_Conveyor(model_path= "examples/ICE/models/Cell_Conveyor.yml")
     scheduler = new Scheduler()
-    bus = new FrostBus(model_path = "models/Common_Bus.yml",width = 8)
+    bus = new FrostBus(model_path = "examples/ICE/models/Common_Bus.yml",width = 8)
     
     #Full demo
     cell1.channel_out, cell2.channel_out, cell5.channel_out, warehouse.channel_out, scheduler.channel_out, kairos_aa.channel_out, conveyor.channel_out, cell4.channel_out -> bus.channel_in after 0

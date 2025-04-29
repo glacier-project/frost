@@ -1,0 +1,18 @@
+[package]
+name = "Frost"
+version = "0.1.0"
+authors = ["sebastiano.gaiardelli@univr.it","pietro.turco@univr.it"]
+homepage = "TODO"
+license = "BSD 2"
+description = "The service-oriented development framework for service-based manufacturing systems."
+
+[[app]]
+name = "Frost"
+main = "examples/ICE/src/Main.lf"
+target = "Python"
+platform = "Native"
+
+[app.properties]
+fast = true
+
+[dependencies]

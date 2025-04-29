@@ -474,7 +474,7 @@ reactor Controller{
             BAY_OUT.set(y)
 
         elif BAY_P_IN.value[0] == "_pallet_arrived":
-            notify_frost.schedule(0, BAY_P_IN.value[1:])
+            notify_frost.schedule(0, [1, BAY_P_IN.value[1:]])
 
         elif BAY_P_IN.value == "Free":
             self.conveyor["L"] = True
@@ -496,7 +496,7 @@ reactor Controller{
             BAY_OUT.set(y)
 
         elif BAY_O_IN.value[0] == "_pallet_arrived":
-            notify_frost.schedule(0, BAY_O_IN.value[1:])
+            notify_frost.schedule(0, [1, BAY_O_IN.value[1:]])
 
         elif BAY_O_IN.value == "Free":
             self.conveyor["I"] = True
@@ -519,7 +519,7 @@ reactor Controller{
 
         elif BAY_N_IN.value[0] == "_pallet_arrived":
 
-            notify_frost.schedule(0, BAY_N_IN.value[1:])
+            notify_frost.schedule(0, [1, [2, BAY_N_IN.value[1]]])
 
         elif BAY_N_IN.value == "Free":
             self.conveyor["B"] = True
@@ -529,7 +529,6 @@ reactor Controller{
             self.BH_buffers["BAY"] = BAY_N_IN.value[1]
             control_BH.schedule(0)
 
-        elif pallet_
 
     =}
 
@@ -537,17 +536,16 @@ reactor Controller{
         temp = BAY_Z_IN.value
         if temp[0] == "giveWorkpiece":
             notify_frost.schedule(0, temp[1:])
-        else:            
-            if temp[0] == "Move":
-                SEG_OUT.set(["DE", "STOP"])
-                self.M_buffers.append(temp[2])
-                BAY_Z_OUT.set(["Move", "OUT"])
-            elif temp[0] == "_pallet_arrived":
-                self.conveyor["E"] = True 
-                self.conveyor["M"] = True
-                SEG_OUT.set(["DE", "CONTINUE"])
-                notify_frost.schedule(0, BAY_Z_IN.value[1:])
-                self.Z = True
+        elif temp[0] == "Move":
+            SEG_OUT.set(["DE", "STOP"])
+            self.M_buffers.append(temp[2])
+            BAY_Z_OUT.set(["Move", "OUT"])
+        elif temp[0] == "_pallet_arrived":
+            self.conveyor["E"] = True 
+            self.conveyor["M"] = True
+            SEG_OUT.set(["DE", "CONTINUE"])
+            notify_frost.schedule(0, [1, [1, BAY_Z_IN.value[1]]])
+            self.Z = True
             
             control_EM.schedule(0)
     =}

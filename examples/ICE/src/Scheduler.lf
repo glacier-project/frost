@@ -7,8 +7,8 @@ preamble{=
     from handle_recipe import *
 =}
 
-reactor Scheduler(recipe_path = "../ICE/recipes/recipes/conveyor.yaml",
-                condition_path = "../ICE/recipes/conditions/conveyor.yaml"
+reactor Scheduler(recipe_path = "examples/ICE/recipes/recipes/conveyor.yaml",
+                condition_path = "examples/ICE/recipes/conditions/conveyor.yaml"
 ){
     input channel_in
     output channel_out

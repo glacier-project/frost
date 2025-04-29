@@ -133,7 +133,6 @@ reactor Conveyor{
     input from_frost
 
     reaction(from_frost) -> Controller.FROST_IN{=
-        print(from_frost.value)
         Controller.FROST_IN.set(from_frost.value)
     =}
 

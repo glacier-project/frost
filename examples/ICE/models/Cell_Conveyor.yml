@@ -78,7 +78,7 @@ root:
                           variable: "Cell_Conveyor/command"
                           store_as: "seekingnode"
                         - !!WaitConditionNode
-                          variable: $seekingnode
+                          variable: "$seekingnode"
                           operator: "=="
                           rhs: $palletNumber
                         - !!ReadVariableNode
