@@ -6,8 +6,16 @@ homepage = "TODO"
 license = "BSD 2"
 description = "The service-oriented development framework for service-based manufacturing systems."
 
+[lib]
+name = "frost"
+main = "./src/FrostMachine.lf"
+target = "Python"
+platform = "Native"
+
+[lib.properties]
+
 [[app]]
-name = "Frost"
+name = "ICE"
 main = "examples/ICE/src/Main.lf"
 target = "Python"
 platform = "Native"
