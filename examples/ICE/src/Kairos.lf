@@ -1,6 +1,6 @@
 target Python
 
-import FrostMachine from "../../../src/FrostMachine.lf"
+import FrostMachine from "../../../frost/FrostMachine.lf"
 
 
 reactor Kairos extends FrostMachine{

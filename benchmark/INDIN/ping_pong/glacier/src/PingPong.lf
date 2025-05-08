@@ -1,6 +1,6 @@
 target Python 
 
-import FrostMachine from "../../../../../src/FrostMachine.lf"
+import FrostMachine from "../../../../../frost/FrostMachine.lf"
 
 reactor PingPong extends FrostMachine{
     state count = {= self.data_model.get_node("PingPong/count") =}

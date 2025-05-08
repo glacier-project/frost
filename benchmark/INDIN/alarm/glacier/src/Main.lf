@@ -11,7 +11,7 @@ target Python{
 }
 
 import Alarm from "Alarm.lf"
-import FrostBus from "../../../../../glacier/src/FrostBus.lf"
+import FrostBus from "../../../../../frost/FrostBus.lf"
 import Scheduler from "Scheduler.lf"
 
 preamble{=
