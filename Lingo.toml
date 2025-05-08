@@ -1,5 +1,5 @@
 [package]
-name = "Frost"
+name = "frost"
 version = "0.1.0"
 authors = ["sebastiano.gaiardelli@univr.it","pietro.turco@univr.it"]
 homepage = "TODO"
@@ -8,7 +8,7 @@ description = "The service-oriented development framework for service-based manu
 
 [lib]
 name = "frost"
-main = "./src/FrostMachine.lf"
+main = "./frost/src/FrostMachine.lf"
 target = "Python"
 platform = "Native"
 
