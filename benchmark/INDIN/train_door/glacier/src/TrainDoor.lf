@@ -1,6 +1,6 @@
 target Python 
 
-import FrostMachine from "../../../../../frost/src/FrostMachine.lf"
+import FrostMachine from "../../../../../src/lib/FrostMachine.lf"
 
 reactor TrainDoor extends FrostMachine{
     state timestamp = {= self.data_model.get_node("TrainDoor/timestamp") =}

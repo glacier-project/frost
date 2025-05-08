@@ -10,7 +10,7 @@ target Python{
 }
 
 import SafeSend from "SafeSend.lf"
-import FrostBus from "../../../../../frost/src/FrostBus.lf"
+import FrostBus from "../../../../../src/lib/FrostBus.lf"
 import Scheduler from "Scheduler.lf"
 
 

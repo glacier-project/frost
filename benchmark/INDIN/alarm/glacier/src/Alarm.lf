@@ -1,6 +1,6 @@
 target Python 
 
-import FrostMachine from "../../../../../frost/src/FrostMachine.lf"
+import FrostMachine from "../../../../../src/lib/FrostMachine.lf"
 
 reactor Alarm extends FrostMachine{
     state out = {= self.data_model.get_node("Alarm/out") =}
