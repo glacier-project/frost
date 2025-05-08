@@ -8,7 +8,7 @@ description = "The service-oriented development framework for service-based manu
 
 [lib]
 name = "frost"
-main = "./src/lib/FrostMachine.lf"
+main = "./src/FrostMachine.lf"
 target = "Python"
 platform = "Native"
 

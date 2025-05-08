@@ -1,6 +1,6 @@
 target Python 
 
-import FrostMachine from "../../../src/lib/FrostMachine.lf"
+import FrostMachine from "../../../src/FrostMachine.lf"
 
 reactor Cell5 extends FrostMachine{
 

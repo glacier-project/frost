@@ -10,7 +10,7 @@ target Python{
 }
 
 import Ring from "Ring.lf"
-import FrostBus from "../../../../../src/lib/FrostBus.lf"
+import FrostBus from "../../../../../src/FrostBus.lf"
 import Scheduler from "Scheduler.lf"
 
 preamble{=

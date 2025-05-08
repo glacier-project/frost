@@ -13,7 +13,7 @@ import Warehouse from "Warehouse.lf"
 import Kairos from "Kairos.lf"
 import Cell_Conveyor from "Cell_Conveyor.lf"
 
-import FrostBus from "../../../src/lib/FrostBus.lf"
+import FrostBus from "../../../src/FrostBus.lf"
 import Scheduler from "Scheduler.lf"
 
 preamble{=
