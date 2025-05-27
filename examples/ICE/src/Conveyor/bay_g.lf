@@ -46,7 +46,9 @@ reactor bay_G(param = "default"){
             else: 
                 self.pallet.action = "OUT"
                 OUT.set(self.pallet)
+                ask.set(["PalletReleased", self.pallet.pallet_id])
                 self.pallet = None
+                print(f"Bay G: {self.name} sent pallet out")
     =}
 
     '''

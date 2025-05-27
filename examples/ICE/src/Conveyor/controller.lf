@@ -710,7 +710,10 @@ reactor Controller{
     reaction(from_G) -> notify_frost, to_G{=
         if from_G.value[0] == self.Events.pallet_arrived.value:
             self.pallet_on_G = True           
-            notify_frost.schedule(0,[1, [from_G.value[1], "G"]])
+            notify_frost.schedule(0,[1, [from_G.value[1], 5]])
+        elif from_G.value[0] == "PalletReleased":
+            notify_frost.schedule(0, [7, [5, from_G.value[1]]])
+        
         else:
             notify_frost.schedule(0, from_G.value)
     =}

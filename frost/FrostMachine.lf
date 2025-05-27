@@ -58,8 +58,6 @@ reactor FrostMachine(update_step = 1000 msec) extends FrostReactor{
         channel_out[0].set(self.generate_bus_registration_message())
         # Schedule the check in 3 seconds.
         check_bus_registration.schedule(SEC(3))
-        self.custom_node = FolderNode(name = "custom_node")
-        self.data_model.add_child(parent_id = self.data_model.root, child = self.custom_node)
     =}
 
     reaction(channel_in)->channel_out,check_bus_registration{=

@@ -21,7 +21,7 @@ preamble{=
     import math 
     import os 
     from enum import Enum
-    CONFIG_PATH = "examples/ICE/models/configuration.yaml"
+    CONFIG_PATH = "models/configuration.yaml"
     from machine_data_model.protocols.frost_v1.frost_message import FrostMessage
     from machine_data_model.protocols.frost_v1.frost_header import MsgType, MsgNamespace, ProtocolMsgName, FrostHeader
     from machine_data_model.protocols.frost_v1.frost_payload import VariablePayload, ProtocolPayload, MethodPayload 
@@ -44,7 +44,6 @@ preamble{=
 
 
 main reactor{
-
     preamble{=
         with open(CONFIG_PATH) as stream:
             config = yaml.safe_load(stream)
@@ -53,25 +52,25 @@ main reactor{
         handler = logging.StreamHandler()
         handler.setFormatter(LFormatter(lf.time.logical_elapsed, TIME_FORMAT))
         logger = logging.getLogger()
-        logger.setLevel(logging.ERROR)
+        logger.setLevel(logging.INFO)
         logger.addHandler(handler)
         recipe_path = os.environ.get("RECIPE_PATH")
         conditions_path = os.environ.get("CONDITIONS_PATH")
     =}
 
-    cell1 = new Cell1(model_path = "examples/ICE/models/Cell1.yml")
-    cell2 = new Cell2(model_path = "examples/ICE/models/Cell2.yml")
-    cell4 = new Cell4(model_path = "examples/ICE/models/Cell4.yml")
-    cell5 = new Cell5(model_path = "examples/ICE/models/Cell5.yml")
-    warehouse = new Warehouse(model_path = "examples/ICE/models/Warehouse.yml")
-    kairos_aa = new Kairos(model_path = "examples/ICE/models/RBKairos.yml")
-    conveyor = new Cell_Conveyor(model_path= "examples/ICE/models/Cell_Conveyor.yml")
+    #cell1 = new Cell1(model_path = "examples/ICE/models/Cell1.yml")
+    #cell2 = new Cell2(model_path = "examples/ICE/models/Cell2.yml")
+    #cell4 = new Cell4(model_path = "examples/ICE/models/Cell4.yml")
+    #cell5 = new Cell5(model_path = "examples/ICE/models/Cell5.yml")
+    #warehouse = new Warehouse(model_path = "examples/ICE/models/Warehouse.yml")
+    #kairos_aa = new Kairos(model_path = "examples/ICE/models/RBKairos.yml")
+    conveyor = new Cell_Conveyor(model_path= "models/Cell_Conveyor.yml")
     scheduler = new Scheduler()
-    bus = new FrostBus(model_path = "examples/ICE/models/Common_Bus.yml",width = 8)
+    bus = new FrostBus(model_path = "models/Common_Bus.yml",width = 2)
     
     #Full demo
-    cell1.channel_out, cell2.channel_out, cell5.channel_out, warehouse.channel_out, scheduler.channel_out, kairos_aa.channel_out, conveyor.channel_out, cell4.channel_out -> bus.channel_in after 0
-    bus.channel_out -> cell1.channel_in, cell2.channel_in, cell5.channel_in, warehouse.channel_in, scheduler.channel_in, kairos_aa.channel_in, conveyor.channel_in, cell4.channel_in after 0
+    #cell1.channel_out, cell2.channel_out, cell5.channel_out, warehouse.channel_out, scheduler.channel_out, kairos_aa.channel_out, conveyor.channel_out, cell4.channel_out -> bus.channel_in after 0
+    #bus.channel_out -> cell1.channel_in, cell2.channel_in, cell5.channel_in, warehouse.channel_in, scheduler.channel_in, kairos_aa.channel_in, conveyor.channel_in, cell4.channel_in after 0
 
     #Demo with 2 machine recipe
     //warehouse.channel_out, kairos_aa.channel_out, scheduler.channel_out -> bus.channel_in after 1 msec
@@ -82,7 +81,7 @@ main reactor{
     //bus.channel_out -> cell5.channel_in, warehouse.channel_in, kairos_aa.channel_in, scheduler.channel_in, conveyor.channel_in after 1 msec
 
     #Demo with just Conveyor
-    //conveyor.channel_out, scheduler.channel_out -> bus.channel_in after 1 msec
-    //bus.channel_out -> conveyor.channel_in, scheduler.channel_in after 1 msec
+    conveyor.channel_out, scheduler.channel_out -> bus.channel_in after 1 msec
+    bus.channel_out -> conveyor.channel_in, scheduler.channel_in after 1 msec
 
 }
