@@ -148,7 +148,7 @@ reactor Controller{
         self.pallets[3] = Pallet(pallet_id = 3, position = "M")
         self.pallets[4] = Pallet(pallet_id = 4, position = "E")
         self.pallets[5] = Pallet(pallet_id = 5, position = "I")
-        self.pallets[6] = Pallet(pallet_id = 6, position = "H")
+        self.pallets[6] = Pallet(pallet_id = 6, position = "D")
         self.pallets[7] = Pallet(pallet_id = 7, position = "B")
         self.pallets[8] = Pallet(pallet_id = 8, position = "C")
         for z in range(1, len(self.pallets)):
@@ -474,7 +474,7 @@ reactor Controller{
             BAY_OUT.set(y)
 
         elif BAY_P_IN.value[0] == "_pallet_arrived":
-            notify_frost.schedule(0, [1, BAY_P_IN.value[1:]])
+            notify_frost.schedule(0, [1, [2, BAY_P_IN.value[1:]]])
 
         elif BAY_P_IN.value == "Free":
             self.conveyor["L"] = True
@@ -496,7 +496,7 @@ reactor Controller{
             BAY_OUT.set(y)
 
         elif BAY_O_IN.value[0] == "_pallet_arrived":
-            notify_frost.schedule(0, [1, BAY_O_IN.value[1:]])
+            notify_frost.schedule(0, [1, [3, BAY_O_IN.value[1:]]])
 
         elif BAY_O_IN.value == "Free":
             self.conveyor["I"] = True
@@ -519,7 +519,7 @@ reactor Controller{
 
         elif BAY_N_IN.value[0] == "_pallet_arrived":
 
-            notify_frost.schedule(0, [1, [2, BAY_N_IN.value[1]]])
+            notify_frost.schedule(0, [1, [4, BAY_N_IN.value[1:]]])
 
         elif BAY_N_IN.value == "Free":
             self.conveyor["B"] = True
@@ -539,6 +539,7 @@ reactor Controller{
         elif temp[0] == "Move":
             SEG_OUT.set(["DE", "STOP"])
             self.M_buffers.append(temp[2])
+            notify_frost.schedule(0, [7, [1, BAY_Z_IN.value[1]]])
             BAY_Z_OUT.set(["Move", "OUT"])
         elif temp[0] == "_pallet_arrived":
             self.conveyor["E"] = True 
@@ -548,6 +549,8 @@ reactor Controller{
             self.Z = True
             
             control_EM.schedule(0)
+        elif temp[0] == "PalletReleased":
+            notify_frost.schedule(0, [7, [1, BAY_Z_IN.value[1]]])
     =}
 
     ############################## SWITCH REACTIONS ##############################
@@ -693,15 +696,20 @@ reactor Controller{
                 y = "Move", "OUT"
                 to_G.set(y)
             elif len(pos) == 2:
+                i = 2
                 if pos == "Z1":
                     BAY_Z_OUT.set(["Move", "OUT"])
                 else:
                     if pos[0] == "N":
                         BAY_OUT.set(["Move", pos, "OUT"])
+                        i = 4
                     elif pos[0] == "O":
                         BAY_OUT.set(["Move", pos, "OUT"])
+                        i = 3
                     elif pos[0] == "P":
                         BAY_OUT.set(["Move", pos, "OUT"])
+                        i = 2
+                    notify_frost.schedule(0, [7, [i, pos[1]]])
             
     =}
 
@@ -719,7 +727,6 @@ reactor Controller{
     =}
 
     reaction(notify_frost) -> FROST_OUT{=
-        temp = notify_frost.value
-        FROST_OUT.set(temp)
+        FROST_OUT.set(notify_frost.value)
     =}
 }

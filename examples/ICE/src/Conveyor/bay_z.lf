@@ -38,14 +38,15 @@ reactor Bay_Z(param = "default"){
             if self.pallet.destination != self.name:
                 ask.set(["Move"])
 
-        elif command.value[0] == "Move":
-            if len(command.value) > 1 and command.value[1] == "OUT":
-                OUT.set(self.pallet)
-                self.pallet = None
-                
-            else:
-                y = "Move", self.name, self.pallet
-                ask.set(y)
+        elif command.value[0] == "Move":            
+            if self.pallet is not None:
+                if len(command.value) > 1 and command.value[1] == "OUT":
+                    ask.set(["PalletReleased", self.pallet.pallet_id]) 
+                    OUT.set(self.pallet)                
+                    self.pallet = None                            
+                else:
+                    y = "Move", self.name, self.pallet
+                    ask.set(y)
         elif command.value[0] == "SPEA":
             ask.set(["giveWorkpiece", "SPEA", self.pallet.object])
             self.pallet.object = None

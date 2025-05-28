@@ -70,7 +70,7 @@ reactor Scheduler(recipe_path = "recipes/recipes/conveyor.yaml",
             if self.conditions[self.i-1].check_condition(message):
                 routine.schedule(SEC(2))
 
-        if self.i == len(self.recipe) - 1:
+        if self.i == len(self.recipe):
             self.counter += 1            
             self.i = 0
     =}

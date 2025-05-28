@@ -98,30 +98,31 @@ reactor Cell_Conveyor extends FrostMachine{
     reaction(conveyor.to_frost){=
         cmd = conveyor.to_frost.value[0]
         lst = conveyor.to_frost.value[1]
-        print("Conveyor to Frost:", cmd, lst)
+        print("Received command:", cmd, "with data:", lst)
         if cmd == 1:
+            print("Pallet Arrived", lst)
             if lst[1] == 5:
                 self.LUBay.get_property("IndexPosition").get_property("palletNum").value  = lst[0]
             elif lst[0] == 1:
                 self.Bay1.get_property("PalletPosition1").get_property("palletNum").value = lst[1]
             elif lst[0] == 2:
-                self.Bay2.get_property("PalletPosition1").get_property("palletNum").value = lst[1]
+                self.Bay2.get_property("PalletPosition" + lst[1][1]).get_property("palletNum").value = lst[1][0]
             elif lst[0] == 3:
-                self.Bay3.get_property("PalletPosition1").get_property("palletNum").value = lst[1]
+                self.Bay3.get_property("PalletPosition" + lst[1][1]).get_property("palletNum").value = lst[1][0]
             elif lst[0] == 4:
-                self.Bay4.get_property("PalletPosition1").get_property("palletNum").value = lst[1]
+                self.Bay4.get_property("PalletPosition" + lst[1][1]).get_property("palletNum").value = lst[1][0]
         elif cmd == 7:
             if lst[0] == 5:
-                self.LUBay.get_property("IndexPosition").get_property("palletNum").value = 0
+                self.LUBay.get_property("IndexPosition").get_property("palletNum").value = 0         
             elif lst[0] == 1:
                 self.Bay1.get_property("PalletPosition1").get_property("palletNum").value = 0
             elif lst[0] == 2:
-                self.Bay2.get_property("PalletPosition1").get_property("palletNum").value = 0
+                self.Bay2.get_property("PalletPosition" + str(lst[1])).get_property("palletNum").value = 0
             elif lst[0] == 3:
-                self.Bay3.get_property("PalletPosition1").get_property("palletNum").value = 0
+                self.Bay3.get_property("PalletPosition" + str(lst[1])).get_property("palletNum").value = 0
             elif lst[0] == 4:
-                self.Bay4.get_property("PalletPosition1").get_property("palletNum").value = 0
-         
+                self.Bay4.get_property("PalletPosition" + str(lst[1])).get_property("palletNum").value = 0
+            print("Pallet released:", lst[1])
         self.out.value = True
     =}
     
@@ -133,7 +134,6 @@ reactor Cell_Conveyor extends FrostMachine{
             self.command.write("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Bayes/Bay" + res[0] + "/PalletPosition" + res[1] + "/palletNum")
         else:
             self.command.write("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Bayes/LoadUnloadZone/IndexPosition/palletNum")
-        print(self.data_model.get_node(self.command.value).value)
         temp1 = destination
         temp2 = ""
         if temp1 != 5:
@@ -150,11 +150,10 @@ reactor Cell_Conveyor extends FrostMachine{
         dest = pallet.get_property("destination").value
         res = str(dest)
         if dest != 5:
-            res = res[:len(res)//2] + "_" + res[len(res)//2:]
-            self.command.write("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_" + res)
+            self.command.write("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Bayes/Bay" + res[0] + "/PalletPosition" + res[1] + "/palletNum")
         else:
-            self.command.write("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_" + str(dest))
-
+            self.command.write("Cell_Conveyor/ConveyorHMI/ConveyorObjects/Bayes/LoadUnloadZone/IndexPosition/palletNum") 
+        print(self.command.value)
         self.messages_to_conveyor.append([7, [palletNumber]])
         return True
     =}

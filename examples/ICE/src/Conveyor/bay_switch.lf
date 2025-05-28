@@ -47,7 +47,7 @@ reactor Bay_Switch(param = "default"){
             if self.pallet.looping:
                 ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
             elif self.pallet.destination[0] in ["N","O","P"] and self.pallet.destination[1] == self.name:
-                ask.set(["_pallet_arrived", self.pallet.pallet_id])                
+                ask.set(["_pallet_arrived", self.pallet.pallet_id, self.name])                
             else:
                 ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
     =}

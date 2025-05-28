@@ -81,7 +81,7 @@ main reactor{
     //bus.channel_out -> cell5.channel_in, warehouse.channel_in, kairos_aa.channel_in, scheduler.channel_in, conveyor.channel_in after 1 msec
 
     #Demo with just Conveyor
-    conveyor.channel_out, scheduler.channel_out -> bus.channel_in after 1 msec
-    bus.channel_out -> conveyor.channel_in, scheduler.channel_in after 1 msec
+    conveyor.channel_out, scheduler.channel_out -> bus.channel_in after 0
+    bus.channel_out -> conveyor.channel_in, scheduler.channel_in after 0
 
 }
