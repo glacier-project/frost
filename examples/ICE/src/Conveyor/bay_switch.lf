@@ -37,7 +37,7 @@ reactor Bay_Switch(param = "default"){
     reaction(IN)-> ask{=
         if IN.value is not None:
             self.pallet = IN.value
-
+            logging.info(f"Bay Switch {self.name} received pallet {self.pallet.pallet_id} at position {self.pallet.position}")
             #Update pallet position
             position_list = list(self.pallet.position)
             position_list[1] = self.name

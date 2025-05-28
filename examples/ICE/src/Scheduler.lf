@@ -45,7 +45,7 @@ reactor Scheduler(recipe_path = "recipes/recipes/conveyor.yaml",
     reaction(startup)-> channel_out, routine{=
         channel_out.set(self.generate_bus_registration_message())
         self.logger = logging.getLogger("Scheduler")
-        routine.schedule(SEC(2))
+        routine.schedule(SEC(3600))
     =}
     state i = 0
     reaction(routine)-> channel_out{=

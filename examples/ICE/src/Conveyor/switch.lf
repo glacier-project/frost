@@ -71,6 +71,7 @@ reactor Switch(param = "default"){
     reaction(IN)-> handle_pallet, ask{=        
         if IN.value is not None:
             self.pallet = IN.value
+            logging.info(f"Switch {self.name} received pallet {self.pallet.pallet_id} at port IN")
             if self.name == "M":
                 self.pallet.position = self.name
                 ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])

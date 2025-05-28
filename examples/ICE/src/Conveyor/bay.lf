@@ -50,6 +50,7 @@ reactor Bay(param = "default"){
     then it schedules the free_switch event'''
     reaction(IN) -> Plat1.CROSS_IN, free_switch{=
         temp = IN.value
+        logging.info(f"Bay {self.name} received pallet {temp.pallet_id} at position {temp.position}")
         temp.position = self.name + "0"
         Plat1.CROSS_IN.set(temp)
         free_switch.schedule(0)

@@ -106,8 +106,7 @@ reactor Controller{
 
     ############################## ACTION REACTIONS ##############################
     reaction (create_pallet) -> OUT{=
-        temp = self.pallets[self.pallets_to_be_created[0]]
-        self.pallets_to_be_created.pop(0)
+        temp = self.pallets[self.pallets_to_be_created.pop(0)]        
         temp.looping = True
         self.pallet_names.append(temp.pallet_id)         
         self.conveyor[temp.position] = False
@@ -121,7 +120,7 @@ reactor Controller{
 
     reaction (startup)-> OUT, BAY_OUT, create_pallet{=
         self.pallet_on_G = False
-        self.pallets_to_be_created = [2, 3, 4, 5, 6, 7, 8]
+        self.pallets_to_be_created = [2, 3, 4, 5, 6, 7, 8, 9, 10]
         self.BH_buffers = {"BAY": None, "IN_UP": [], "IN_DOWN": []}
         self.CI_buffers = {"BAY": None, "IN_UP": [], "IN_DOWN": []}
         self.DL_buffers = {"BAY": None, "IN_UP": [], "IN_DOWN": []}
@@ -147,10 +146,12 @@ reactor Controller{
         self.pallets[2] = Pallet(pallet_id = 2, position = "A")
         self.pallets[3] = Pallet(pallet_id = 3, position = "M")
         self.pallets[4] = Pallet(pallet_id = 4, position = "E")
-        self.pallets[5] = Pallet(pallet_id = 5, position = "I")
+        self.pallets[5] = Pallet(pallet_id = 5, position = "F")
         self.pallets[6] = Pallet(pallet_id = 6, position = "D")
         self.pallets[7] = Pallet(pallet_id = 7, position = "B")
         self.pallets[8] = Pallet(pallet_id = 8, position = "C")
+        self.pallets[9] = Pallet(pallet_id = 9, position = "L")
+        self.pallets[10] = Pallet(pallet_id = 10, position = "H")
         for z in range(1, len(self.pallets)):
             create_pallet.schedule(z-1)
     =}
@@ -163,7 +164,6 @@ reactor Controller{
             y = ["GF"]
             SEG_OUT.set(y)        
     =}
-    
     reaction(control_BH)-> SEG_OUT, BAY_OUT{=
         if self.conveyor["B"] == True or self.conveyor["H"] == True:
             y = PriorityAlgorithm(self.BH_buffers)
@@ -209,7 +209,6 @@ reactor Controller{
                 self.conveyor["B"] = True
                 self.conveyor["H"] = True                          
     =}
-
     reaction(control_CI)-> SEG_OUT, BAY_OUT{=
         if self.conveyor["C"] == True or self.conveyor["I"] == True:
             y = PriorityAlgorithm(self.CI_buffers)
@@ -255,7 +254,6 @@ reactor Controller{
                 self.conveyor["C"] = True
                 self.conveyor["I"] = True                          
     =}
-
     reaction(control_DL)-> SEG_OUT, BAY_OUT{=
         if self.conveyor["D"] == True or self.conveyor["L"] == True:
             y = PriorityAlgorithm(self.DL_buffers)
@@ -302,7 +300,6 @@ reactor Controller{
                 self.conveyor["D"] = True
                 self.conveyor["L"] = True                          
     =}
-    
     reaction(control_EM)-> SEG_OUT, BAY_Z_OUT{=
         if self.conveyor["E"] == True and self.conveyor["M"] == True and (self.DE_buffers or self.M_buffers):
             self.conveyor["E"] = False
@@ -317,7 +314,6 @@ reactor Controller{
                 y = ["DE"]
                 SEG_OUT.set(y)
     =}
-
     reaction(control_G) -> SEG_OUT{=
         if self.conveyor["G"] == True and (self.HG_buffers):
             self.conveyor["G"] = False
@@ -342,7 +338,6 @@ reactor Controller{
         control_BH.schedule(0)
         control_AF.schedule(1)        
     =}
-
     reaction(SEG_BC)->control_BH, control_CI{=
         self.conveyor["B"] = True
         self.conveyor["H"] = True
@@ -358,7 +353,6 @@ reactor Controller{
         control_CI.schedule(0)
         control_BH.schedule(1)
     =}
-
     reaction(SEG_CD) -> control_CI, control_DL{=
         self.conveyor["C"] = True
         self.conveyor["I"] = True
@@ -375,7 +369,6 @@ reactor Controller{
         control_DL.schedule(0)
         control_CI.schedule(1)
     =}
-
     reaction(SEG_DE) -> control_DL, control_EM{=
         self.conveyor["D"] = True
         self.conveyor["L"] = True
@@ -390,7 +383,6 @@ reactor Controller{
         control_EM.schedule(0)
         control_DL.schedule(1)
     =}
-
     reaction(SEG_ML) -> control_EM, control_DL{=
         self.conveyor["M"] = True
         self.conveyor["E"] = True
@@ -406,7 +398,6 @@ reactor Controller{
         control_DL.schedule(0)
         control_EM.schedule(1)
     =}
-
     reaction(SEG_LI) -> control_DL, control_CI{=
         self.conveyor["L"] = True
         self.conveyor["D"] = True
@@ -423,7 +414,6 @@ reactor Controller{
         control_CI.schedule(0)
         control_DL.schedule(1)
     =}
-
     reaction(SEG_IH) -> control_BH, control_CI{=
         self.conveyor["I"] = True
         self.conveyor["C"] = True
@@ -440,7 +430,6 @@ reactor Controller{
         control_CI.schedule(0)
         control_BH.schedule(1)
     =}
-
     reaction(SEG_HG) -> control_BH, control_G{=
         self.conveyor["H"] = True
         self.conveyor["B"] = True
@@ -451,7 +440,6 @@ reactor Controller{
         control_G.schedule(0)
         control_BH.schedule(1)
     =}
-
     reaction(SEG_GF) -> control_AF, control_G{=
         self.conveyor["G"] = True
         temp = SEG_GF.value
@@ -560,21 +548,18 @@ reactor Controller{
             y = "Move", "A", route
             OUT.set(y)
     =}
-
     reaction (B_IN) -> OUT{=
         if B_IN.value is not None and B_IN.value[0] == "Move":
             route = Routing(B_IN.value[1], B_IN.value[2])  
             y = "Move", "B", route
             OUT.set(y)
     =}
-    
     reaction (C_IN) -> OUT{=
         if C_IN.value is not None and C_IN.value[0] == "Move":
             route = Routing(C_IN.value[1], C_IN.value[2])  
             y = "Move", "C", route
             OUT.set(y)
     =}
-
     reaction (D_IN) -> OUT{=
         if D_IN.value is not None and D_IN.value[0] == "Move":
             route = Routing(D_IN.value[1], D_IN.value[2])  
@@ -585,19 +570,16 @@ reactor Controller{
             y = "Move", "D", route                       
             OUT.set(y)
     =}
-
     reaction (E_IN) -> OUT{=
         if E_IN.value is not None and E_IN.value[0] == "Move":
             y = "Move", "E", "OUT"
             OUT.set(y)
     =}
-
     reaction (F_IN) -> OUT{=
         if F_IN.value is not None and F_IN.value[0] == "Move":
             y = "Move", "F", "OUT"
             OUT.set(y)
     =}
-
     reaction (H_IN) -> OUT, BAY_OUT{=
         if H_IN.value is not None and H_IN.value[0] == "Move":
             route = "OUT"
@@ -613,7 +595,6 @@ reactor Controller{
                 
             OUT.set(y)
     =}
-
     reaction (I_IN) -> OUT{=
         if I_IN.value is not None and I_IN.value[0] == "Move":
             route = Routing(I_IN.value[1], I_IN.value[2])
@@ -626,7 +607,6 @@ reactor Controller{
                     y = "Move", "I","OUT"
             OUT.set(y)
     =}
-
     reaction (L_IN) -> OUT{=
         if L_IN.value is not None and L_IN.value[0] == "Move":
             route = Routing(L_IN.value[1], L_IN.value[2])
@@ -640,7 +620,6 @@ reactor Controller{
 
             OUT.set(y)
     =}
-
     reaction (M_IN) -> OUT{=
         if M_IN.value is not None and M_IN.value[0] == "Move":
             route = "OUT"
@@ -660,7 +639,6 @@ reactor Controller{
             
             OUT.set(y)
     =}
-
     ############################## FROST ##############################
     reaction(FROST_IN)-> OUT, BAY_OUT, BAY_Z_OUT, to_G, notify_frost{=
         command = FROST_IN.value[0]
