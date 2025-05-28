@@ -113,10 +113,8 @@ reactor Cell_Conveyor extends FrostMachine{
         elif cmd == 7:
             if lst[0] == 5:
                 self.LUBay.get_property("IndexPosition").get_property("palletNum").value = 0
-                print("YEAHHHH1")
             elif lst[0] == 1:
                 self.Bay1.get_property("PalletPosition1").get_property("palletNum").value = 0
-                print("YEAHHHH2")
             elif lst[0] == 2:
                 self.Bay2.get_property("PalletPosition1").get_property("palletNum").value = 0
             elif lst[0] == 3:
