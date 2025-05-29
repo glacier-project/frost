@@ -1,5 +1,5 @@
 target Python{
-    fast: True,
+    fast: False,
     timeout: 3600s,
     files: [../models/l_formatter.py, ../models/time_utils.py, ../models/singleton_meta.py],
     logging: warn 
