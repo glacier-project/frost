@@ -59,7 +59,7 @@ reactor FrostMachine(update_step = 1000 msec) extends FrostReactor{
         # Schedule the check in 3 seconds.
         check_bus_registration.schedule(SEC(3))
     =}
-
+    state method_queue = []
     reaction(channel_in)->channel_out,check_bus_registration{=
         '''
         Handle incoming messages from the bus
@@ -78,7 +78,13 @@ reactor FrostMachine(update_step = 1000 msec) extends FrostReactor{
                 if message.header.matches(MsgType.RESPONSE, MsgNamespace.PROTOCOL, ProtocolMsgName.REGISTER):
                     self.logger.debug(f"Machine {self.name}, correctly registered with the CommonBus.")
                     self.registered_to_bus = True
-    
+
+                elif isistance(self.data_model.get_node(message.payload.node), MethodNode) and not (
+                    isistance(self.data_model.get_node(message.payload.node), AsyncMethodNode) 
+                    or isistance(self.data_model.get_node(message.payload.node), CompositeMethodNode)):
+                    self.method_queue.append(message)
+                    continue
+
                 else:
                     response_message = self.protocol_mng.handle_request(message)
                     self.message_queue.append(response_message)
