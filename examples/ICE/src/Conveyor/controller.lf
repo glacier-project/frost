@@ -120,7 +120,7 @@ reactor Controller{
 
     reaction (startup)-> OUT, BAY_OUT, create_pallet{=
         self.pallet_on_G = False
-        self.pallets_to_be_created = [2, 3, 4, 5, 6, 7, 8, 9]
+        self.pallets_to_be_created = []
         self.BH_buffers = {"BAY": None, "IN_UP": [], "IN_DOWN": []}
         self.CI_buffers = {"BAY": None, "IN_UP": [], "IN_DOWN": []}
         self.DL_buffers = {"BAY": None, "IN_UP": [], "IN_DOWN": []}
@@ -137,22 +137,22 @@ reactor Controller{
         self.O_ = [True, True, True]
         self.P_ = [True, True, True]
         self.conveyor = {"A" : True, "B" : True, "C" : True, "D" : True, "E" : True, "F" : True, "G" : True, "H" : True, "I" : True, "L" : True, "M" : True}
-        temp = Pallet(pallet_id = 1, position = "I")
+        temp = Pallet(pallet_id = 1, position = "M")
         temp.looping = True
         self.pallets[temp.pallet_id] = temp
         self.pallet_names.append(temp.pallet_id)         
         y = "Create", temp.position, self.pallets[temp.pallet_id]
         OUT.set(y)
-        self.pallets[2] = Pallet(pallet_id = 2, position = "M")
+        '''self.pallets[2] = Pallet(pallet_id = 2, position = "M")
         self.pallets[3] = Pallet(pallet_id = 3, position = "L")
         self.pallets[4] = Pallet(pallet_id = 4, position = "C")
         self.pallets[5] = Pallet(pallet_id = 5, position = "D")
         self.pallets[6] = Pallet(pallet_id = 6, position = "E")
         self.pallets[7] = Pallet(pallet_id = 7, position = "H")
         self.pallets[8] = Pallet(pallet_id = 8, position = "A")
-        self.pallets[9] = Pallet(pallet_id = 9, position = "B")
-        for z in range(1, len(self.pallets)):
-            create_pallet.schedule(z-1)
+        self.pallets[9] = Pallet(pallet_id = 9, position = "B")'''
+        #for z in range(1, len(self.pallets)):
+        #    create_pallet.schedule(z-1)
     =}
 
     reaction(control_AF) -> SEG_OUT{=

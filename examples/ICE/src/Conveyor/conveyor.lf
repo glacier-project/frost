@@ -10,6 +10,12 @@ import Bay_Z from "bay_z.lf"
 import bay_G from "bay_g.lf"
 
 reactor Conveyor{
+    // 
+    //   M ------- L
+    //   |         |
+    //   |         |
+    //   E ------- D
+    //
     //First ring instantiation
     M = new Switch(param = "M")
     L = new Switch(param = "L")
@@ -20,19 +26,24 @@ reactor Conveyor{
     
     //Links among segments
     ML = new Segment(param = "ML")
-    M.OUT ->  ML.IN after 5722 msec
+    M.OUT ->  ML.IN after 12700 msec
     ML.OUT ->  L.IN
     DE = new Segment(param = "DE")
     DE.OUT -> E.IN
-    D.OUT -> DE.IN after 5722 msec
+    D.OUT -> DE.IN after 12700 msec
     
     //Links among interchanges
     L.CROSS, D.CROSS -> LD.IN_UP, LD.IN_DOWN after 7000msec  
     LD.OUT_UP, LD.OUT_DOWN -> L.CROSS_IN, D.CROSS_IN  
     //Links among mutexes
-    E.OUT -> EM.IN after 7000msec
-    EM.OUT -> M.IN
+    E.OUT, EM.OUT  -> EM.IN, M.IN after 1250msec
     
+    // 
+    //   M ------- L ------- I
+    //   |         |         |
+    //   |         |         |
+    //   E ------- D ------- C 
+    //
     //Second ring instantiation
     I = new Switch(param = "I")
     C = new Switch(param = "C")
@@ -40,16 +51,22 @@ reactor Conveyor{
 
     //Links among segments
     LI = new Segment(param = "LI")
-    L.OUT -> LI.IN after 9722 msec
+    L.OUT -> LI.IN after 20200 msec
     LI.OUT -> I.IN
     CD = new Segment(param = "CD")
     CD.OUT -> D.IN
-    C.OUT -> CD.IN after 9722 msec
+    C.OUT -> CD.IN after 20200 msec
 
     //Links among interchange
     I.CROSS, C.CROSS -> IC.IN_UP, IC.IN_DOWN after 7000msec
     IC.OUT_UP, IC.OUT_DOWN -> I.CROSS_IN, C.CROSS_IN
-    
+
+    // 
+    //   M ------- L ------- I ------- H
+    //   |         |         |         |
+    //   |         |         |         |
+    //   E ------- D ------- C ------- B
+    //
     //Third ring instantiation
     H = new Switch(param = "H")
     B = new Switch(param = "B")
@@ -57,21 +74,33 @@ reactor Conveyor{
 
     //Links among segments
     IH = new Segment(param = "IH")
-    I.OUT -> IH.IN after 5416 msec
+    I.OUT -> IH.IN after 13250 msec
     IH.OUT -> H.IN
     BC = new Segment(param = "BC")
     BC.OUT -> C.IN
-    B.OUT -> BC.IN after 5416 msec
+    B.OUT -> BC.IN after 14500 msec
 
     //Links among interchange
-    H.CROSS, B.CROSS -> HB.IN_UP, HB.IN_DOWN after 7000msec
+    H.CROSS, B.CROSS -> HB.IN_UP, HB.IN_DOWN after 2400msec
     HB.OUT_UP, HB.OUT_DOWN -> H.CROSS_IN, B.CROSS_IN
     
+    // 
+    //   M ------- L ------- I ------- H ------- G
+    //   |         |         |         |
+    //   |         |         |         |
+    //   E ------- D ------- C ------- B
+    //
     //G instantiation
     G = new bay_G(param = "G")
     HG = new Segment(param = "HG")
     H.OUT, HG.OUT -> HG.IN, G.IN
 
+    // 
+    //   M ------- L ------- I ------- H ------- G--- F
+    //   |         |         |         |              |
+    //   |         |         |         |              |
+    //   E ------- D ------- C ------- B ------------ A
+    //
     //Fourth ring instantiation
     F = new Switch(param = "F")   
     A = new Switch(param = "A")    
@@ -112,7 +141,6 @@ reactor Conveyor{
     Z.OUT -> MZ.IN_UP after 5000msec
     MZ.OUT_DOWN -> M.BAY_IN
 
-    
     //Controller instantiation
     Controller = new Controller()
     //SWITCHES CONNECTIONS

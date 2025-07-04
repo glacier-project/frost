@@ -91,7 +91,7 @@ reactor Switch(param = "default"){
         if CROSS_IN.value is not None:
             self.pallet = CROSS_IN.value
             self.pallet.position = self.name
-
+            logging.info(f"Switch {self.name} received pallet {self.pallet.pallet_id} at port IN")
             if self.pallet.looping:
                 self.pallet.action = "OUT"
                 handle_pallet.schedule(0)

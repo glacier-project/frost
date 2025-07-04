@@ -1,8 +1,7 @@
 target Python{
-    fast: False,
+    fast: false,
     timeout: 3600s,
     files: [../models/l_formatter.py, ../models/time_utils.py, ../models/singleton_meta.py],
-    logging: warn 
 }
 
 import Cell1 from "Cell1.lf"
@@ -81,7 +80,6 @@ main reactor{
     //bus.channel_out -> cell5.channel_in, warehouse.channel_in, kairos_aa.channel_in, scheduler.channel_in, conveyor.channel_in after 1 msec
 
     #Demo with just Conveyor
-    conveyor.channel_out, scheduler.channel_out -> bus.channel_in after 0
-    bus.channel_out -> conveyor.channel_in, scheduler.channel_in after 0
-
+    conveyor.channel_out, scheduler.channel_out -> bus.channel_in after 100 msec
+    bus.channel_out -> conveyor.channel_in, scheduler.channel_in after 100 msec
 }
