@@ -1,12 +1,18 @@
 [package]
+<<<<<<< HEAD
 name = "frost"
 version = "0.1.0"
+=======
+name = "Glacier"
+version = "0.0.0"
+>>>>>>> origin/dev
 authors = ["sebastiano.gaiardelli@univr.it","pietro.turco@univr.it"]
 homepage = "TODO"
 license = "BSD 2"
 description = "The service-oriented development framework for service-based manufacturing systems."
 
 [lib]
+<<<<<<< HEAD
 name = "frost"
 location = "frost"
 target = "Python"
@@ -16,6 +22,9 @@ platform = "Native"
 
 [[app]]
 name = "ICE"
+=======
+name = "GlacierExample"
+>>>>>>> origin/dev
 main = "examples/ICE/src/Main.lf"
 target = "Python"
 platform = "Native"
@@ -23,4 +32,8 @@ platform = "Native"
 [app.properties]
 fast = true
 
+<<<<<<< HEAD
 [dependencies]
+=======
+[dependencies]
+>>>>>>> origin/dev
