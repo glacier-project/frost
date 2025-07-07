@@ -138,7 +138,7 @@ reactor Switch(param = "default"){
         
         elif command.value[1] == self.name and command.value[0] == "Move" and self.pallet is not None:
             if command.value[2] == "CROSS":                
-                pallet.action = command.value[2]   
+                self.pallet.action = command.value[2]   
 
             elif command.value[2] == "OUT":
                 self.pallet.action = command.value[2]

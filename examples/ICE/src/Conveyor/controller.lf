@@ -116,11 +116,12 @@ reactor Controller{
 
     reaction(shutdown){=
         logging.info(f"Conveyor state: {self.conveyor}")
+        logging.info(f"Pallet 4: {self.pallets[4].position}, action: {self.pallets[4].action}")
     =}
 
     reaction (startup)-> OUT, BAY_OUT, create_pallet{=
         self.pallet_on_G = False
-        self.pallets_to_be_created = [2, 3, 4, 5, 6, 7, 8, 9, 10]
+        self.pallets_to_be_created = [2, 3, 4, 5, 6, 7, 8, 9]
         self.BH_buffers = {"BAY": None, "IN_UP": [], "IN_DOWN": []}
         self.CI_buffers = {"BAY": None, "IN_UP": [], "IN_DOWN": []}
         self.DL_buffers = {"BAY": None, "IN_UP": [], "IN_DOWN": []}
@@ -137,13 +138,13 @@ reactor Controller{
         self.O_ = [True, True, True]
         self.P_ = [True, True, True]
         self.conveyor = {"A" : True, "B" : True, "C" : True, "D" : True, "E" : True, "F" : True, "G" : True, "H" : True, "I" : True, "L" : True, "M" : True}
-        temp = Pallet(pallet_id = 1, position = "M")
+        temp = Pallet(pallet_id = 1, position = "I")
         temp.looping = True
         self.pallets[temp.pallet_id] = temp
         self.pallet_names.append(temp.pallet_id)         
         y = "Create", temp.position, self.pallets[temp.pallet_id]
         OUT.set(y)
-        self.pallets[2] = Pallet(pallet_id = 2, position = "I")
+        self.pallets[2] = Pallet(pallet_id = 2, position = "M")
         self.pallets[3] = Pallet(pallet_id = 3, position = "L")
         self.pallets[4] = Pallet(pallet_id = 4, position = "C")
         self.pallets[5] = Pallet(pallet_id = 5, position = "D")
@@ -151,7 +152,6 @@ reactor Controller{
         self.pallets[7] = Pallet(pallet_id = 7, position = "H")
         self.pallets[8] = Pallet(pallet_id = 8, position = "A")
         self.pallets[9] = Pallet(pallet_id = 9, position = "B")
-        self.pallets[10] = Pallet(pallet_id = 10, position = "F")
         for z in range(1, len(self.pallets)):
             create_pallet.schedule(z-1)
     =}
@@ -496,6 +496,7 @@ reactor Controller{
     =}
 
     reaction(BAY_N_IN) -> BAY_OUT, notify_frost, control_BH{=
+        print("BAY_N_IN", BAY_N_IN.value)
         if BAY_N_IN.value[0] == "giveWorkpiece":
             temp = BAY_N_IN.value[1:]
             notify_frost.schedule(0, BAY_N_IN.value[1:])
@@ -506,7 +507,7 @@ reactor Controller{
             BAY_OUT.set(y)
 
         elif BAY_N_IN.value[0] == "_pallet_arrived":
-
+            print("BAY_N_IN", BAY_N_IN.value)
             notify_frost.schedule(0, [1, [4, BAY_N_IN.value[1:]]])
 
         elif BAY_N_IN.value == "Free":
@@ -580,7 +581,7 @@ reactor Controller{
             y = "Move", "F", "OUT"
             OUT.set(y)
     =}
-    reaction (H_IN) -> OUT, BAY_OUT{=
+    reaction (H_IN) -> OUT{=
         if H_IN.value is not None and H_IN.value[0] == "Move":
             route = "OUT"
             route = Routing(H_IN.value[1], H_IN.value[2])
@@ -589,7 +590,7 @@ reactor Controller{
             if route == "BAY":
                 if Bay_Control(self.N_, int(H_IN.value[2][1])):
                     self.N_ = Update_Truth_Table(self.N_, int(H_IN.value[2][1]))
-                    y = route, "H", "N1"                      
+                    y = "Move", "H", route,                       
                 else:
                     y = "Move", "H", "OUT"
                 
@@ -602,7 +603,7 @@ reactor Controller{
             if route == "BAY":
                 if Bay_Control(self.O_, int(I_IN.value[2][1])):   
                         self.O_ = Update_Truth_Table(self.O_, int(I_IN.value[2][1]))
-                        y = route, "I", "O1"                      
+                        y = "Move", "I", route,                      
                 else:
                     y = "Move", "I","OUT"
             OUT.set(y)
@@ -690,8 +691,6 @@ reactor Controller{
                     notify_frost.schedule(0, [7, [i, pos[1]]])
             
     =}
-
-
 
     reaction(from_G) -> notify_frost, to_G{=
         if from_G.value[0] == self.Events.pallet_arrived.value:

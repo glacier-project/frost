@@ -50,8 +50,7 @@ reactor Scheduler(recipe_path = "recipes/recipes/conveyor.yaml",
     state i = 0
     reaction(routine)-> channel_out{=
         self.logger.warning(f"Scheduler: {self.name} is sending {self.recipe[self.i]}")
-        channel_out.set(self.recipe[self.i])
-        self.i += 1
+        channel_out.set(self.recipe[self.i])        
     =}
     state counter = 0
     reaction(channel_in) -> routine{=
@@ -67,10 +66,12 @@ reactor Scheduler(recipe_path = "recipes/recipes/conveyor.yaml",
             else:
                 self.logger.warning(f"{message.sender} to {message.target} with header {message.header} and payload {message.payload}\n")
 
-            if self.conditions[self.i-1].check_condition(message):
+            
+            if self.conditions[self.i].check_condition(message):
+                self.i += 1
                 routine.schedule(SEC(2))
 
-        if self.i == len(self.recipe):
+        if self.i >= len(self.recipe)-1:
             self.counter += 1            
             self.i = 0
     =}
