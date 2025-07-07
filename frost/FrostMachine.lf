@@ -59,13 +59,14 @@ reactor FrostMachine(update_step = 1000 msec) extends FrostReactor{
         # Schedule the check in 3 seconds.
         check_bus_registration.schedule(SEC(3))
     =}
+
     state method_queue = []
     reaction(channel_in)->channel_out,check_bus_registration{=
         '''
         Handle incoming messages from the bus
         First check if the message is a durable method, if so, schedule it to be executed
         Second check if the message is an update message, if so, schedule it to be handled
-        Otherwise, handle the message and generate a response (This one used for most of the cases)
+        Otherwise, handle the message and generate a response (This one used for most of the cases except for MethodNode invokation)
         Once the response is generated, append it to the message queue
         Send the message queue to the bus
         '''
