@@ -80,9 +80,9 @@ reactor FrostMachine(update_step = 1000 msec) extends FrostReactor{
                     self.logger.debug(f"Machine {self.name}, correctly registered with the CommonBus.")
                     self.registered_to_bus = True
 
-                elif isistance(self.data_model.get_node(message.payload.node), MethodNode) and not (
-                    isistance(self.data_model.get_node(message.payload.node), AsyncMethodNode) 
-                    or isistance(self.data_model.get_node(message.payload.node), CompositeMethodNode)):
+                elif isinstance(self.data_model.get_node(message.payload.node), MethodNode) and not (
+                    isinstance(self.data_model.get_node(message.payload.node), AsyncMethodNode) 
+                    or isinstance(self.data_model.get_node(message.payload.node), CompositeMethodNode)):
                     self.method_queue.append(message)
                     continue
 

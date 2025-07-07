@@ -27,9 +27,7 @@ reactor Warehouse extends FrostMachine{
         self.data_model.get_node("Warehouse/SocketLink/sendback").callback = lambda TrayNumber: self.tray_to_sendback.write(TrayNumber) if 1 <= TrayNumber <= 8 else -1
         self.show_message.callback = self.show_Message
         self.tray_to_extract = NumericalVariableNode(name = "tray_to_extract", value = 0, measure_unit = "NoneMeasureUnits.NONE")
-        self.custom_node.add_child(self.tray_to_extract)
         self.tray_to_sendback = NumericalVariableNode(name = "tray_to_sendback", value = 0, measure_unit = "NoneMeasureUnits.NONE")
-        self.custom_node.add_child(self.tray_to_sendback)
     =}
 
     method extract_Tray(TrayNumber){=

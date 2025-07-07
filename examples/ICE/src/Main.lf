@@ -1,5 +1,5 @@
 target Python{
-    fast: false,
+    fast: true,
     timeout: 3600s,
     files: [../models/l_formatter.py, ../models/time_utils.py, ../models/singleton_meta.py],
 }
@@ -61,8 +61,8 @@ main reactor{
     #cell2 = new Cell2(model_path = "examples/ICE/models/Cell2.yml")
     #cell4 = new Cell4(model_path = "examples/ICE/models/Cell4.yml")
     #cell5 = new Cell5(model_path = "examples/ICE/models/Cell5.yml")
-    #warehouse = new Warehouse(model_path = "examples/ICE/models/Warehouse.yml")
-    #kairos_aa = new Kairos(model_path = "examples/ICE/models/RBKairos.yml")
+    #warehouse = new Warehouse(model_path = "models/Warehouse.yml")
+    #kairos_aa = new Kairos(model_path = "models/RBKairos.yml")
     conveyor = new Cell_Conveyor(model_path= "models/Cell_Conveyor.yml")
     scheduler = new Scheduler()
     bus = new FrostBus(model_path = "models/Common_Bus.yml",width = 2)
