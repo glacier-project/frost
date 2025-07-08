@@ -22,6 +22,10 @@ reactor Kairos extends FrostMachine{
     =}
 
     method startMission(){=
+        """
+        Starts a mission by setting the control to busy, initializing the ongoing mission name,
+        and resetting the mission call counter. It also sets the last mission result to True.
+        """
         self.ongoing_mission_name.value = ""
         self.missions_call_counter.value = self.missions_call_counter.value + 1
         self.last_mission_result.value = True
@@ -29,6 +33,11 @@ reactor Kairos extends FrostMachine{
     =}
 
     method preemptMission(){=
+        """
+        Preempts the ongoing mission by setting the control to busy, updating the ongoing mission feedback,
+        and resetting the last mission result and ongoing mission name.
+        Returns True if the mission was successfully aborted, False otherwise.
+        """
         if not self.control_busy.value:
             return False
 

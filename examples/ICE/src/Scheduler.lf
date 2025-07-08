@@ -43,17 +43,30 @@ reactor Scheduler(recipe_path = "recipes/recipes/conveyor.yaml",
     =}
 
     reaction(startup)-> channel_out, routine{=
+        """        
+        Initializes the Scheduler reactor, setting up the initial state and scheduling the first routine.
+        It also sends a registration message to the communication channel.
+        """
         channel_out.set(self.generate_bus_registration_message())
         self.logger = logging.getLogger("Scheduler")
         routine.schedule(SEC(0))
     =}
     state i = 0
     reaction(routine)-> channel_out{=
+        """
+        Sends the next message in the recipe to the communication channel.
+        If the index `i` is out of bounds, it resets to 0.
+        """
         self.logger.warning(f"Scheduler: {self.name} is sending {self.recipe[self.i]}")
         channel_out.set(self.recipe[self.i])        
     =}
     state counter = 0
     reaction(channel_in) -> routine{=
+        """
+        Handles incoming messages from the communication channel, checking them against the conditions. 
+        If a message matches the current condition, it increments the index and schedules the next routine.
+        If all conditions are met, it resets the index and increments the counter.
+        """
         messages = channel_in.value
         assert isinstance(messages, list) and all(isinstance(item, Message) for item in messages), f"Received invalid messages: {messages}"
         for message in messages:
