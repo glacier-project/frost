@@ -529,15 +529,6 @@ root:
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           initial_value: 0
-                    - !!ObjectVariableNode
-                      name: "PalletPosition0"
-                      description: ""
-                      properties:
-                        - !!NumericalVariableNode
-                          name: "palletNum"
-                          description: ""
-                          measure_unit: "NoneMeasureUnits.NONE"
-                          initial_value: 0
                 - !!ObjectVariableNode
                   name: "Bay3"
                   description: ""
@@ -568,16 +559,7 @@ root:
                           name: "palletNum"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          initial_value: 0
-                    - !!ObjectVariableNode
-                      name: "PalletPosition0"
-                      description: ""
-                      properties:
-                        - !!NumericalVariableNode
-                          name: "palletNum"
-                          description: ""
-                          measure_unit: "NoneMeasureUnits.NONE"
-                          initial_value: 0                  
+                          initial_value: 0               
                 - !!ObjectVariableNode
                   name: "Bay2"
                   description: ""
@@ -609,48 +591,12 @@ root:
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           initial_value: 0
-                    - !!ObjectVariableNode
-                      name: "PalletPosition0"
-                      description: ""
-                      properties:
-                        - !!NumericalVariableNode
-                          name: "palletNum"
-                          description: ""
-                          measure_unit: "NoneMeasureUnits.NONE"
-                          initial_value: 0
                 - !!ObjectVariableNode
                   name: "Bay1"
                   description: ""
                   properties:
                     - !!ObjectVariableNode
-                      name: "PalletPosition3"
-                      description: ""
-                      properties:
-                        - !!NumericalVariableNode
-                          name: "palletNum"
-                          description: ""
-                          measure_unit: "NoneMeasureUnits.NONE"
-                          initial_value: 0
-                    - !!ObjectVariableNode
-                      name: "PalletPosition2"
-                      description: ""
-                      properties:
-                        - !!NumericalVariableNode
-                          name: "palletNum"
-                          description: ""
-                          measure_unit: "NoneMeasureUnits.NONE"
-                          initial_value: 0
-                    - !!ObjectVariableNode
                       name: "PalletPosition1"
-                      description: ""
-                      properties:
-                        - !!NumericalVariableNode
-                          name: "palletNum"
-                          description: ""
-                          measure_unit: "NoneMeasureUnits.NONE"
-                          initial_value: 0
-                    - !!ObjectVariableNode
-                      name: "PalletPosition0"
                       description: ""
                       properties:
                         - !!NumericalVariableNode
