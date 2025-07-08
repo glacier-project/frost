@@ -17,6 +17,14 @@ reactor Cell2 extends FrostMachine{
     timer work(0ms, 1000ms)
     logical action delay
     reaction(work) -> delay{=
+        """        
+        Checks the current mission and schedules a delay based on the mission type.
+        If the machine is busy, it checks the current mission and schedules a delay accordingly.
+        If the mission is "TakeBoard", it checks if the board is not present and schedules a delay of 10 seconds.
+        If the mission is "engraveText", it checks if the text is not empty and schedules a delay of 40 seconds.
+        If the mission is "TakeBoardOut", it checks if the board is present and schedules a delay of 10 seconds.
+        If the machine is not busy, it does nothing.
+        """
         if self.busy.value:
             if self.current_mission.value == "TakeBoard":
                 if not self.board.value:

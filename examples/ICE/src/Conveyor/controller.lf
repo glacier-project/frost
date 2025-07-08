@@ -116,7 +116,6 @@ reactor Controller{
 
     reaction(shutdown){=
         logging.info(f"Conveyor state: {self.conveyor}")
-        logging.info(f"Pallet 4: {self.pallets[4].position}, action: {self.pallets[4].action}")
     =}
 
     reaction (startup)-> OUT, BAY_OUT, create_pallet{=
