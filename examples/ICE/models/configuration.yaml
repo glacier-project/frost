@@ -1,0 +1,433 @@
+time_format: MSECS
+reactors:
+  controller:
+    logging_level: WARNING
+  wp_logger:
+    logging_level: WARNING
+  scheduler:
+    logging_level: DEBUG
+    parameters:
+      schedule: config/i3_schedule.json
+    reactors:
+      stack_driver:
+        logging_level: DEBUG
+      crane_driver:
+        logging_level: DEBUG
+      stamp_driver:
+        logging_level: WARNING
+      gd_driver:
+        logging_level: WARNING
+      cm_driver:
+        logging_level: WARNING
+      lsc_driver:
+        logging_level: DEBUG
+      pac_driver:
+        logging_level: WARNING
+      ssc_driver:
+        logging_level: WARNING
+      rfc_driver:
+        logging_level: WARNING
+  stack_driver:
+    logging_level: DEBUG
+    reactors:
+      stack:
+        logging_level: DEBUG
+        parameters:
+          buffer: 
+            - id: 0
+              m_type: PLASTIC
+              weight: 1
+            - id: 1
+              m_type: STEEL
+              weight: 1
+            - id: 2
+              m_type: PLASTIC
+              weight: 1
+            - id: 3
+              m_type: STEEL
+              weight: 1
+            - id: 4
+              m_type: PLASTIC
+              weight: 1
+            - id: 5
+              m_type: PLASTIC
+              weight: 1
+            - id: 6
+              m_type: PLASTIC
+              weight: 1
+            - id: 7
+              m_type: PLASTIC
+              weight: 1
+            - id: 8
+              m_type: PLASTIC
+              weight: 1
+            - id: 9
+              m_type: PLASTIC
+              weight: 1
+            - id: 10
+              m_type: PLASTIC
+              weight: 1
+            - id: 11
+              m_type: PLASTIC
+              weight: 1
+            - id: 12
+              m_type: PLASTIC
+              weight: 1
+            - id: 13
+              m_type: PLASTIC
+              weight: 1
+            - id: 14
+              m_type: PLASTIC
+              weight: 1
+            - id: 15
+              m_type: PLASTIC
+              weight: 1
+            - id: 16
+              m_type: PLASTIC
+              weight: 1
+            - id: 17
+              m_type: PLASTIC
+              weight: 1
+            - id: 18
+              m_type: PLASTIC
+              weight: 1
+            - id: 19
+              m_type: PLASTIC
+              weight: 1
+            - id: 20
+              m_type: PLASTIC
+              weight: 1
+            - id: 21
+              m_type: PLASTIC
+              weight: 1
+            - id: 22
+              m_type: PLASTIC
+              weight: 1
+            - id: 23
+              m_type: PLASTIC
+              weight: 1
+            - id: 24
+              m_type: PLASTIC
+              weight: 1
+            - id: 25
+              m_type: PLASTIC
+              weight: 1
+            - id: 26
+              m_type: PLASTIC
+              weight: 1
+            - id: 27
+              m_type: PLASTIC
+              weight: 1
+            - id: 28
+              m_type: PLASTIC
+              weight: 1
+            - id: 29
+              m_type: PLASTIC
+              weight: 1
+            - id: 30
+              m_type: PLASTIC
+              weight: 1
+            - id: 31
+              m_type: PLASTIC
+              weight: 1
+            - id: 32
+              m_type: PLASTIC
+              weight: 1
+            - id: 33
+              m_type: PLASTIC
+              weight: 1
+            - id: 34
+              m_type: PLASTIC
+              weight: 1
+            - id: 35
+              m_type: PLASTIC
+              weight: 1
+            - id: 36
+              m_type: PLASTIC
+              weight: 1
+            - id: 37
+              m_type: PLASTIC
+              weight: 1
+            - id: 38
+              m_type: PLASTIC
+              weight: 1
+            - id: 39
+              m_type: PLASTIC
+              weight: 1
+            - id: 40
+              m_type: PLASTIC
+              weight: 1
+            - id: 41
+              m_type: PLASTIC
+              weight: 1
+            - id: 42
+              m_type: PLASTIC
+              weight: 1
+            - id: 43
+              m_type: PLASTIC
+              weight: 1
+            - id: 44
+              m_type: PLASTIC
+              weight: 1
+            - id: 45
+              m_type: PLASTIC
+              weight: 1
+            - id: 46
+              m_type: PLASTIC
+              weight: 1
+            - id: 47
+              m_type: PLASTIC
+              weight: 1
+            - id: 48
+              m_type: PLASTIC
+              weight: 1
+            - id: 49
+              m_type: PLASTIC
+              weight: 1
+            - id: 50
+              m_type: PLASTIC
+              weight: 1
+            - id: 51
+              m_type: PLASTIC
+              weight: 1
+            - id: 52
+              m_type: PLASTIC
+              weight: 1
+            - id: 53
+              m_type: PLASTIC
+              weight: 1
+            - id: 54
+              m_type: PLASTIC
+              weight: 1
+            - id: 55
+              m_type: PLASTIC
+              weight: 1
+            - id: 56
+              m_type: PLASTIC
+              weight: 1
+            - id: 57
+              m_type: PLASTIC
+              weight: 1
+            - id: 58
+              m_type: PLASTIC
+              weight: 1
+            - id: 59
+              m_type: PLASTIC
+              weight: 1
+            - id: 60
+              m_type: PLASTIC
+              weight: 1
+            - id: 61
+              m_type: PLASTIC
+              weight: 1
+            - id: 62
+              m_type: PLASTIC
+              weight: 1
+          ref_x: -0.0025
+          ref_y: 0.8
+          c_angle: 0
+        reactors:
+          mc:
+            logging_level: WARNING
+            parameters:
+              retraction_speed: 223.684
+              extension_speed: 472.222
+              extension_length: 0.07
+              is_retracted: True
+  crane_driver:
+    logging_level: DEBUG
+    reactors:
+      crane:
+        logging_level: DEBUG
+        parameters:
+          ref_x: 0.2275
+          ref_y: 0.8275
+        reactors:
+          mc:
+            logging_level: WARNING
+            parameters:
+              retraction_speed: 223.684
+              extension_speed: 472.222
+              extension_length: 0.045
+              is_retracted: True
+          r_base:
+            logging_level: WARNING
+            reactors:
+              motor:
+                logging_level: WARNING
+                parameters:
+                  ang_speed: 0.698132 # 40 deg/s
+              m_driver:
+                logging_level: WARNING
+                parameters:
+                  accuracy: 0.01
+  stamp_driver:
+    logging_level: WARNING
+    reactors:
+      stamp:
+        logging_level: WARNING
+        parameters:
+          ref_x: 0.2775
+          ref_y: 0.8
+          c_angle: 0
+          stamp_light_p_delay: 2
+          stamp_medium_p_delay: 2.2
+          stamp_heavy_p_delay: 2.4
+        reactors:
+          mc:
+            logging_level: WARNING
+            parameters:
+              retraction_speed: 223.684
+              extension_speed: 472.222
+              extension_length: 0.13
+              is_retracted: False
+          bc:
+            logging_level: WARNING
+            parameters:
+              retraction_speed: 223.684
+              extension_speed: 472.222
+              extension_length: 0.055
+              is_retracted: True
+  gd_driver:
+    logging_level: WARNING
+    reactors:
+      g_dispenser:
+        logging_level: WARNING
+        parameters:
+          ref_x: 0.375
+          ref_y: 0.58
+          c_angle: np.pi
+          dglue_delay: 2
+  cm_driver:
+    logging_level: WARNING
+    reactors:
+      capping_machine:
+        logging_level: WARNING
+        parameters:
+          ref_x: 0.375
+          ref_y: 0.40
+          c_angle: np.pi
+          capping_delay: 2
+  lsc_driver:
+    logging_level: WARNING
+    reactors:
+      lsc:
+        logging_level: WARNING
+        parameters:
+          # tick_interval: 0.02
+          ref_x: 0.2
+          ref_y: 0.8
+          c_angle: (3/2)*np.pi
+          length: 0.6
+          width: 0.055
+          speed: 0.185
+        reactors:
+          mc_ramp_start:
+            logging_level: WARNING
+            parameters:
+              retraction_speed: 223.684
+              extension_speed: 472.222
+              extension_length: 0.085
+              is_retracted: True
+          mc_pac:
+            logging_level: WARNING
+            parameters:
+              retraction_speed: 223.684
+              extension_speed: 472.222
+              extension_length: 0.085
+              is_retracted: True
+          mc_ramp_mid:
+            logging_level: WARNING
+            parameters:
+              retraction_speed: 274.194
+              extension_speed: 531.25
+              extension_length: 0.085
+              is_retracted: True
+  lsc_ramp_start:
+    logging_level: WARNING
+  lsc_ramp_mid:
+    logging_level: WARNING
+  lsc_ramp_end:
+    logging_level: WARNING
+  pac_driver:
+    logging_level: WARNING
+    reactors:
+      pac:
+        logging_level: WARNING
+        parameters:
+          # tick_interval: 0.01
+          ref_x: 0.255
+          ref_y: 0.45
+          c_angle: 0
+          length: 0.6
+          width: 0.055
+          speed: 0.185
+        reactors:
+          pa:
+            logging_level: WARNING
+            parameters:
+              speed: 0.185
+              length: 0.46
+              pos1: 0.0175
+              pos2: 0.0625
+              pos3: 0.2225
+              pos4: 0.4375
+            reactors:
+              mc:
+                logging_level: WARNING
+                parameters:
+                  retraction_speed: 223.684
+                  extension_speed: 472.222
+                  extension_length: 0.085
+                  is_retracted: True
+          mc_guard:
+            logging_level: WARNING
+            parameters:
+              retraction_speed: 223.684
+              extension_speed: 472.222
+              extension_length: 0.085
+              is_retracted: True
+  ssc_driver:
+    logging_level: WARNING
+    reactors:
+      ssc:
+        logging_level: WARNING
+        parameters:
+          # tick_interval: 0.01
+          ref_x: 0.91
+          ref_y: 0.27
+          c_angle: np.pi/2
+          length: 0.53
+          width: 0.055
+          speed: 0.185   
+        reactors:       
+          mc_rfc:
+            logging_level: WARNING
+            parameters:
+              retraction_speed: 223.684
+              extension_speed: 472.222
+              extension_length: 0.085
+              is_retracted: True
+  ssc_ramp_end:
+    logging_level: WARNING
+  rfc_driver:
+    logging_level: WARNING
+    reactors:
+      rfc:
+        logging_level: WARNING
+        parameters:
+          # tick_interval: 0.01
+          ref_x: 0.855
+          ref_y: 0.80
+          c_angle: np.pi
+          length: 0.60
+          width: 0.055
+          speed: 0.185
+        reactors:       
+          mc_guard:
+            logging_level: WARNING
+            parameters:
+              retraction_speed: 223.684
+              extension_speed: 472.222
+              extension_length: 0.085
+              is_retracted: True

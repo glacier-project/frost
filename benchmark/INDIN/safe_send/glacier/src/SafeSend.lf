@@ -1,0 +1,23 @@
+target Python 
+
+import FrostMachine from "../../../../../frost/FrostMachine.lf"
+
+reactor SafeSend extends FrostMachine{
+    state req = {= self.data_model.get_node("SafeSend/req") =}
+    state error = {= self.data_model.get_node("SafeSend/error") =}  
+    state c = {= self.data_model.get_node("SafeSend/call") =}
+    
+    method call(ins){=
+        self.logger.info("Received: %s", ins)
+        if ins == 0:
+            self.error.value = 1      
+        else:
+            self.req.value = 0
+        return ins
+    =}
+
+    reaction(startup){=
+        self.c.callback = self.call
+    =}  
+
+}

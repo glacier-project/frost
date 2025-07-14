@@ -1,0 +1,95 @@
+target Python{
+    files: [source_folder/pallet.py, source_folder/material.py]
+};
+
+preamble{=
+    from pallet import Pallet 
+    from material import Material
+=}
+
+reactor bay_G(param = "default"){
+    //Internal variables
+    state name = param   
+
+    //Physical links
+    input IN
+    output OUT
+    
+
+    //Controller Links
+    input command
+    output ask
+
+    //Current Pallet
+    state pallet
+    
+    logical action handle_pallet
+
+    reaction(startup){=
+        self.pallet = None
+    =}
+
+    '''
+    The following reaction is called for handling the pallets in the switch.
+    It checks if the pallet destination is the switch itself, if so,
+    it sends a message to the warehouse that the pallet has arrived.
+    Ohterwise, it sends the pallet to the next destination by reading the pallet action.
+    '''
+    reaction(handle_pallet)-> ask, OUT{=
+        if self.pallet is not None:
+            self.pallet.position = self.name
+
+            if self.pallet.destination == self.name:
+                y = "_pallet_arrived", self.pallet.pallet_id
+                ask.set(y)
+                
+            else: 
+                self.pallet.action = "OUT"
+                OUT.set(self.pallet)
+                ask.set(["PalletReleased", self.pallet.pallet_id])
+                self.pallet = None
+    =}
+
+    '''
+    When a pallet arrives at the switch, it is stored in the pallet variable and 
+    it schedules the handle_pallet action to handle the pallet.''' 
+    reaction(IN)-> handle_pallet, ask{=
+        if IN.value is not None:
+            self.pallet = IN.value            
+            handle_pallet.schedule(0)
+    =}
+
+    '''
+    The following reaction is called when the controller sends a command to the switch.
+    If the command is to create a pallet, it stores the pallet in the pallet variable and asks the controller
+    where to send the pallet.
+    If the command is to move the pallet, it sends the pallet to appropriate port.
+    If the command is BAY, it sends the pallet to the BAY_OUT port.
+    If the command is Give, it sends the pallet object to the CROSS port.
+    This last one is used to send the material to any machines that interact with the material
+    on the pallet.
+    '''
+    reaction(command) -> handle_pallet, ask{=
+        temp = command.value[0]
+        if isinstance(temp, Material):
+            self.pallet.object = temp
+            self.pallet.destination = None
+            self.pallet.looping = True
+            handle_pallet.schedule(0)
+            ask.set(["Conveyor", True])
+        elif temp == "KairosAA":
+                ask.set([temp, self.pallet.object])
+                self.pallet.object = None
+        elif command.value[0] == "Create":
+            self.pallet = command.value[2]
+            if self.pallet.looping == True:
+                self.pallet.action = "OUT"
+
+            handle_pallet.schedule(0)
+        
+        elif command.value[0] == "Move" and self.pallet is not None:
+            self.pallet.action = command.value[1]
+
+            handle_pallet.schedule(0)        
+    =}
+}

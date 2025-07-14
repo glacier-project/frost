@@ -1,0 +1,54 @@
+recipe: "4_machine"
+conditions:
+  - machine: "Warehouse"
+    header: METHOD
+    node: "TrayNumber"
+    value: 8
+  - machine: "RBKairos"
+    header: METHOD
+    node: "Result"
+    value: True
+  - machine: "RBKairos"
+    header: METHOD
+    node: "Result"
+    value: True
+  - machine: "Cell_Conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "RBKairos"
+    header: METHOD
+    node: "Result"
+    value: True
+  - machine: "Cell_Conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "Cell_Conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "Cell5"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "Cell_Conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "Cell_Conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "RBKairos"
+    header: METHOD
+    node: "Result"
+    value: True
+  - machine: "Cell_Conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "Warehouse"
+    header: METHOD
+    node: "TrayNumber"
+    value: 0

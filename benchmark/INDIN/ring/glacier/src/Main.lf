@@ -1,0 +1,36 @@
+target Python{
+    fast: True,
+    files: [
+        ../../config/utils/l_formatter.py, 
+        ../../config/utils/time_utils.py, 
+        ../../config/utils/singleton_meta.py, 
+        ../../config/utils/g_preamble.py, 
+        ../../config/utils/handle_recipe.py
+    ],
+}
+
+import Ring from "Ring.lf"
+import FrostBus from "../../../../../frost/FrostBus.lf"
+import Scheduler from "Scheduler.lf"
+
+preamble{=
+    from g_preamble import *
+=}
+
+
+main reactor{
+
+    preamble{=
+        handler = logging.StreamHandler()
+        handler.setFormatter(LFormatter(lf.time.logical_elapsed, TimeFormat.MSECS))
+        logger = logging.getLogger()
+        logger.setLevel(logging.ERROR)
+        logger.addHandler(handler)
+    =}
+    Ring = new Ring(model_path = "../../config/models/ring.yml", update_step  = 1 nsec)
+    scheduler = new Scheduler(recipe_path = {=RECIPE_PATH=}, condition_path= {=CONDITIONS_PATH=})
+    bus = new FrostBus(model_path = "../../config/models/bus.yml",width = 2)
+    
+    Ring.channel_out, scheduler.channel_out -> bus.channel_in after 0 nsec
+    bus.channel_out -> Ring.channel_in, scheduler.channel_in after 0 nsec
+}

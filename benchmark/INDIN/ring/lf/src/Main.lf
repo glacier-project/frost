@@ -1,0 +1,73 @@
+/**
+ * There seems to be some problem with infinite feedback loops.
+ */
+ target Python{
+    fast: True,
+    files: [
+        ../../config/utils/l_formatter.py, 
+        ../../config/utils/time_utils.py, 
+        ../../config/utils/singleton_meta.py, 
+        ../../config/utils/g_preamble.py, 
+        ../../config/utils/handle_recipe.py
+    ],
+}
+
+preamble{=
+    from g_preamble import *
+=}
+
+ reactor Source {
+    input ins
+    output out
+    logical action start(1 nsec)
+    state received
+    state counter
+    reaction(startup) -> start {=
+        self.received = 0
+        start.schedule(0)
+        self.counter = 0
+    =}
+    reaction(start) -> out {=
+        out.set(self.received)
+    =}
+    
+    reaction(ins) -> start{=
+        self.received = ins.value
+        start.schedule(0)
+        self.counter = self.counter + 1
+        if (self.counter == NUM_RUNS):
+            lf.request_stop()        
+    =}
+ }
+ 
+ reactor Node {
+    input ins
+    output out
+    reaction(ins) -> out {=
+        out.set(ins.value + 1)
+    =}
+ }
+ 
+ main reactor {
+
+    preamble{=
+        handler = logging.StreamHandler()
+        handler.setFormatter(LFormatter(lf.time.logical_elapsed, TimeFormat.MSECS))
+        logger = logging.getLogger()
+        logger.setLevel(logging.ERROR)
+        logger.addHandler(handler)
+    =}
+    
+    s = new Source()
+    n1 = new Node()
+    n2 = new Node()
+    n3 = new Node()
+    n4 = new Node()
+    n5 = new Node()
+    s.out -> n1.ins after 1 nsec
+    n1.out -> n2.ins after 1 nsec
+    n2.out -> n3.ins after 1 nsec
+    n3.out -> n4.ins after 1 nsec
+    n4.out -> n5.ins after 1 nsec
+    n5.out -> s.ins after 1 nsec
+ }

@@ -1,0 +1,23 @@
+recipe: "Test"
+description: "Test recipe for the RBKairos system"
+steps:
+  - sender: "Scheduler"
+    target: "Alarm"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "VARIABLE"
+      msg_name: "WRITE"
+    payload:
+      node: "Alarm/fault"
+      value: True  
+  - sender: "Scheduler"
+    target: "Alarm"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "VARIABLE"
+      msg_name: "WRITE"
+    payload:
+      node: "Alarm/fault"
+      value: False  

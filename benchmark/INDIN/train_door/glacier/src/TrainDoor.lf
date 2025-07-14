@@ -1,0 +1,34 @@
+target Python 
+
+import FrostMachine from "../../../../../frost/FrostMachine.lf"
+
+reactor TrainDoor extends FrostMachine{
+    state timestamp = {= self.data_model.get_node("TrainDoor/timestamp") =}
+    state opened = {= self.data_model.get_node("TrainDoor/opened") =}
+
+    state op = {= self.data_model.get_node("TrainDoor/operation") =}
+
+    method operation(operation){=
+        if operation == "m":
+            return "Motion detected!"
+            self.timestamp.value = lf.time.logical_elapsed()
+        elif operation == "o":
+            if self.opened.value:
+                return "The door is already open"
+            else:
+                if self.timestamp.value == 0 or lf.time.logical_elapsed() - self.timestamp.value > SECS(2):
+                    self.opened.value = True
+                    return "Opening the door."
+                else:
+                    return "Cannot open the door recent motion detected."
+        elif operation == "c":
+            self.opened.value = False
+            return "Closing the door"
+    =}
+
+    reaction(startup){=
+        self.op.callback = self.operation 
+    =}
+
+
+}
