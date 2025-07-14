@@ -171,3 +171,5 @@ cython_debug/
 .idea/
 bin/
 Lingo.lock
+*.csv
+*.tex

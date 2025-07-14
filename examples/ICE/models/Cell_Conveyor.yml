@@ -1,13 +1,21 @@
-name: "CellConveyor" # name of the machine
+name: "Cell_Conveyor" # name of the machine
 machine_category: "unknown" # category of the machine
 machine_type: "unknown" # type of the machine
 machine_model: "unknown" # model of the machine
 description: "" # description of the machine
 root:
   !!FolderNode
-  name: "CellConveyor"
+  name: "Cell_Conveyor"
   description: "OPCUA"
   children:
+    - !!StringVariableNode
+      name: "command"
+      description: ""
+      initial_value: ""
+    - !!BooleanVariableNode
+      name: "output"
+      description: ""
+      initial_value: True
     - !!FolderNode
       name: "ConveyorHMI"
       description: "HMI"
@@ -20,11 +28,29 @@ root:
               name: "Commands"
               description: ""
               children:
-                - !!ObjectVariableNode
+                - !!FolderNode
                   name: "ConveyorCommandsPointer"
                   description: ""
-                  properties:
-                    - !!MethodNode
+                  children:
+                    - !!AsyncMethodNode
+                      name: "setDestination"
+                      description: ""
+                      parameters:
+                        - !!NumericalVariableNode
+                          name: "palletNumber"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                        - !!NumericalVariableNode
+                          name: "destination"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                      returns:
+                        - !!StringVariableNode
+                          name: "res"
+                          description: ""
+                    - !!CompositeMethodNode
                       name: "setPalletDestination"
                       description: ""
                       parameters:
@@ -32,17 +58,32 @@ root:
                           name: "palletNumber"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          default_value: 0
                         - !!NumericalVariableNode
                           name: "destination"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          default_value: 0
                       returns:
                         - !!BooleanVariableNode
                           name: "result"
                           description: ""
-                          value: True
+                      cfg:
+                        - !!CallMethodNode
+                          method: "Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setDestination"
+                          args: 
+                            - $palletNumber
+                            - $destination
+                        - !!ReadVariableNode
+                          variable: "Cell_Conveyor/command"
+                          store_as: "seekingnode"
+                        - !!WaitConditionNode
+                          variable: "$seekingnode"
+                          operator: "=="
+                          rhs: $palletNumber
+                        - !!ReadVariableNode
+                          variable: "Cell_Conveyor/output"
+                          store_as: "result"
                     - !!MethodNode
                       name: "setPalletDestinationWithReservation"
                       description: ""
@@ -75,17 +116,15 @@ root:
                           name: "destination"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          default_value: 0
                       returns:
                         - !!BooleanVariableNode
                           name: "result"
                           description: ""
-                          value: True
                         - !!NumericalVariableNode
                           name: "palletNumber"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
                     - !!MethodNode
                       name: "callFreePalletToWithReservation"
                       description: ""
@@ -94,22 +133,20 @@ root:
                           name: "destination"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          default_value: 0
                         - !!NumericalVariableNode
                           name: "reservationId"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          default_value: 0
                       returns:
                         - !!BooleanVariableNode
                           name: "result"
                           description: ""
-                          value: True
                         - !!NumericalVariableNode
                           name: "palletNumber"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
                     - !!MethodNode
                       name: "callFreePalletOfTypeTo"
                       description: ""
@@ -118,22 +155,20 @@ root:
                           name: "destination"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          default_value: 0
                         - !!NumericalVariableNode
                           name: "type"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          default_value: 0
                       returns:
                         - !!BooleanVariableNode
                           name: "result"
                           description: ""
-                          value: True
                         - !!NumericalVariableNode
                           name: "palletNumber"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
                     - !!MethodNode
                       name: "callFreePalletOfTypeToWithReservation"
                       description: ""
@@ -142,27 +177,25 @@ root:
                           name: "destination"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          default_value: 0
                         - !!NumericalVariableNode
                           name: "type"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          default_value: 0
                         - !!NumericalVariableNode
                           name: "reservationId"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          default_value: 0
                       returns:
                         - !!BooleanVariableNode
                           name: "result"
                           description: ""
-                          value: True
                         - !!NumericalVariableNode
                           name: "palletNumber"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
                     - !!MethodNode
                       name: "reservePallet"
                       description: ""
@@ -171,18 +204,17 @@ root:
                           name: "palletNumber"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          default_value: 0
                         - !!NumericalVariableNode
                           name: "reservationId"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          default_value: 0
                       returns:
                         - !!BooleanVariableNode
                           name: "result"
                           description: ""
-                          value: True
-                    - !!MethodNode
+                    - !!CompositeMethodNode
                       name: "releasePallet"
                       description: ""
                       parameters:
@@ -190,12 +222,39 @@ root:
                           name: "palletNumber"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          default_value: 0
                       returns:
                         - !!BooleanVariableNode
                           name: "result"
                           description: ""
-                          value: True
+                      cfg:
+                        - !!CallMethodNode
+                          method: "Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/release"
+                          args: 
+                            - $palletNumber
+                        - !!ReadVariableNode
+                          variable: "Cell_Conveyor/command"
+                          store_as: "seekingnode"
+                        - !!WaitConditionNode
+                          variable: $seekingnode
+                          operator: "=="
+                          rhs: 0
+                        - !!ReadVariableNode
+                          variable: "Cell_Conveyor/output"
+                          store_as: "result"
+                    - !!AsyncMethodNode
+                      name: "release"
+                      description: ""
+                      parameters:
+                        - !!NumericalVariableNode
+                          name: "palletNumber"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                      returns:
+                        - !!BooleanVariableNode
+                          name: "result"
+                          description: ""
                     - !!MethodNode
                       name: "setPartOnPallet"
                       description: ""
@@ -204,23 +263,22 @@ root:
                           name: "palletNumber"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          default_value: 0
                         - !!NumericalVariableNode
                           name: "position"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          default_value: 0
                         - !!NumericalVariableNode
                           name: "part"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          default_value: 0
                       returns:
                         - !!NumericalVariableNode
                           name: "destination"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0  
                     - !!MethodNode
                       name: "clearPartOnPallet"
                       description: ""
@@ -229,18 +287,17 @@ root:
                           name: "palletNumber"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          default_value: 0
                         - !!NumericalVariableNode
                           name: "position"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          default_value: 0
                       returns:
                         - !!NumericalVariableNode
                           name: "destination"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
             - !!FolderNode
               name: "BayLights"
               description: ""
@@ -249,22 +306,22 @@ root:
                   name: "bay2Light"
                   description: ""
                   measure_unit: "NoneMeasureUnits.NONE"
-                  value: 0   
+                  initial_value: 0   
                 - !!NumericalVariableNode
                   name: "bay3Light"
                   description: ""
                   measure_unit: "NoneMeasureUnits.NONE"
-                  value: 0
+                  initial_value: 0
                 - !!NumericalVariableNode
                   name: "bay4Light"
                   description: ""
                   measure_unit: "NoneMeasureUnits.NONE"
-                  value: 0
+                  initial_value: 0
                 - !!NumericalVariableNode
                   name: "bay5Light"
                   description: ""
                   measure_unit: "NoneMeasureUnits.NONE"
-                  value: 0
+                  initial_value: 0
             - !!FolderNode
               name: "Destinations"
               description: ""
@@ -273,101 +330,101 @@ root:
                   name: "destination_palletid_1_1"
                   description: ""
                   measure_unit: "NoneMeasureUnits.NONE"
-                  value: 0 #id pallet in quella posizione
+                  initial_value: 0 #id pallet in quella posizione
                 - !!NumericalVariableNode
                   name: "destination_palletid_2_1"
                   description: ""
                   measure_unit: "NoneMeasureUnits.NONE"
-                  value: 0
+                  initial_value: 0
                 - !!NumericalVariableNode
                   name: "destination_palletid_2_2"
                   description: ""
                   measure_unit: "NoneMeasureUnits.NONE"
-                  value: 0
+                  initial_value: 0
                 - !!NumericalVariableNode
                   name: "destination_palletid_2_3"
                   description: ""
                   measure_unit: "NoneMeasureUnits.NONE"
-                  value: 0
+                  initial_value: 0
                 - !!NumericalVariableNode
                   name: "destination_palletid_3_1"
                   description: ""
                   measure_unit: "NoneMeasureUnits.NONE"
-                  value: 0
+                  initial_value: 0
                 - !!NumericalVariableNode
                   name: "destination_palletid_3_2"
                   description: ""
                   measure_unit: "NoneMeasureUnits.NONE"
-                  value: 0
+                  initial_value: 0
                 - !!NumericalVariableNode
                   name: "destination_palletid_3_3"
                   description: ""
                   measure_unit: "NoneMeasureUnits.NONE"
-                  value: 0
+                  initial_value: 0
                 - !!NumericalVariableNode
                   name: "destination_palletid_4_1"
                   description: ""
                   measure_unit: "NoneMeasureUnits.NONE"
-                  value: 0
+                  initial_value: 0
                 - !!NumericalVariableNode
                   name: "destination_palletid_4_2"
                   description: ""
                   measure_unit: "NoneMeasureUnits.NONE"
-                  value: 0
+                  initial_value: 0
                 - !!NumericalVariableNode
                   name: "destination_palletid_4_3"
                   description: ""
                   measure_unit: "NoneMeasureUnits.NONE"
-                  value: 0
+                  initial_value: 0
                 - !!NumericalVariableNode
                   name: "destination_palletid_5"
                   description: ""
                   measure_unit: "NoneMeasureUnits.NONE"
-                  value: 0
+                  initial_value: 0
                 - !!BooleanVariableNode #skip
                   name: "destination_ok_1_1"
                   description: ""
-                  value: True 
+                  initial_value: True 
                 - !!BooleanVariableNode
                   name: "destination_ok_2_1"
                   description: ""
-                  value: True
+                  initial_value: True
                 - !!BooleanVariableNode
                   name: "destination_ok_2_2"
                   description: ""
-                  value: True
+                  initial_value: True
                 - !!BooleanVariableNode
                   name: "destination_ok_2_3"
                   description: ""
-                  value: True
+                  initial_value: True
                 - !!BooleanVariableNode
                   name: "destination_ok_3_1"
                   description: ""
-                  value: True
+                  initial_value: True
                 - !!BooleanVariableNode
                   name: "destination_ok_3_2"
                   description: ""
-                  value: True
+                  initial_value: True
                 - !!BooleanVariableNode
                   name: "destination_ok_3_3"
                   description: ""
-                  value: True
+                  initial_value: True
                 - !!BooleanVariableNode
                   name: "destination_ok_4_1"
                   description: ""
-                  value: True
+                  initial_value: True
                 - !!BooleanVariableNode
                   name: "destination_ok_4_2"
                   description: ""
-                  value: True
+                  initial_value: True
                 - !!BooleanVariableNode
                   name: "destination_ok_4_3"
                   description: ""
-                  value: True
+                  initial_value: True
                 - !!BooleanVariableNode
                   name: "destination_ok_5"
                   description: ""
-                  value: True
+                  initial_value: True
             - !!FolderNode
               name: "Buttons"
               description: ""
@@ -375,51 +432,51 @@ root:
                 - !!BooleanVariableNode
                   name: "auxBay2"
                   description: ""
-                  value: True 
+                  initial_value: True 
                 - !!BooleanVariableNode
                   name: "auxBay3"
                   description: ""
-                  value: True
+                  initial_value: True
                 - !!BooleanVariableNode
                   name: "auxBay4"
                   description: ""
-                  value: True
+                  initial_value: True
                 - !!BooleanVariableNode
                   name: "auxLoadUnloadZone"
                   description: ""
-                  value: True
+                  initial_value: True
                 - !!BooleanVariableNode
                   name: "ackBay2"
                   description: ""
-                  value: True
+                  initial_value: True
                 - !!BooleanVariableNode
                   name: "ackBay3"
                   description: ""
-                  value: True
+                  initial_value: True
                 - !!BooleanVariableNode
                   name: "ackBay4"
                   description: ""
-                  value: True
+                  initial_value: True
                 - !!BooleanVariableNode
                   name: "ackLoadUnloadZone"
                   description: ""
-                  value: True
+                  initial_value: True
                 - !!BooleanVariableNode
                   name: "denialBay2"
                   description: ""
-                  value: True
+                  initial_value: True
                 - !!BooleanVariableNode
                   name: "denialBay3"
                   description: ""
-                  value: True
+                  initial_value: True
                 - !!BooleanVariableNode
                   name: "denialBay4"
                   description: ""
-                  value: True
+                  initial_value: True
                 - !!BooleanVariableNode
                   name: "denialLoadUnloadZone"
                   description: ""
-                  value: True
+                  initial_value: True
         - !!FolderNode
           name: "ConveyorObjects"
           description: ""
@@ -440,7 +497,7 @@ root:
                           name: "palletNum"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                 - !!ObjectVariableNode 
                   name: "Bay4"
                   description: ""
@@ -453,7 +510,7 @@ root:
                           name: "palletNum"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                     - !!ObjectVariableNode
                       name: "PalletPosition2"
                       description: ""
@@ -462,7 +519,7 @@ root:
                           name: "palletNum"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                     - !!ObjectVariableNode
                       name: "PalletPosition1"
                       description: ""
@@ -471,16 +528,7 @@ root:
                           name: "palletNum"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
-                    - !!ObjectVariableNode
-                      name: "PalletPosition0"
-                      description: ""
-                      properties:
-                        - !!NumericalVariableNode
-                          name: "palletNum"
-                          description: ""
-                          measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                 - !!ObjectVariableNode
                   name: "Bay3"
                   description: ""
@@ -493,7 +541,7 @@ root:
                           name: "palletNum"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                     - !!ObjectVariableNode
                       name: "PalletPosition2"
                       description: ""
@@ -502,7 +550,7 @@ root:
                           name: "palletNum"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                     - !!ObjectVariableNode
                       name: "PalletPosition1"
                       description: ""
@@ -511,16 +559,7 @@ root:
                           name: "palletNum"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
-                    - !!ObjectVariableNode
-                      name: "PalletPosition0"
-                      description: ""
-                      properties:
-                        - !!NumericalVariableNode
-                          name: "palletNum"
-                          description: ""
-                          measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0                  
+                          initial_value: 0               
                 - !!ObjectVariableNode
                   name: "Bay2"
                   description: ""
@@ -533,7 +572,7 @@ root:
                           name: "palletNum"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                     - !!ObjectVariableNode
                       name: "PalletPosition2"
                       description: ""
@@ -542,7 +581,7 @@ root:
                           name: "palletNum"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                     - !!ObjectVariableNode
                       name: "PalletPosition1"
                       description: ""
@@ -551,39 +590,12 @@ root:
                           name: "palletNum"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
-                    - !!ObjectVariableNode
-                      name: "PalletPosition0"
-                      description: ""
-                      properties:
-                        - !!NumericalVariableNode
-                          name: "palletNum"
-                          description: ""
-                          measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                 - !!ObjectVariableNode
                   name: "Bay1"
                   description: ""
                   properties:
                     - !!ObjectVariableNode
-                      name: "PalletPosition3"
-                      description: ""
-                      properties:
-                        - !!NumericalVariableNode
-                          name: "palletNum"
-                          description: ""
-                          measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
-                    - !!ObjectVariableNode
-                      name: "PalletPosition2"
-                      description: ""
-                      properties:
-                        - !!NumericalVariableNode
-                          name: "palletNum"
-                          description: ""
-                          measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
-                    - !!ObjectVariableNode
                       name: "PalletPosition1"
                       description: ""
                       properties:
@@ -591,16 +603,7 @@ root:
                           name: "palletNum"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
-                    - !!ObjectVariableNode
-                      name: "PalletPosition0"
-                      description: ""
-                      properties:
-                        - !!NumericalVariableNode
-                          name: "palletNum"
-                          description: ""
-                          measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
             - !!FolderNode
               name: "Pallets"
               description: ""
@@ -613,32 +616,32 @@ root:
                       name: "destination"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "reserved"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition1"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition2"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition3"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "type"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                 - !!ObjectVariableNode
                   name: "Pallet2"
                   description: ""
@@ -647,32 +650,32 @@ root:
                       name: "destination"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "reserved"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition1"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition2"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition3"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "type"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0 
+                      initial_value: 0 
                 - !!ObjectVariableNode
                   name: "Pallet3"
                   description: ""
@@ -681,32 +684,32 @@ root:
                       name: "destination"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "reserved"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition1"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition2"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition3"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "type"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0   
+                      initial_value: 0   
                 - !!ObjectVariableNode
                   name: "Pallet4"
                   description: ""
@@ -715,32 +718,32 @@ root:
                       name: "destination"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "reserved"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition1"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition2"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition3"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "type"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                 - !!ObjectVariableNode
                   name: "Pallet5"
                   description: ""
@@ -749,32 +752,32 @@ root:
                       name: "destination"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "reserved"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition1"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition2"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition3"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "type"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                 - !!ObjectVariableNode
                   name: "Pallet6"
                   description: ""
@@ -783,32 +786,32 @@ root:
                       name: "destination"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "reserved"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition1"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition2"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition3"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "type"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                 - !!ObjectVariableNode
                   name: "Pallet7"
                   description: ""
@@ -817,32 +820,32 @@ root:
                       name: "destination"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "reserved"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition1"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition2"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition3"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "type"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0 
+                      initial_value: 0 
                 - !!ObjectVariableNode
                   name: "Pallet8"
                   description: ""
@@ -851,32 +854,32 @@ root:
                       name: "destination"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "reserved"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition1"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition2"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition3"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "type"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                 - !!ObjectVariableNode
                   name: "Pallet9"
                   description: ""
@@ -885,32 +888,32 @@ root:
                       name: "destination"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "reserved"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition1"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition2"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition3"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "type"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                 - !!ObjectVariableNode
                   name: "Pallet10"
                   description: ""
@@ -919,32 +922,32 @@ root:
                       name: "destination"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "reserved"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition1"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition2"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition3"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
                     - !!NumericalVariableNode
                       name: "type"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
             - !!FolderNode #skip
               name: "Segments"    
               description: ""
@@ -961,57 +964,57 @@ root:
                           name: "size"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item0"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item1"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item2"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item3"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0  
+                          initial_value: 0  
                         - !!NumericalVariableNode 
                           name: "item4"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item5"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item6"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item7"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item8"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item9"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                 - !!ObjectVariableNode
                   name: "Segment2"
                   description: ""
@@ -1024,57 +1027,57 @@ root:
                           name: "size"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item0"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item1"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item2"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item3"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0  
+                          initial_value: 0  
                         - !!NumericalVariableNode 
                           name: "item4"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item5"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item6"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item7"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item8"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item9"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                 - !!ObjectVariableNode  
                   name: "Segment3"
                   description: ""
@@ -1087,57 +1090,57 @@ root:
                           name: "size"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item0"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item1"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item2"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item3"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0  
+                          initial_value: 0  
                         - !!NumericalVariableNode 
                           name: "item4"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item5"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item6"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item7"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item8"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item9"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0  
+                          initial_value: 0  
                 - !!ObjectVariableNode
                   name: "Segment4"
                   description: ""
@@ -1150,57 +1153,57 @@ root:
                           name: "size"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item0"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item1"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item2"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item3"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0  
+                          initial_value: 0  
                         - !!NumericalVariableNode 
                           name: "item4"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item5"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item6"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item7"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item8"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item9"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                 - !!ObjectVariableNode
                   name : "Segment5"
                   description: ""
@@ -1213,57 +1216,57 @@ root:
                           name: "size"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item0"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item1"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item2"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item3"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0  
+                          initial_value: 0  
                         - !!NumericalVariableNode 
                           name: "item4"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item5"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item6"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item7"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item8"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item9"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                 - !!ObjectVariableNode
                   name: "Segment6"
                   description: ""
@@ -1276,57 +1279,57 @@ root:
                           name: "size"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item0"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item1"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item2"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item3"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0  
+                          initial_value: 0  
                         - !!NumericalVariableNode 
                           name: "item4"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item5"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item6"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item7"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item8"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item9"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                 - !!ObjectVariableNode
                   name: "Segment7"
                   description: ""
@@ -1339,57 +1342,57 @@ root:
                           name: "size"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item0"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item1"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item2"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item3"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0  
+                          initial_value: 0  
                         - !!NumericalVariableNode 
                           name: "item4"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item5"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item6"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item7"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item8"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item9"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                 - !!ObjectVariableNode  
                   name: "Segment8"
                   description: ""
@@ -1402,57 +1405,57 @@ root:
                           name: "size"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item0"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item1"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item2"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item3"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0  
+                          initial_value: 0  
                         - !!NumericalVariableNode 
                           name: "item4"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item5"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item6"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item7"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item8"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
                         - !!NumericalVariableNode
                           name: "item9"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          initial_value: 0
             - !!FolderNode #skip
               name: "RunningMode"
               description: ""
@@ -1460,11 +1463,11 @@ root:
                 - !!BooleanVariableNode
                   name: "modeAutomatic"
                   description: ""
-                  value: True
+                  initial_value: True
                 - !!BooleanVariableNode
                   name: "modeManual"
                   description: ""
-                  value: False    
+                  initial_value: False    
             - !!FolderNode #skip
               name: "LTUMainBelts"
               description: ""
@@ -1477,7 +1480,7 @@ root:
                       name: "pallet"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      value: 0
+                      initial_value: 0
         - !!FolderNode #skip
           name: ConveyorHMIVars
           description: ""
@@ -1485,7 +1488,7 @@ root:
             - !!BooleanVariableNode
               name: "PANEL_ENABLED"
               description: ""
-              value: True   
+              initial_value: True   
         - !!FolderNode #skip
           name: "ConveyorSystemStatus"
           description: ""
@@ -1493,287 +1496,287 @@ root:
             - !!BooleanVariableNode
               name: "MAIN_MOTORS_ON"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY2_MOTOR_ON"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY3_MOTOR_ON"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY4_MOTOR_ON"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY2_LTU_BACKWARD_MOTOR_ON"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY3_LTU_BACKWARD_MOTOR_ON"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY3_LTU_FORWARD_MOTOR_ON"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY3_LTU_BACKWARD_MOTOR_ON"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY4_LTU_FORWARD_MOTOR_ON"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY4_LTU_BACKWARD_MOTOR_ON"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "LTU_WAREHOUSE_MOTOR_ON"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "LTU_2_TO_1_MOTOR_ON"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY2_LTU_FORWARD_ACTIVE"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY2_LTU_BACKWARD_ACTIVE"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY3_LTU_FORWARD_ACTIVE"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY3_LTU_BACKWARD_ACTIVE"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY4_LTU_FORWARD_ACTIVE"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY4_LTU_BACKWARD_ACTIVE"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "LTU_WAREHOUSE_ACTIVE"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "LTU_2_TO_1_ACTIVE"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY2_INDEX_UP"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY3_INDEX_UP"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY4_INDEX_UP"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "LOAD_UNLOAD_ZONE_INDEX_UP"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY2_LTU_FORWARD_UP"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY2_LTU_FORWARD_DOWN"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY2_LTU_BACKWARD_UP"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY2_LTU_BACKWARD_DOWN"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY2_VARIABLE_STOPPER_LTU_SIDE_UP"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY2_VARIABLE_STOPPER_BAY_SIDE_UP"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY3_LTU_FORWARD_UP"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY3_LTU_FORWARD_DOWN"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY3_LTU_BACKWARD_UP"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY3_LTU_BACKWARD_DOWN"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY3_VARIABLE_STOPPER_LTU_SIDE_UP"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY3_VARIABLE_STOPPER_BAY_SIDE_UP"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY4_LTU_FORWARD_UP"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY4_LTU_FORWARD_DOWN"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY4_LTU_BACKWARD_UP"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode 
               name: "BAY4_LTU_BACKWARD_DOWN"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY4_VARIABLE_STOPPER_LTU_SIDE_UP"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY4_VARIABLE_STOPPER_BAY_SIDE_UP"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "LTU_WAREHOUSE_UP"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "LTU_2_TO_1_UP"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY2_POSITION_1_ENTRANCE_STOP_GATE_OPENED"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY2_POSITION_1_EXIT_STOP_GATE_OPENED"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY2_POSITION_2_ENTRANCE_STOP_GATE_OPENED"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY2_POSITION_2_EXIT_STOP_GATE_OPENED"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY2_POSITION_3_ENTRANCE_STOP_GATE_OPENED"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY2_POSITION_3_EXIT_STOP_GATE_OPENED"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY3_POSITION_1_ENTRANCE_STOP_GATE_OPENED"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY3_POSITION_1_EXIT_STOP_GATE_OPENED"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY3_POSITION_2_ENTRANCE_STOP_GATE_OPENED"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY3_POSITION_2_EXIT_STOP_GATE_OPENED"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY3_POSITION_3_ENTRANCE_STOP_GATE_OPENED"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY3_POSITION_3_EXIT_STOP_GATE_OPENED"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY4_POSITION_1_ENTRANCE_STOP_GATE_OPENED"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY4_POSITION_1_EXIT_STOP_GATE_OPENED"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY4_POSITION_2_ENTRANCE_STOP_GATE_OPENED"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY4_POSITION_2_EXIT_STOP_GATE_OPENED"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY4_POSITION_3_ENTRANCE_STOP_GATE_OPENED"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "BAY4_POSITION_3_EXIT_STOP_GATE_OPENED"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "LOAD_UNLOAD_ZONE_STOP_GATE_OPENED"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "SEGMENT1_STOP_GATE_OPENED"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "SEGMENT2_STOP_GATE_OPENED"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "SEGMENT3_STOP_GATE_OPENED"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "SEGMENT4_STOP_GATE_OPENED"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "SEGMENT5_STOP_GATE_OPENED"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "SEGMENT6_STOP_GATE_OPENED"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "SEGMENT7_STOP_GATE_OPENED"
               description: ""
-              value: True
+              initial_value: True
             - !!BooleanVariableNode
               name: "SEGMENT8_STOP_GATE_OPENED"
               description: ""
-              value: True
+              initial_value: True
 
 
             

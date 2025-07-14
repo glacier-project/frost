@@ -1,0 +1,36 @@
+name: "TrafficLight" # name of the machine
+machine_category: "unknown" # category of the machine
+machine_type: "unknown" # type of the machine
+machine_model: "unknown" # model of the machine
+description: "" # description of the machine
+root:
+  !!FolderNode
+  name: "TrafficLight"
+  description: ""
+  children:
+    - !!NumericalVariableNode
+      name: "count"
+      description: ""
+      measure_unit: "NoneMeasureUnits.NONE"
+      initial_value: 0
+    - !!NumericalVariableNode
+      name: "mode"
+      description: ""
+      measure_unit: "NoneMeasureUnits.NONE"
+      initial_value: 0
+    - !!BooleanVariableNode
+      name: "sigR"
+      description: ""
+      initial_value: True  
+    - !!BooleanVariableNode
+      name: "sigY"
+      description: ""
+      initial_value: False 
+    - !!BooleanVariableNode
+      name: "sigG"
+      description: ""
+      initial_value: False 
+    - !!BooleanVariableNode
+      name: "pedestrian"
+      description: ""
+      initial_value: False

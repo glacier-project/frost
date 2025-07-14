@@ -1,46 +1,65 @@
 target Python
 
-import Model from "../../../glacier/src/Model.lf"
+import FrostMachine from "../../../frost/FrostMachine.lf"
 
 
-reactor Kairos extends Model{
-    
+reactor Kairos extends FrostMachine{
+
     state start_mission = {= self.data_model.get_node("RBKairos/Mission_Methods/start_mission") =}
-    state preemptRunningMission = {= self.data_model.get_node("RBKairos/Mission_Methods/preemptRunningMission") =}
+    state preempt_running_mission = {= self.data_model.get_node("RBKairos/Mission_Methods/preemptRunningMission") =}
 
-    state controlBusy = {= self.data_model.get_node("RBKairos/Mission_Methods/Control_Busy") =}
-    state lastMissionResult = {= self.data_model.get_node("RBKairos/Mission_Methods/Last_Mission_Result") =}
-    state missionsCallCounter = {= self.data_model.get_node("RBKairos/Mission_Methods/Missions_Call_Counter") =}
-    state ongoingMissionFeedback = {= self.data_model.get_node("RBKairos/Mission_Methods/Ongoing_Mission_Feedback") =}
-    state ongoingMissionName = {= self.data_model.get_node("RBKairos/Mission_Methods/Ongoing_Mission_Name") =}
-
-    state act
+    state control_busy = {= self.data_model.get_node("RBKairos/Mission_Methods/Control_Busy") =}
+    state last_mission_result = {= self.data_model.get_node("RBKairos/Mission_Methods/Last_Mission_Result") =}
+    state missions_call_counter = {= self.data_model.get_node("RBKairos/Mission_Methods/Missions_Call_Counter") =}
+    state ongoing_mission_feedback = {= self.data_model.get_node("RBKairos/Mission_Methods/Ongoing_Mission_Feedback") =}
+    state ongoing_mission_name = {= self.data_model.get_node("RBKairos/Mission_Methods/Ongoing_Mission_Name") =}
+    timer work(0ms, 1000ms)
+    logical action delay
     reaction (startup){=
-        assert isinstance(self.start_mission, MethodNode), "startMission Node not found"
-        assert isinstance(self.preemptRunningMission, MethodNode), "preemptRunningMission Node not found"
-        self.start_mission.callback = self.startMission
-        self.preemptRunningMission.callback = self.preemptMission
+        assert isinstance(self.start_mission, MethodNode), "start_mission Node not found"
+        assert isinstance(self.preempt_running_mission, MethodNode), "preempt_running_mission Node not found"
+        self.preempt_running_mission.callback = self.preemptMission
     =}
 
-    method startMission(name){=
-        self.ongoingMissionName.update(name)
-        self.ongoingMissionFeedback.update("Mission done")
-        self.missionsCallCounter.update(self.missionsCallCounter.read() + 1)   
-        self.controlBusy.update(True)
-        self.lastMissionResult.update(True)  
-        return self.lastMissionResult.read()
+    method startMission(){=
+        """
+        Starts a mission by setting the control to busy, initializing the ongoing mission name,
+        and resetting the mission call counter. It also sets the last mission result to True.
+        """
+        self.ongoing_mission_name.value = ""
+        self.missions_call_counter.value = self.missions_call_counter.value + 1
+        self.last_mission_result.value = True
+        self.control_busy.value = False    
     =}
 
     method preemptMission(){=
-        self.controlBusy.update(False)
-        self.ongoingMissionFeedback.update("Mission aborted")
-        self.lastMissionResult.update(False)
-        self.ongoingMissionName.update("")
-        return self.lastMissionResult.read()
+        """
+        Preempts the ongoing mission by setting the control to busy, updating the ongoing mission feedback,
+        and resetting the last mission result and ongoing mission name.
+        Returns True if the mission was successfully aborted, False otherwise.
+        """
+        if not self.control_busy.value:
+            return False
+
+        self.control_busy.value = False 
+        self.ongoing_mission_feedback.value = "Mission aborted"
+        self.last_mission_result.value = False 
+        self.ongoing_mission_name.value = ""
+        return True
     =}
 
-    reaction(durable_method)-> durable_method, durable_method_end{=
-        durable_method_end.schedule(SEC(1), self.protocol_mng.handle_message(durable_method.value))
+    reaction(work)-> delay{=
+        if self.control_busy.value:
+            delay.schedule(SEC(20), [self.startMission])
+    =}
+
+    reaction(delay){=
+        callback = delay.value[0]
+        if len(delay.value) > 1:
+            args = delay.value[1:]
+            callback(*args)
+        else:
+            callback()
     =}
 
 }

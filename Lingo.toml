@@ -1,13 +1,21 @@
 [package]
-name = "Glacier"
-version = "0.0.0"
+name = "frost"
+version = "0.1.0"
 authors = ["sebastiano.gaiardelli@univr.it","pietro.turco@univr.it"]
 homepage = "TODO"
 license = "BSD 2"
 description = "The service-oriented development framework for service-based manufacturing systems."
 
 [lib]
-name = "GlacierExample"
+name = "frost"
+location = "frost"
+target = "Python"
+platform = "Native"
+
+[lib.properties]
+
+[[app]]
+name = "ICE"
 main = "examples/ICE/src/Main.lf"
 target = "Python"
 platform = "Native"

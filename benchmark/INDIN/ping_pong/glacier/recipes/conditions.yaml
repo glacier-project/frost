@@ -1,0 +1,6 @@
+recipe: "Test"
+conditions:
+  - machine: "PingPong"
+    header: METHOD
+    node: "result"
+    value: 10

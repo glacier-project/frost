@@ -1,0 +1,34 @@
+recipe: "2_Machine"
+description: "Test recipe for the RBKairos system"
+steps:
+  #WAREHOUSE + KAIROS
+  - sender: "Scheduler"
+    target: "Warehouse"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "Warehouse/SocketLink/extractTray"
+      args: [8]
+  - sender: "Scheduler"
+    target: "RBKairos"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "RBKairos/Mission_Methods/start_mission"
+      args: ["Warehouse"]
+  - sender: "Scheduler"
+    target: "RBKairos"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "RBKairos/Mission_Methods/start_mission"
+      args: ["Conveyor"]

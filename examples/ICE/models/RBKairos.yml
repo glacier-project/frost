@@ -1,4 +1,4 @@
-name: "Kairos" # name of the machine
+name: "RBKairos" # name of the machine
 machine_category: "Mobile Robot" # category of the machine
 machine_type: "unknown" # type of the machine
 machine_model: "unknown" # model of the machine
@@ -12,47 +12,58 @@ root:
       name: "Mission_Methods"
       description: "OPCUA"
       children:
-        - !!MethodNode
+        - !!CompositeMethodNode
           name: "start_mission"
           description: "Move"
-          durable: True
           parameters:
             - !!StringVariableNode
               name: "name"
               description: "Destination"
-              value: "default"
+              default_value: "default"
           returns:
             - !!BooleanVariableNode
-              name: "Accepted"
+              name: "Result"
               description: ""
+          cfg:
+            - !!WriteVariableNode
+              variable: "RBKairos/Mission_Methods/Ongoing_Mission_Name"
+              value: "$name"
+            - !!WriteVariableNode
+              variable: "RBKairos/Mission_Methods/Control_Busy"
               value: True
-        - !!MethodNode
+            - !!WaitConditionNode
+              variable: "RBKairos/Mission_Methods/Control_Busy"
+              operator: "=="
+              rhs: False
+            - !!ReadVariableNode
+              variable: "RBKairos/Mission_Methods/Last_Mission_Result"
+              store_as: "Result"
+        - !!AsyncMethodNode
           name: "preemptRunningMission"
           description: "Move"
           returns:
             - !!BooleanVariableNode
               name: "accepted"
               description: ""
-              value: True
         - !!BooleanVariableNode
           name: "Control_Busy"
           description: ""
-          value: True
+          initial_value: False
         - !!BooleanVariableNode
           name: "Last_Mission_Result"
           description: ""
-          value: True
+          initial_value: False
         - !!NumericalVariableNode
           name: "Missions_Call_Counter"
           description: "Number of calls"
           measure_unit: "NoneMeasureUnits.NONE"
-          value: 0
+          initial_value: 0
         - !!StringVariableNode
-            name: "Ongoing_Mission_Feedback"
-            description: "control"
-            value: "default"
+          name: "Ongoing_Mission_Feedback"
+          description: "control"
+          initial_value: "default"
         - !!StringVariableNode
-            name: "Ongoing_Mission_Name"
-            description: "control"
-            value: "default"
+          name: "Ongoing_Mission_Name"
+          description: "control"
+          initial_value: "default"
     

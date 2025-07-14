@@ -1,0 +1,85 @@
+/**
+ * (Original) Description:
+ * This example illustrates the "Verify Absence-of-Errors" mode.
+ * The server expects a tuple `{REQUEST,PID-OF-SENDER}`
+ * but the main sends to it an atom instead of its pid, then
+ * generating an exception when the server tries to send back
+ * a response to what he assumes to be a pid.
+ *
+ * The verification step discovers a *genuine* counter-example.
+ * To inspect the error trace run bfc on the generated model
+ * and look at the trace alongside the dot model of the ACS.
+ */
+
+ target Python{
+    fast: True,
+    files: [
+        ../../config/utils/l_formatter.py, 
+        ../../config/utils/time_utils.py, 
+        ../../config/utils/singleton_meta.py, 
+        ../../config/utils/g_preamble.py, 
+        ../../config/utils/handle_recipe.py
+    ],
+}
+
+preamble{=
+    from g_preamble import *
+=}
+
+
+reactor Client {
+    input ins
+    output out
+    state req
+    state counter
+    reaction(startup) -> out {=
+        self.req = 1
+        out.set(self.req)
+        self.counter = 0
+    =}
+ 
+    reaction(ins) -> out {=
+        self.req = 0
+        out.set(1)
+        self.counter = self.counter + 1
+        if (self.counter == NUM_RUNS):
+            lf.request_stop()
+        
+    =}
+}
+ 
+reactor Server {
+    
+    input ins
+    output out
+    state error
+    logical action err
+
+    reaction(ins) -> out, err {=
+        if (ins.value == 0):
+            err.schedule(0)
+        
+        else:
+            out.set(ins.value)
+    =}
+
+    reaction(err) {=
+        self.error = 1
+    =}
+}
+ 
+main reactor {
+
+    preamble{=
+        handler = logging.StreamHandler()
+        handler.setFormatter(LFormatter(lf.time.logical_elapsed, TimeFormat.MSECS))
+        logger = logging.getLogger()
+        logger.setLevel(logging.ERROR)
+        logger.addHandler(handler)
+    =}
+    
+    c = new Client();
+    s = new Server();
+    c.out -> s.ins after 1 nsec
+    s.out -> c.ins
+}

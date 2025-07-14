@@ -1,51 +1,49 @@
 target Python 
 
-import Model from "../../../glacier/src/Model.lf"
+import FrostMachine from "../../../frost/FrostMachine.lf"
 
-reactor Cell2 extends Model{
+reactor Cell2 extends FrostMachine{
     //METHOD
-    state startMission = {= self.data_model.get_node("OPCUA/MES/Methods/StartMission")=}
-    state engraveText = {= self.data_model.get_node("OPCUA/MES/Methods/engraveText")=}
+    state start_mission = {= self.data_model.get_node("OPCUA/MES/Methods/StartMission")=}
+    state engrave_text = {= self.data_model.get_node("OPCUA/MES/Methods/engraveText")=}
 
     //VARIABLE
-    state Busy = {= self.data_model.get_node("OPCUA/MES/MESBusy")=}
-    state lastResult = {= self.data_model.get_node("OPCUA/MES/MESLastResult")=}
-    state currentMission = {= self.data_model.get_node("OPCUA/MES/CurrentMission")=}
-    state MES = {= self.data_model.get_node("OPCUA/MES") =}
-    state board = {= BooleanVariableNode("board", "Board is in?", False) =} 
-
-    method StartMission(mission_name){=
-        if self.Busy.read() and not self.board.read():
-            return False
-
-        self.board.update(True)
-        self.Busy.update(True)
-        self.currentMission.update(mission_name)
-
-        return True
+    state busy = {= self.data_model.get_node("OPCUA/MES/MESBusy")=}
+    state last_result = {= self.data_model.get_node("OPCUA/MES/MESLastResult")=}
+    state current_mission = {= self.data_model.get_node("OPCUA/MES/CurrentMission")=}
+    state mes = {= self.data_model.get_node("OPCUA/MES") =}
+    state board = {= self.data_model.get_node("OPCUA/MES/Board")=}
+    state text = {= self.data_model.get_node("OPCUA/MES/TextToWrite")=}
+    timer work(0ms, 1000ms)
+    logical action delay
+    reaction(work) -> delay{=
+        """        
+        Checks the current mission and schedules a delay based on the mission type.
+        If the machine is busy, it checks the current mission and schedules a delay accordingly.
+        If the mission is "TakeBoard", it checks if the board is not present and schedules a delay of 10 seconds.
+        If the mission is "engraveText", it checks if the text is not empty and schedules a delay of 40 seconds.
+        If the mission is "TakeBoardOut", it checks if the board is present and schedules a delay of 10 seconds.
+        If the machine is not busy, it does nothing.
+        """
+        if self.busy.value:
+            if self.current_mission.value == "TakeBoard":
+                if not self.board.value:
+                    self.board.value = True           
+                    delay.schedule(SEC(10))
+            elif self.current_mission.value == "engraveText":
+                if not self.text.value == "":
+                    self.text.value = ""
+                    delay.schedule(SEC(40))
+            elif self.current_mission.value == "TakeBoardOut":
+                if self.board.value:
+                    self.board.value = False
+                    delay.schedule(SEC(10))
     =}
 
-    method EngraveText(text){=
-        if self.Busy.read() and self.board.read():
-            return False
-        
-        self.Busy.update(True)
-        self.currentMission.update(text)
-        
-        return True
-    =}
-
-    reaction(startup){=
-        self.startMission.callback = self.StartMission
-        self.engraveText.callback = self.EngraveText
-        self.MES.add_child(self.board)
-    =}
-
-    reaction(work){=
-        if self.Busy.read():
-            self.Busy.update(False)            
-            self.lastResult.update(True)
-            self.currentMission.update("")
+    reaction(delay){=
+        self.last_result.value = True
+        self.current_mission.value = ""
+        self.busy.value = False
     =}
 
 }

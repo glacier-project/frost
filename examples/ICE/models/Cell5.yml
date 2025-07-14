@@ -8,94 +8,96 @@ root:
   name: "Cell5"
   description: "OPCUA"
   children:
-    - !!MethodNode
-      name: "do_quality_control"
-      description: "Checks quality"
-      parameters:
-        - !!NumericalVariableNode
-          name: "Unknown1"
-          description: "Quality of the Lego"
-          measure_unit: "NoneMeasureUnits.NONE"
-          value: 0
-        - !!NumericalVariableNode
-          name: "Unknown2"
-          description: "Lego image"
-          measure_unit: "NoneMeasureUnits.NONE"
-          value: 0
-      returns:
-        - !!BooleanVariableNode
-          name: "quality"
-          description: "Quality of the Lego"
-          value: True
+    - !!FolderNode
+      name: "Methods"
+      description: "Variables"
+      children:
+        - !!AsyncMethodNode
+          name: "CheckQualityCovers"
+          description: "Checks quality"
+          parameters:
+            - !!StringVariableNode
+              name: "color"
+              description: "Cover color"
+              default_value: ""
+          returns:
+            - !!BooleanVariableNode
+              name: "result"
+              description: "QualityCover"
+        - !!AsyncMethodNode
+          name: "CheckQualityLego"
+          description: "Checks quality"
+          parameters:
+            - !!NumericalVariableNode
+              name: "shape1"
+              description: "Quality of the Lego"
+              measure_unit: "NoneMeasureUnits.NONE"
+              default_value: 0
+            - !!NumericalVariableNode
+              name: "shape2"
+              description: "Lego image"
+              measure_unit: "NoneMeasureUnits.NONE"
+              default_value: 0
+            - !!NumericalVariableNode
+              name: "shape3"
+              description: "Lego image"
+              measure_unit: "NoneMeasureUnits.NONE"
+              default_value: 0
+          returns:
+            - !!BooleanVariableNode
+              name: "result"
+              description: "Quality of the Lego"
     - !!FolderNode
       name: "Status"
       description: "Variables"
       children:
-        - !!NumericalVariableNode
-          name: "detectedShape[0]"
+        - !!BooleanVariableNode
+          name: "Busy"
           description: "Lego image"
           measure_unit: "LengthUnits.Meter"
-          value: 0
-        - !!NumericalVariableNode
-          name: "detectedShape[0]"
+          initial_value: False
+        - !!StringVariableNode
+          name: "CurrentMission"
+          description: "Lego image"
+          initial_value: ""
+        - !!BooleanVariableNode
+          name: "LastResult"
           description: "Lego image"
           measure_unit: "LengthUnits.Meter"
-          value: 0
-        - !!NumericalVariableNode
-          name: "detectedShape[0]"
-          description: "Lego image"
-          measure_unit: "LengthUnits.Meter"
-          value: 0
-        - !!BooleanVariableNode
-          name: "validShape[0]"
-          description: ""
-          value: True
-        - !!BooleanVariableNode
-          name: "validShape[1]"
-          description: ""
-          value: True
-        - !!BooleanVariableNode
-          name: "validShape[2]"
-          description: ""
-          value: True
+          initial_value: False   
     - !!FolderNode
       name: "Statistics"
       description: "Contains statistics of the Lego analyzed"
       children:
         - !!NumericalVariableNode
-          name: "controlCount"
-          description: "Number of controls"
+          name: "ChecksGadget"
+          description: ""
           measure_unit: "NoneMeasureUnits.NONE"
-          value: 0
+          initial_value: 0
         - !!NumericalVariableNode
-          name: "2x2Counter"
-          description: "Count of 2x2 Legos"
+          name: "ChecksLego"
+          description: ""
           measure_unit: "NoneMeasureUnits.NONE"
-          value: 0
+          initial_value: 0
         - !!NumericalVariableNode
-          name: "2x4Counter"
-          description: "Count of 2x4 Legos"
+          name: "ChecksTotal"
+          description: ""
           measure_unit: "NoneMeasureUnits.NONE"
-          value: 0
+          initial_value: 0
         - !!NumericalVariableNode
-          name: "2x6Counter"
-          description: "Count of 2x6 Legos"
+          name: "FaultsGadget"
+          description: ""
           measure_unit: "NoneMeasureUnits.NONE"
-          value: 0
+          initial_value: 0
         - !!NumericalVariableNode
-          name: "2x8Counter"
-          description: "Count of 2x8 Legos"
+          name: "FaultsLego"
+          description: ""
           measure_unit: "NoneMeasureUnits.NONE"
-          value: 0
+          initial_value: 0
         - !!NumericalVariableNode
-          name: "CorrectPartsCounter"
-          description: "Number of correct parts"
-          measure_unit: "NoneMeasureUnits.NONE"
-          value: 0
-        - !!NumericalVariableNode
-          name: "FaultsCounter"
+          name: "FaultsTotal"
           description: "Number of faults"
           measure_unit: "NoneMeasureUnits.NONE"
-          value: 0
+          initial_value: 0
 
     

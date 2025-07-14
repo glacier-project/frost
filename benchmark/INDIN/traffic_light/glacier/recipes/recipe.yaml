@@ -1,0 +1,13 @@
+recipe: "Test"
+description: "Test recipe for the RBKairos system"
+steps:  
+  - sender: "Scheduler"
+    target: "TrafficLight"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "VARIABLE"
+      msg_name: "WRITE"
+    payload:
+      node: "TrafficLight/pedestrian"
+      value: True
