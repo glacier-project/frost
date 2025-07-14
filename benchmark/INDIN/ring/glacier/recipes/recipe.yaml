@@ -1,0 +1,14 @@
+recipe: "Test"
+description: "Test recipe for the RBKairos system"
+steps:
+  - sender: "Scheduler"
+    target: "Ring"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "Ring/ring"
+      args: [0]
+  

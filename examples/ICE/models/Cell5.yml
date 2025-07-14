@@ -1,0 +1,103 @@
+name: "Cell5" # name of the machine
+machine_category: "unknown" # category of the machine
+machine_type: "unknown" # type of the machine
+machine_model: "unknown" # model of the machine
+description: "Checks Lego on the Conveyor Belt" # description of the machine
+root:
+  !!FolderNode
+  name: "Cell5"
+  description: "OPCUA"
+  children:
+    - !!FolderNode
+      name: "Methods"
+      description: "Variables"
+      children:
+        - !!AsyncMethodNode
+          name: "CheckQualityCovers"
+          description: "Checks quality"
+          parameters:
+            - !!StringVariableNode
+              name: "color"
+              description: "Cover color"
+              default_value: ""
+          returns:
+            - !!BooleanVariableNode
+              name: "result"
+              description: "QualityCover"
+        - !!AsyncMethodNode
+          name: "CheckQualityLego"
+          description: "Checks quality"
+          parameters:
+            - !!NumericalVariableNode
+              name: "shape1"
+              description: "Quality of the Lego"
+              measure_unit: "NoneMeasureUnits.NONE"
+              default_value: 0
+            - !!NumericalVariableNode
+              name: "shape2"
+              description: "Lego image"
+              measure_unit: "NoneMeasureUnits.NONE"
+              default_value: 0
+            - !!NumericalVariableNode
+              name: "shape3"
+              description: "Lego image"
+              measure_unit: "NoneMeasureUnits.NONE"
+              default_value: 0
+          returns:
+            - !!BooleanVariableNode
+              name: "result"
+              description: "Quality of the Lego"
+    - !!FolderNode
+      name: "Status"
+      description: "Variables"
+      children:
+        - !!BooleanVariableNode
+          name: "Busy"
+          description: "Lego image"
+          measure_unit: "LengthUnits.Meter"
+          initial_value: False
+        - !!StringVariableNode
+          name: "CurrentMission"
+          description: "Lego image"
+          initial_value: ""
+        - !!BooleanVariableNode
+          name: "LastResult"
+          description: "Lego image"
+          measure_unit: "LengthUnits.Meter"
+          initial_value: False   
+    - !!FolderNode
+      name: "Statistics"
+      description: "Contains statistics of the Lego analyzed"
+      children:
+        - !!NumericalVariableNode
+          name: "ChecksGadget"
+          description: ""
+          measure_unit: "NoneMeasureUnits.NONE"
+          initial_value: 0
+        - !!NumericalVariableNode
+          name: "ChecksLego"
+          description: ""
+          measure_unit: "NoneMeasureUnits.NONE"
+          initial_value: 0
+        - !!NumericalVariableNode
+          name: "ChecksTotal"
+          description: ""
+          measure_unit: "NoneMeasureUnits.NONE"
+          initial_value: 0
+        - !!NumericalVariableNode
+          name: "FaultsGadget"
+          description: ""
+          measure_unit: "NoneMeasureUnits.NONE"
+          initial_value: 0
+        - !!NumericalVariableNode
+          name: "FaultsLego"
+          description: ""
+          measure_unit: "NoneMeasureUnits.NONE"
+          initial_value: 0
+        - !!NumericalVariableNode
+          name: "FaultsTotal"
+          description: "Number of faults"
+          measure_unit: "NoneMeasureUnits.NONE"
+          initial_value: 0
+
+    

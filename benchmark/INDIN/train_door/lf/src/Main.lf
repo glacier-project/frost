@@ -1,0 +1,77 @@
+target Python{
+    fast: True,
+    files: [
+        ../../config/utils/l_formatter.py, 
+        ../../config/utils/time_utils.py, 
+        ../../config/utils/singleton_meta.py, 
+        ../../config/utils/g_preamble.py, 
+        ../../config/utils/handle_recipe.py
+    ]
+}
+
+preamble{=
+    from g_preamble import *
+    import random
+=}
+
+reactor Controller {
+    timer t(0s, 1s)
+    output out
+    state counter = 0
+    reaction(t) -> out {=
+        self.counter += 1
+        if self.counter == NUM_RUNS:
+            lf.request_stop()
+        out.set(random.choice(["m", "o", "c"]))
+    =}    
+}
+
+reactor Train {
+    input ins
+    output door
+    state timestamp = 0sec
+    reaction(ins) -> door {=
+        operation = ins.value
+        if operation == "m":
+            print("Motion detected!")
+            self.timestamp = lf.time.logical_elapsed()
+        elif operation == "o":
+            if self.timestamp == SEC(0) or (lf.time.logical_elapsed() - self.timestamp) > SECS(2):
+                door.set(True)
+            
+        elif operation == "c":
+            door.set(False)
+            print("Closing the door")
+    =}
+}
+
+reactor Door {
+    input ins
+    state opened
+    reaction(ins) {=
+        if ins.value == True:
+            if self.opened:
+                print("The door is already open")
+            else:
+                print("Opening the door.")
+                self.opened = True    
+        else:
+            self.opened = False
+    =}
+}
+
+main reactor {
+
+    preamble{=
+        handler = logging.StreamHandler()
+        handler.setFormatter(LFormatter(lf.time.logical_elapsed, TimeFormat.MSECS))
+        logger = logging.getLogger()
+        logger.setLevel(logging.ERROR)
+        logger.addHandler(handler)
+    =}
+    
+    c = new Controller()
+    t = new Train()
+    d = new Door()
+    c.out, t.door -> t.ins, d.ins after 1 sec
+}

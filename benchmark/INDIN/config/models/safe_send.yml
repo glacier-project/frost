@@ -1,0 +1,34 @@
+name: "SafeSend" # name of the machine
+machine_category: "unknown" # category of the machine
+machine_type: "unknown" # type of the machine
+machine_model: "unknown" # model of the machine
+description: "" # description of the machine
+root:
+  !!FolderNode
+  name: "SafeSend"
+  description: ""
+  children:
+    - !!NumericalVariableNode
+      name: "error"
+      description: ""
+      measure_unit: "NoneMeasureUnits.NONE"
+      initial_value: 0
+    - !!NumericalVariableNode
+      name: "req"
+      description: ""
+      measure_unit: "NoneMeasureUnits.NONE"
+      initial_value: 1
+    - !!AsyncMethodNode
+      name: "call"
+      description: ""
+      parameters:
+        - !!NumericalVariableNode
+          name: "ins"
+          description: ""
+          measure_unit: "NoneMeasureUnits.NONE"
+          default_value: 0
+      returns:
+        - !!NumericalVariableNode
+          name: "out"
+          description: ""
+          measure_unit: "NoneMeasureUnits.NONE"
