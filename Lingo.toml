@@ -13,14 +13,3 @@ target = "Python"
 platform = "Native"
 
 [lib.properties]
-
-[[app]]
-name = "ICE"
-main = "src/Main.lf"
-target = "Python"
-platform = "Native"
-
-[app.properties]
-fast = true
-
-[dependencies]
