@@ -8,7 +8,7 @@ description = "The service-oriented development framework for service-based manu
 
 [lib]
 name = "frost"
-location = "frost"
+location = "src"
 target = "Python"
 platform = "Native"
 
@@ -16,7 +16,7 @@ platform = "Native"
 
 [[app]]
 name = "ICE"
-main = "examples/ICE/src/Main.lf"
+main = "src/Main.lf"
 target = "Python"
 platform = "Native"
 
