@@ -1,0 +1,24 @@
+target Python
+
+reactor GenericWrapper(
+    file_path = "",
+    step_size = 0.1
+) {
+    state step = {=int(self.step_size * 1e9)=}
+    logical action doStep
+
+    reaction(startup) -> doStep {=
+        '''
+        #Initialize the wrapper and schedule the first step.
+        '''
+        doStep.schedule(SEC(0))
+    =}
+
+    reaction(doStep) -> doStep{=
+        '''
+        #Perform a step in the wrapper and schedule the next step.
+        '''
+        doStep.schedule(NSEC(self.step))
+    =}
+
+}

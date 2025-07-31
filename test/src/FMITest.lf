@@ -1,0 +1,32 @@
+target Python{
+    timeout: 10s,
+    fast: true,
+}
+
+import FMUWrapper from "../../src/lib/FMUWrapper.lf"
+
+reactor test extends FMUWrapper {
+
+    state vars = []
+
+    reaction(startup) -> doStep {=
+        '''
+        Initialize the FMU and schedule the first step.
+        '''
+        self.vars = []
+        for variable in self.model_description.modelVariables:
+            self.vars.append(variable.valueReference)
+    =}
+
+    reaction(doStep) -> doStep {=
+        if self.fmu is None:
+            return 0
+
+        print(f"Step at time {self.fmu_time}, LF time: {lf.time.logical_elapsed(), lf.tag().microstep}")
+        print(f"Variables: {self.fmu.getReal(self.vars)}")
+    =}
+}
+
+main reactor FMITest{
+    fmu_test = new test(file_path = "utils/bouncingBall.fmu", step_size = 0.1)
+}

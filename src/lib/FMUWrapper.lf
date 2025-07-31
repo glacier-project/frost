@@ -1,0 +1,75 @@
+target Python
+
+import GenericWrapper from "GenericWrapper.lf"
+
+
+
+reactor FMUWrapper extends GenericWrapper{
+
+    preamble{=
+        import fmpy
+        import fmpy.fmi3 as fmi
+        import os
+    =}
+
+    input IN
+    output OUT
+
+    state fmu
+    state fmu_time = 0.0
+    state unzipdir
+    state model_description
+
+    reaction(startup) -> doStep {=
+        '''
+        Initialize the FMU by extracting it, reading the model description and schedule the first step.
+        '''
+        self.unzipdir = self.fmpy.extract(self.file_path)
+        self.model_description = self.fmpy.read_model_description(self.unzipdir)
+        self.fmu = self.fmpy.instantiate_fmu(self.unzipdir, self.model_description)
+        self.fmu.enterInitializationMode()
+        self.fmu.exitInitializationMode()
+    =}
+
+    reaction(IN) {=
+        '''
+        When input is received, set the input values in the FMU and schedule the next step.
+        '''
+        values = IN.value
+        for val in values:
+            if isinstance(val, float):
+                self.fmu.setReal(None, [val])
+            elif isinstance(val, int):
+                self.fmu.setInteger(None, [val])
+            elif isinstance(val, bool):
+                self.fmu.setBoolean(None, [val])
+            elif isinstance(val, str):
+                self.fmu.setString(None, [val])
+            else:
+                raise TypeError(f"Unsupported input type: {type(val)}")
+    =}
+
+    reaction(doStep){=
+        '''
+        Perform a step in the FMU, retrieve output values, and schedule the next step.
+        '''
+        if self.fmu is None:
+            return 0
+            
+        self.fmu.doStep(currentCommunicationPoint = self.fmu_time, communicationStepSize = self.step)
+        self.fmu_time += self.step
+    =}
+
+    logical action free
+    reaction(shutdown) -> free{=
+        '''
+        Free the FMU instance and clean up resources.
+        '''
+        if self.fmu is None:
+            return 0
+
+        self.fmu.terminate()
+        self.fmu.freeInstance()
+        self.fmu = None          
+    =}
+}
