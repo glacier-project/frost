@@ -1,0 +1,146 @@
+target Python
+
+import FrostReactor from "FrostReactor.lf"
+
+reactor FrostMachine(update_step = 1000 msec) extends FrostReactor{
+
+    state registered_to_bus = False
+    state custom_node
+    state time_step = 1
+    timer check_update(0, update_step)
+    logical action check_bus_registration
+    logical action registered_to_bus
+
+
+    method create_registration_message(){=
+        """Creates the registration message for the FrostBus.
+
+        Returns:
+            FrostMessage: A message that requests registration in the FrostBus.
+        """
+        return FrostMessage(
+            sender=self.name,
+            target="Common_Bus",
+            identifier=str(uuid.uuid4()),
+            header=FrostHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.PROTOCOL,
+                msg_name=ProtocolMsgName.REGISTER,
+            ),
+            payload=ProtocolPayload(),
+        )
+    =}
+
+    reaction(check_bus_registration)->channel_out,check_bus_registration{=
+        """Check if the machine is registered to the bus. If not registered, it will send a registration message and re-schedule the check. 
+        """
+        if not self.registered_to_bus:
+            # TODO: this should be set as a number of attempts!
+            if lf.time.logical_elapsed() > SEC(9):
+                raise Exception(f"Handshake failed:{self.name} unable to connect to the bus")
+            # Generate and send the bus registration message.
+            channel_out[0].set(self.create_registration_message())
+            # Re-schedule the check in 3 seconds.
+            check_bus_registration.schedule(SEC(3))
+    =}
+
+    reaction(startup)-> channel_out,check_bus_registration{=
+        """Initializes the internal state of the FrostMachine reactor. After the initialization, it sends a registration message to the bus and schedules the first check for registration.
+        """
+        # Generate and send the bus registration message.
+        channel_out[0].set(self.create_registration_message())
+        # Schedule the check in 3 seconds.
+        check_bus_registration.schedule(SEC(3))
+    =}
+
+    method process_response(message, registered_to_bus){=
+        """Process a response message received from another FrostReactor.
+        
+        Args:
+            message (FrostMessage): The response message to process.
+            registered_to_bus (logical action): Action to be executed if the registration is successful.
+        """
+        self.logger.debug(f"Processing response: {message}")
+
+        if message.header.namespace == MsgNamespace.PROTOCOL and message.header.msg_name == ProtocolMsgName.REGISTER:
+            self.logger.debug(f"Registered with the CommonBus.")
+            self.registered_to_bus = True
+            registered_to_bus.schedule(0)
+
+        if message.header.namespace == MsgNamespace.VARIABLE and message.header.msg_name == VariableMsgName.SUBSCRIBE:
+            self.logger.debug(f"Subscribed to variable {message.payload.node}.")
+            
+            
+        # TODO: Add here all the other cases!
+    =}
+
+    method process_request(message){=
+        """Process a request message received from another FrostReactor.
+        
+        Args:
+            message (FrostMessage): The request message to process.
+        Returns:
+            FrostMessage: A response message if the request is handled, otherwise None.
+        """
+        self.logger.debug(f"Processing request: {message}")
+
+        if message.header.namespace == MsgNamespace.METHOD and message.header.msg_name == MethodMsgName.INVOKE:
+            method_node = self.data_model.get_node(message.payload.node)
+            self.logger.debug(f"method: {method_node.name} is_async: {method_node.is_async()}")
+
+            # TODO: this check here should be simplified 
+            if isinstance(method_node, MethodNode) and not isinstance(method_node, AsyncMethodNode) and not isinstance(method_node, CompositeMethodNode):
+                self.method_queue.append(message)
+                return None
+
+        # TODO: Handle other request types here!
+        response = self.protocol_mng.handle_request(message)
+        self.logger.debug(f"Generated response: {response}")
+        return response 
+    =}
+
+    # TODO: why we need this?
+    state method_queue = []
+    reaction(channel_in)->channel_out,registered_to_bus{=
+        """Handle incoming messages from the bus."""
+
+        messages = channel_in[0].value
+        assert isinstance(messages, list) and all(isinstance(item, Message) for item in messages), f"Received invalid messages: {messages}"
+        
+        message_queue = []
+        for message in messages:
+            if not isinstance(message, FrostMessage):
+                continue
+
+            self.logger.debug(f"Received message: {message}")
+
+            # HANDLE RESPONSE
+            if message.header.type == MsgType.RESPONSE:
+                self.process_response(message, registered_to_bus)
+                continue
+
+            # HANDLE REQUESTS 
+            if message.header.type == MsgType.REQUEST:
+                response = self.process_request(message)
+                if response is not None:
+                    message_queue.append(response)
+                continue
+
+            # HANDLE ERRORS HERE!
+
+        if message_queue:
+            channel_out[0].set(message_queue)
+        
+    =}
+
+    reaction(check_update)-> channel_out{=
+        """Check if there are any updates in the data model and send them to the subscribers."""
+        
+        update_messages = list(self.protocol_mng.get_update_messages())
+        if update_messages:  
+            channel_out[0].set(update_messages)
+            self.protocol_mng.clear_update_messages()
+            
+    =}
+}

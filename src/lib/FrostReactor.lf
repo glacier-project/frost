@@ -1,0 +1,20 @@
+target Python
+
+
+reactor FrostReactor(model_path = "", width = 1){
+    input[width]  channel_in
+    output[width] channel_out
+
+    state logger
+    state path = model_path
+    state data_model = {= DataModelBuilder().get_data_model(self.path) =}
+    state name = {= self.data_model.name =}
+    state protocol_mng = {= FrostProtocolMng(self.data_model) =}
+
+
+    reaction(startup)-> channel_out{=
+        """Iinitialize the reactor and its internal variables."""
+        self.logger = logging.getLogger(self.name)
+    =}
+
+}
