@@ -1,18 +1,21 @@
-name: "Common_Bus" # name of the machine
+name: "FrostBus" # name of the machine
 machine_category: "unknown" # category of the machine
 machine_type: "unknown" # type of the machine
 machine_model: "unknown" # model of the machine
 description: "" # description of the machine
 root:
   !!FolderNode
-  name: "Bus"
+  name: "FrostBus"
   description: ""
   children:
     - !!NumericalVariableNode
-      name: "number_of_machines"
+      name: "#Machines"
       description: ""
       measure_unit: "NoneMeasureUnits.NONE"
       initial_value: 0
+    - !!FolderNode
+      name: "MachineInfo"
+      description: ""
     - !!MethodNode
       name: "add_machine"
       description: ""

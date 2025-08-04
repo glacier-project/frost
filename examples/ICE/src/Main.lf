@@ -51,7 +51,7 @@ main reactor{
         handler = logging.StreamHandler()
         handler.setFormatter(LFormatter(lf.time.logical_elapsed, TIME_FORMAT))
         logger = logging.getLogger()
-        logger.setLevel(logging.INFO)
+        logger.setLevel(logging.DEBUG)
         logger.addHandler(handler)
         recipe_path = os.environ.get("RECIPE_PATH")
         conditions_path = os.environ.get("CONDITIONS_PATH")

@@ -48,7 +48,7 @@ reactor Warehouse extends FrostMachine{
     =}
 
     method show_Message(message){=
-        print(message)
+        self.logger.info(f"Show Message: {message}")
     =}
 
     reaction(work)-> delay{=
