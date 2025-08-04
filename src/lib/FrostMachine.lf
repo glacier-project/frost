@@ -9,7 +9,7 @@ reactor FrostMachine(update_step = 1000 msec) extends FrostReactor{
     state time_step = 1
     timer check_update(0, update_step)
     logical action check_bus_registration
-    logical action registered_to_bus
+    logical action ready
 
 
     method create_registration_message(){=
@@ -54,19 +54,19 @@ reactor FrostMachine(update_step = 1000 msec) extends FrostReactor{
         check_bus_registration.schedule(SEC(3))
     =}
 
-    method process_response(message, registered_to_bus){=
+    method process_response(message, ready){=
         """Process a response message received from another FrostReactor.
         
         Args:
             message (FrostMessage): The response message to process.
-            registered_to_bus (logical action): Action to be executed if the registration is successful.
+            ready (logical action): Action to be executed if the registration is successful.
         """
         self.logger.debug(f"Processing response: {message}")
 
         if message.header.namespace == MsgNamespace.PROTOCOL and message.header.msg_name == ProtocolMsgName.REGISTER:
             self.logger.debug(f"Registered with the CommonBus.")
             self.registered_to_bus = True
-            registered_to_bus.schedule(0)
+            ready.schedule(0)
 
         if message.header.namespace == MsgNamespace.VARIABLE and message.header.msg_name == VariableMsgName.SUBSCRIBE:
             self.logger.debug(f"Subscribed to variable {message.payload.node}.")
@@ -102,7 +102,7 @@ reactor FrostMachine(update_step = 1000 msec) extends FrostReactor{
 
     # TODO: why we need this?
     state method_queue = []
-    reaction(channel_in)->channel_out,registered_to_bus{=
+    reaction(channel_in)->channel_out,ready{=
         """Handle incoming messages from the bus."""
 
         messages = channel_in[0].value
@@ -117,7 +117,7 @@ reactor FrostMachine(update_step = 1000 msec) extends FrostReactor{
 
             # HANDLE RESPONSE
             if message.header.type == MsgType.RESPONSE:
-                self.process_response(message, registered_to_bus)
+                self.process_response(message, ready)
                 continue
 
             # HANDLE REQUESTS 
