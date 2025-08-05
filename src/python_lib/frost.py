@@ -35,5 +35,3 @@ handler.setFormatter(LFormatter(lf.time.logical_elapsed, TIME_PRECISION))
 logger = logging.getLogger()
 logger.setLevel(LOGGING_LEVEL)
 logger.addHandler(handler)
-
-del os 

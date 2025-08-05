@@ -19,8 +19,8 @@ reactor FrostMachine(update_step = 1000 msec) extends FrostReactor{
             FrostMessage: A message that requests registration in the FrostBus.
         """
         return FrostMessage(
-            sender=self.name,
-            target="Common_Bus",
+            sender=self._get_reactor_name(),
+            target="frost_bus",
             identifier=str(uuid.uuid4()),
             header=FrostHeader(
                 type=MsgType.REQUEST,

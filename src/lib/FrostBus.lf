@@ -3,12 +3,19 @@ target Python
 import FrostReactor from "FrostReactor.lf"
 
 reactor FrostBus extends FrostReactor{
-    state routing_map = {= {} =}
-    // state messages_out = {= {} =}
+    state routing_map 
+    state bus_node 
+    state number_of_machines 
+    state machine_info_nodes 
 
-    state bus_node = {=  self.data_model.get_node("FrostBus")  =}
-    state number_of_machines = {= self.data_model.get_node("FrostBus/#Machines") =}
-    state machine_info_nodes = {= self.data_model.get_node("FrostBus/MachineInfo") =}
+    reaction(startup) {=
+        """Initialize the FrostBus reactor."""
+        self.routing_map = {}
+        self.bus_node = self.data_model.get_node("FrostBus")
+        self.machine_info_nodes = self.data_model.get_node("FrostBus/MachineInfo")
+        self.number_of_machines = self.data_model.get_node("FrostBus/#Machines")
+        self.number_of_machines.value = 0
+    =}
 
     method register_machine(message, index){=
         """Register a machine to the bus.
@@ -106,10 +113,6 @@ reactor FrostBus extends FrostReactor{
             # TODO: remove copy from here. The messages should be immutable.
             channel_out[target_index].set(messages.copy())
             self.logger.debug(f"FrostBus sent {len(messages)} messages to target {messages[0].target} at index {target_index}.")
-    =}
-
-    reaction(startup) {=
-        self.number_of_machines.value = 0
     =}
 
 }

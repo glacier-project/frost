@@ -1,54 +1,18 @@
 target Python
 
+import FrostBase from "FrostBase.lf"
 
-reactor FrostReactor(model_path = "", width = 1){
+reactor FrostReactor(data_model_path = "", width = 1) extends FrostBase{
     input[width]  channel_in
     output[width] channel_out
 
-    state logger
-    state path = model_path
-    state data_model = {= DataModelBuilder().get_data_model(self.path) =}
-    state name = {= self.data_model.name =}
-    state protocol_mng = {= FrostProtocolMng(self.data_model) =}
-
-    method _get_reactor_name(){=
-        """Get the name of the reactor."""
-        return self.name if self.name else "unnamed_reactor"
-    =}
-
-    method __override_initial_parameters(reactor_name){=
-        """Override the reactor's parameters based on the configuration file."""
-        configuration = FROST_CONFIG
-
-        # search for the reactor
-        for part in reactor_name.split("."):
-            if "reactors" not in configuration or part not in configuration["reactors"]:
-                self.logger.warning("Reactor %s not found in configuration. Using default parameters.", reactor_name)
-                return 
-
-            configuration = configuration["reactors"][part]
-
-        if "logging_level" in configuration:
-            self.logger.setLevel(configuration["logging_level"])
-
-        if "parameters" not in configuration or not isinstance(configuration["parameters"], dict):
-            return
-
-        for key, value in configuration["parameters"].items():
-            if not hasattr(self, key):
-                self.logger.warning(f"Parameter {key} not found in reactor {reactor_name}. Setting it to {value}.")
-
-            setattr(self, key, value)
-
-    =}
+    state data_model
+    state protocol_mng
 
     reaction(startup){=
-        """Initialize the logger and override the reactor's parameters."""
-        reactor_name = self._get_reactor_name()
-
-        self.logger = logging.getLogger(reactor_name)
-        self.__override_initial_parameters(reactor_name)
-        
-        self.logger.info(f"Reactor {reactor_name} started with parameters: {self.__dict__}")
+        """Initialize the reactor with the provided model path."""
+        self.data_model = DataModelBuilder().get_data_model(self.data_model_path)
+        self.protocol_mng = FrostProtocolMng(self.data_model)
     =}
+
 }
