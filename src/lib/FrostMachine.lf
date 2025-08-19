@@ -3,16 +3,19 @@ target Python
 import FrostReactor from "FrostReactor.lf" 
 import FrostDataModel from "FrostDataModel.lf" 
  
-reactor FrostMachine(update_step = 1000 msec) extends FrostDataModel, FrostReactor{
+reactor FrostMachine(_update_step = 1000 msec) extends FrostDataModel, FrostReactor{
     '''Reactor implementing the common logic for Frost machines.
     Machine reactors extend the FrostDataModel to handle data 
      
 
     Args:
-        update_step (int): The time step for periodic updates in the machine.
+        _update_step (int): The time step for periodic updates in the machine.
     Attributes:
         time_step (int): The time step for periodic updates in the machine.
+        update_step (int): The time step for periodic updates in the machine.
     '''
+
+    state update_step = _update_step
 
     // TODO: is this needed?
     // state custom_node

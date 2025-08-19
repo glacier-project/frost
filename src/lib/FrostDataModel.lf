@@ -2,20 +2,22 @@ target Python;
 
 import FrostInterface from "FrostInterface.lf" 
 
-reactor FrostDataModel(data_model_path = "", update_interval=1 s) extends FrostInterface{
+reactor FrostDataModel(_data_model_path = "", update_interval=1 s) extends FrostInterface{
     '''Reactor implementing the common logic used to handle incoming data model-related messages, such as variable updates, method invocations, and protocol registrations.
     
     Args:
-        data_model_path (str): Path to the data model file.
+        _data_model_path (str): Path to the data model file.
         update_interval (int): Interval for checking updates in the data model.
 
     Attributes:
+        data_model_path (str): The path to the data model file.
         data_model (DataModel): The data model used by the reactor.
         protocol_mng (FrostProtocolMng): The protocol manager for handling protocol messages.
     '''
 
     timer check_update(0, update_interval)
 
+    state data_model_path = _data_model_path
     state data_model
     state protocol_mng
 
