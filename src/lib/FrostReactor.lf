@@ -1,18 +1,24 @@
 target Python
 
-import FrostBase from "FrostBase.lf"
+import FrostInterface from "FrostInterface.lf"
 
-reactor FrostReactor(data_model_path = "", width = 1) extends FrostBase{
-    input[width]  channel_in
-    output[width] channel_out
+reactor FrostReactor extends FrostInterface{ 
+    '''Base reactor for Frost components that provides common functionality and utility methods such as connection management and message handling.
+    ''' 
 
-    state data_model
-    state protocol_mng
+    // @label _initialize_frost_reactor
+    reaction (startup) -> connect_to_bus{=
+        '''Initialize the FrostReactor reactor. 
+        This method sets up the reactor and triggers the connection to the FrostBus.
 
-    reaction(startup){=
-        """Initialize the reactor with the provided model path."""
-        self.data_model = DataModelBuilder().get_data_model(self.data_model_path)
-        self.protocol_mng = FrostProtocolMng(self.data_model)
+        Args:
+            startup (input): The event that triggers the initialization.
+        Returns:
+            connect_to_bus (logical event): The event that triggers the connection to the FrostBus procedure.
+        '''
+        self.logger.info(f"Initializing FrostReactor: {self._get_reactor_name()}")
+
+        # Trigger the connection to the bus.
+        connect_to_bus.schedule(0)
     =}
-
 }

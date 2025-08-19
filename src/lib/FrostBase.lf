@@ -1,16 +1,29 @@
 target Python;
 
 reactor FrostBase(name = "unnamed_reactor"){
+    '''Base reactor providing utility methods and common functionality.
+    
+    Args:
+        name (str): The name of the reactor.
+
+    Attributes:
+        logger (Logger): The logger for the reactor.
+    '''
+
     state logger
 
     method _get_reactor_name(){=
-        """Get the name of the reactor."""
+        '''Get the name of the reactor.'''
         return self.name
     =}
 
-    method __override_initial_parameters(reactor_name){=
-        """Override the reactor's parameters based on the configuration file."""
-        configuration = FROST_CONFIG
+    method __override_initial_parameters(configuration, reactor_name){=
+        '''Override the reactor's parameters based on the configuration file.
+        
+        Args:
+            configuration (dict): The configuration dictionary containing reactor parameters.
+            reactor_name (str): The name of the reactor to override parameters for.
+        '''
 
         # search for the reactor
         for part in reactor_name.split("."):
@@ -34,14 +47,98 @@ reactor FrostBase(name = "unnamed_reactor"){
 
     =}
 
-    reaction(startup){=
-        """Initialize the logger and override the reactor's parameters."""
-        reactor_name = self._get_reactor_name()
+    method _set_output_multiport(value, output_port, exclude){=
+        '''Set the output value for the specified reactor multiport output. If a value is already set, it will append the new value to the existing one.
+
+        Args:
+            value (Any): The value to set for the output ports.
+            output_port (output): The output multiport to set the value for.
+            exclude (list): A list of indexes to exclude from setting the value.
+        Raises:
+            AssertionError: If the output_port is not a port_capsule.
+        '''
+
+        assert output_port.width > 0, f"Invalid output multiport {output_port} with width {output_port.width}."
+
+        if exclude is None:
+            exclude = []
+
+        for index, port in enumerate(output_port):
+            if port in exclude:
+                continue
+
+            self._set_output_port(value, port)
+    =}
+
+    method _set_output_port(value, output_port){=
+        '''Set the output value for the specified output port. If a value is already set, it will append the new value to the existing one. If the output port is a multiport, it will set the value for all ports.
+
+        Args:
+            value (Any): The value to set for the output port.
+            output_port (output): The output port to set the value for.
+        '''
+
+        if output_port.width > 0:
+            self._set_output_multiport(value, output_port, None)
+            return
+
+        # Check if the output is present, if not, initialize it
+        if not output_port.is_present:
+            output_port.set([])
+
+        # Append the new value to the output port
+        if isinstance(value, list):
+            output_port.value.extend(value)
+        else:
+            output_port.value.append(value)
+    =}
+
+    method _set_channel_out_port(value, channel_out){=
+        '''Set the output value for the channel_out port. If a value is already set, it will append the new value to the existing one.
+
+        Args:
+            value (Any): The value to set for the channel_out port.
+            channel_out (output): The channel_out port to set the value for.
+        '''
+        self._set_output_port(value, channel_out)
+    =}
+    
+    method _get_input_values(input_port){=
+        '''Get the values from the specified input port.
+
+        Args:
+            input_port (input): The input port to get the values from.
+        '''
+        if input_port.width <= 0:
+            return [(None, input_port.value)] if input_port.is_present else []
+
+        values = []
+        for bank_index, port in enumerate(input_port):
+            if not port.is_present:
+                continue
+
+            values.append((bank_index, port.value))
+
+        return values
+    =}
+
+    // @label _init_base
+    reaction (startup){=
+        '''Initialize the logger and override the reactor's parameters.
+        
+        Args:
+            startup (input): The event that triggers the configuration of the message filter.
+        '''
+        
+        configuration = FROST_CONFIG
+        reactor_name = self.name
 
         self.logger = logging.getLogger(reactor_name)
-        self.__override_initial_parameters(reactor_name)
+        logging_level = configuration.get("logging_level", "WARNING")
+        self.logger.setLevel(logging_level)
+        
+        self.__override_initial_parameters(configuration, reactor_name)
         
         self.logger.debug(f"Reactor {reactor_name} started with parameters: {self.__dict__}")
     =}
-
 }

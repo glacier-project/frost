@@ -1,0 +1,116 @@
+target Python;
+
+import FrostBase from "../FrostBase.lf"
+
+reactor MessageFilter extends FrostBase{
+    '''Reactor implementing a message filter for Frost messages.
+    This reactor filters incoming messages based on the specified filter criteria and routes them to the appropriate output ports.
+
+    Attributes:
+        message_type (type): The type of messages to filter.
+        filter_callbacks (list[callable]): The list of filter callbacks to apply.
+    '''
+
+    # Input msgs
+    input message_type
+    input filter_callbacks
+    input messages
+
+    # Output msgs
+    output requests 
+    output responses
+    output errors
+    # port for messages that do not match the filter criteria
+    output discarded_messages 
+
+    state _message_type = {=object=}
+    state _filter_callbacks = []
+
+    // @label set_message_type
+    reaction (message_type) {=
+        '''Set the message type for filtering messages.
+
+        Args:
+            message_type (type): The type of messages to filter.
+        '''
+        self._message_type = message_type.value
+        self.logger.debug(f"Message type set to: {self._message_type}")
+    =}
+
+    // @label set_filter_callbacks
+    reaction (filter_callbacks) {=
+        '''Set the filter callbacks for filtering messages.
+        Args:
+            filter_callbacks (list[callable]): The list of filter callbacks to apply.
+        '''
+        self._filter_callbacks = filter_callbacks.value
+        self.logger.debug(f"Filter callbacks set to: {self._filter_callbacks}")
+    =}
+
+    method _should_process_message(message){=
+        '''Returns True if the message should be processed, False otherwise.
+
+        Args:
+            message (tuple[int, FrostMessage]): The message to check.
+        
+        Returns:
+            bool: True if the message should be processed, False otherwise.
+        '''
+        filter_callbacks = self._filter_callbacks
+        for callback in filter_callbacks:
+            if not callback(message):
+                return False
+        return True
+    =}
+
+    method _handle_message(message, requests, responses, errors){=
+        '''Handle incoming messages based on their type.
+
+        Args:
+            message (tuple[int, FrostMessage]): The message to check.
+            requests (output): The output port for request messages.
+            responses (output): The output port for response messages.
+            errors (output): The output port for error messages.
+        '''        
+        self.logger.debug(f"Handling message: {message}")
+
+        header_type = message[1].header.type
+        if header_type == MsgType.REQUEST:
+            self._set_output_port(message, requests)
+        elif header_type == MsgType.RESPONSE:
+            self._set_output_port(message, responses)
+        elif header_type == MsgType.ERROR:
+            self._set_output_port(message, errors)
+        else:
+            self.logger.warning(f"Unknown message type: {header_type}")
+    =}
+
+    // @label _handle_messages
+    reaction (messages) -> requests, responses, errors, discarded_messages{=
+        '''Handle incoming messages and route them to the appropriate output ports.
+
+        Args:
+            messages (tuple[int, object]): The messages to handle. Each message is a tuple containing the bank index and the message object.
+
+        Returns:
+            requests (output): The output port for request messages.
+            responses (output): The output port for response messages.
+            errors (output): The output port for error messages.
+            discarded_messages (output): The output port for messages that do not match the filter criteria.
+        '''
+        message_type = self._message_type
+        for message in messages.value:
+            self.logger.debug(f"Processing message: {message}")
+
+            if not isinstance(message[1], message_type):
+                self.logger.warning(f"Received invalid message: {message.value}")
+                continue
+
+            if not self._should_process_message(message):
+                self.logger.debug(f"Message {message} does not match the filter criteria, skipping.")
+                self._set_output_port(message, discarded_messages)
+                continue
+
+            self._handle_message(message, requests, responses, errors)
+    =}
+}
