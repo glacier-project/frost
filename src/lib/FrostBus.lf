@@ -58,11 +58,13 @@ reactor FrostBus extends FrostDataModel{
         Returns:
             channel_out (output): The output port for processed messages.
         '''
-        # print(f"Received registration request: {message_filter.requests.value}")
 
         for bank_index, message in message_filter.requests.value:
             if message.header.namespace != MsgNamespace.PROTOCOL or message.header.msg_name != ProtocolMsgName.REGISTER:
-                return 0
+                continue
+            # Check if the sender is already registered.
+            if message.sender in self.routing_map:
+                continue
 
             # Register sender to the map.
             self.routing_map[message.sender] = bank_index
@@ -106,6 +108,9 @@ reactor FrostBus extends FrostDataModel{
         Args:
             discarded_messages (output): The output port for messages that do not match the filter criteria.
         '''
+        if not message_filter.discarded_messages.value:
+            return 0
+
         messages = [
             message for bank_index, message in message_filter.discarded_messages.value
         ]

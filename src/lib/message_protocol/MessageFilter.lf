@@ -103,7 +103,7 @@ reactor MessageFilter extends FrostBase{
             self.logger.debug(f"Processing message: {message}")
 
             if not isinstance(message[1], message_type):
-                self.logger.warning(f"Received invalid message: {message.value}")
+                self.logger.warning(f"Received invalid message: {message}")
                 continue
 
             if not self._should_process_message(message):

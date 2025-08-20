@@ -51,8 +51,7 @@ class LFormatter(logging.Formatter):
             self, 
             lf_logical_elapsed,
             time_precision: TimePrecision = TimePrecision.NSECS,
-            fmt: str = "%(logical_time)s | %(levelname)s | %(name)s | %(message)s", 
-            colors: bool = True
+            fmt: str = "%(logical_time)s | %(levelname)s | %(name)s | %(message)s"
             ) -> None:
         super().__init__(fmt)
         self._lf_logical_elapsed = lf_logical_elapsed
@@ -90,17 +89,19 @@ class LFormatter(logging.Formatter):
     def format(self, record):
         global max_name_l
         logical_time = self._lf_logical_elapsed()
-        record.logical_time = '{:<20} ({})'.format(f_convert(logical_time, TimePrecision.NSECS, self._time_precision), self._unit)
+        record.logical_time = f"{f_convert(logical_time, TimePrecision.NSECS, self._time_precision):<20} ({self._unit})"
         record.levelname = '{:<10}'.format(record.levelname)
         
-        name = record.name
         colors = self.get_col_name(record.name)
         record.name = colors[0]+colors[1]+record.name.ljust(max_name_l)+reset_col+self._levelname_color[record.levelno]
 
         log_fmt = self._formatters[record.levelno]
         return log_fmt.format(record)
     
-    def time_unit(self, ltf: TimePrecision):
+    def time_unit(self, ltf: TimePrecision) -> str:
+        '''
+        Get the time unit string for the given time unit.
+        '''
         if ltf == TimePrecision.WEEKS:
             return 'weeks'
         if ltf == TimePrecision.DAYS:

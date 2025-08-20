@@ -33,6 +33,10 @@ reactor FrostDataModel(_data_model_path = "", update_interval=1 s) extends Frost
         Args:
             startup (input): The event that triggers the configuration of the message filter.
         '''
+        if not os.path.exists(self.data_model_path) and not os.path.isfile(self.data_model_path):
+            self.logger.error(f"Data model file not found: {self.data_model_path}")
+            sys.exit(1)
+
         self.data_model = DataModelBuilder().get_data_model(self.data_model_path)
         self.protocol_mng = FrostProtocolMng(self.data_model)
     =}
@@ -50,7 +54,7 @@ reactor FrostDataModel(_data_model_path = "", update_interval=1 s) extends Frost
         '''
         for bank_index, message in message_filter.requests.value:
             if message.header.namespace == MsgNamespace.PROTOCOL or message.target != self.name:
-                return 0
+                continue
 
             self.logger.debug(f"Handling data model request: {message}")
 
@@ -61,7 +65,7 @@ reactor FrostDataModel(_data_model_path = "", update_interval=1 s) extends Frost
                 # TODO: this check here should be simplified 
                 if isinstance(method_node, MethodNode) and not isinstance(method_node, AsyncMethodNode) and not isinstance(method_node, CompositeMethodNode):
                     self.method_queue.append(message)
-                    return 0
+                    continue
 
             # TODO: Handle other request types here!
             response = self.protocol_mng.handle_request(message)

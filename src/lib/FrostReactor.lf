@@ -8,8 +8,7 @@ reactor FrostReactor extends FrostInterface{
 
     // @label _initialize_frost_reactor
     reaction (startup) -> connect_to_bus{=
-        '''Initialize the FrostReactor reactor. 
-        This method sets up the reactor and triggers the connection to the FrostBus.
+        '''Initialize the reactor and trigger connection to the FrostBus.
 
         Args:
             startup (input): The event that triggers the initialization.

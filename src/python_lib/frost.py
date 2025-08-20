@@ -4,7 +4,7 @@ import logging
 import yaml
 import os 
 import LinguaFrancaMain as lf
-from time_utils import TimePrecision, convert, f_convert
+from time_utils import TimePrecision
 from l_formatter import LFormatter    
 from machine_data_model.protocols.frost_v1.frost_message import FrostMessage
 
@@ -12,19 +12,14 @@ from machine_data_model.protocols.frost_v1.frost_message import FrostMessage
 # load configuration file
 FROST_CONFIG = os.environ.get("FROST_CONFIG", "resources/frost_config.yml")
 
-print(f"Loading FROST configuration from {FROST_CONFIG}")
-# print current working directory
-print(f"Current working directory: {os.getcwd()}")
-
-
 # if the file does not exist, use a default configuration
 if not os.path.exists(FROST_CONFIG) or not os.path.isfile(FROST_CONFIG):
     FROST_CONFIG = {
         "time_precision": "NSECS",
-        "logging_level": "INFO"
+        "logging_level": "WARNING"
     }
 else:
-    with open(FROST_CONFIG, "r") as config_file:
+    with open(FROST_CONFIG) as config_file:
         FROST_CONFIG = yaml.safe_load(config_file)
 
 TIME_PRECISION = TimePrecision[FROST_CONFIG["time_precision"]]
@@ -35,9 +30,11 @@ handler = logging.StreamHandler()
 handler.setFormatter(LFormatter(lf.time.logical_elapsed, TIME_PRECISION))
 logger = logging.getLogger()
 logger.setLevel(LOGGING_LEVEL)
-logger.addHandler(handler)
+# Add the handler only if it hasn't been added yet
+if not any(isinstance(h, logging.StreamHandler) for h in logger.handlers):
+    logger.addHandler(handler)
 
-def is_target_valid(message: tuple[int, FrostMessage], target: str):
+def is_target_valid(message: tuple[int, FrostMessage], target: str) -> bool:
     """Check if the target of the message matches the given target.
     Args:
         message (tuple[int, FrostMessage]): The message to check.

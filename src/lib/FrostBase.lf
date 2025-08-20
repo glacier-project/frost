@@ -1,4 +1,12 @@
-target Python;
+target Python{
+    files: [
+        "../python_lib/frost.py",
+        "../python_lib/l_formatter.py",
+        "../python_lib/time_utils.py",
+    ],
+    logging: error,
+    single-threaded: false,
+}
 
 reactor FrostBase(name = "unnamed_reactor"){
     '''Base reactor providing utility methods and common functionality.
@@ -41,7 +49,7 @@ reactor FrostBase(name = "unnamed_reactor"){
 
         for key, value in configuration["parameters"].items():
             if not hasattr(self, key):
-                self.logger.warning(f"Parameter {key} not found in reactor {reactor_name}. Setting it to {value}.")
+                self.logger.warning(f"Parameter {key} not found in reactor {reactor_name}. Creating dynamic parameter {key} = {value}.")
 
             setattr(self, key, value)
 
@@ -64,7 +72,7 @@ reactor FrostBase(name = "unnamed_reactor"){
             exclude = []
 
         for index, port in enumerate(output_port):
-            if port in exclude:
+            if index in exclude:
                 continue
 
             self._set_output_port(value, port)

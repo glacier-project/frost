@@ -1,4 +1,4 @@
-target Python
+target Python;
 
 import FrostReactor from "FrostReactor.lf" 
 import FrostDataModel from "FrostDataModel.lf" 
@@ -22,11 +22,12 @@ reactor FrostMachine(_update_step = 1000 msec) extends FrostDataModel, FrostReac
     // TODO: is this needed?
     state time_step = 1
 
-    reaction (startup) {=
-        '''Initialize the FrostMachine reactor.
+    // TODO: is this needed?
+    // reaction (startup) {=
+    //     '''Initialize the FrostMachine reactor.
         
-        Args:
-            startup (input): The event that triggers the configuration of the message filter.
-        '''
-    =}
+    //     Args:
+    //         startup (input): The event that triggers the configuration of the message filter.
+    //     '''
+    // =}
 }

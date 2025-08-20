@@ -12,10 +12,6 @@ reactor FrostInterface(width = 1) extends FrostBase{
     Attributes:
         connected (bool): Indicates whether the reactor is connected to the FrostBus.
     '''
-    preamble{=
-        from frost import is_target_valid
-        from machine_data_model.protocols.frost_v1.frost_message import FrostMessage
-    =}
 
     input[width]  channel_in
     output[width] channel_out
@@ -39,7 +35,7 @@ reactor FrostInterface(width = 1) extends FrostBase{
             message_filter.message_type (output): The output port where the message type is set.
             message_filter.filter_callbacks (output): The output port where the filter callbacks are set.
         '''
-        message_filter.message_type.set(self.FrostMessage)
+        message_filter.message_type.set(FrostMessage)
         message_filter.filter_callbacks.set([lambda msg: is_target_valid(msg, self._get_reactor_name())])
     =}
 
@@ -98,7 +94,7 @@ reactor FrostInterface(width = 1) extends FrostBase{
         '''
 
         values = self._get_input_values(channel_in)
-        messages = [(bank_index, message) for bank_index, messages in values for message in messages]
+        messages = [(bank_index, m) for bank_index, bank_msgs in values for m in bank_msgs]
 
         self._set_output_port(messages, message_filter.messages)
     =}
