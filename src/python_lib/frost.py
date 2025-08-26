@@ -3,7 +3,15 @@
 import logging
 import yaml
 import os 
-import LinguaFrancaMain as lf
+import sys
+import importlib
+
+for file in os.listdir(os.path.dirname(__file__)):
+    if file.startswith("LinguaFranca") and file.endswith(".so"):
+        base_name = file[:-3]  
+        base_module = importlib.import_module(base_name)
+        break
+
 from time_utils import TimePrecision
 from l_formatter import LFormatter    
 from machine_data_model.protocols.frost_v1.frost_message import FrostMessage
@@ -27,7 +35,7 @@ LOGGING_LEVEL = FROST_CONFIG["logging_level"].upper()
 
 # setup logging
 handler = logging.StreamHandler()
-handler.setFormatter(LFormatter(lf.time.logical_elapsed, TIME_PRECISION))
+handler.setFormatter(LFormatter(base_module.time.logical_elapsed, TIME_PRECISION))
 logger = logging.getLogger()
 logger.setLevel(LOGGING_LEVEL)
 # Add the handler only if it hasn't been added yet

@@ -1,0 +1,17 @@
+target Python
+
+import FrostBase from "../../src/lib/FrostBase.lf"
+
+preamble{=
+    import yaml
+    import logging
+    from frost import FROST_CONFIG
+=}
+
+reactor Empty extends FrostBase{
+    
+}
+
+main reactor{
+    s = new Empty()
+}
