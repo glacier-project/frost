@@ -1,0 +1,23 @@
+target Python
+
+import FrostInterface from "FrostInterface.lf"
+
+reactor FrostReactor extends FrostInterface{ 
+    '''Base reactor for Frost components that provides common functionality and utility methods such as connection management and message handling.
+    ''' 
+
+    // @label _initialize_frost_reactor
+    reaction (startup) -> connect_to_bus{=
+        '''Initialize the reactor and trigger connection to the FrostBus.
+
+        Args:
+            startup (input): The event that triggers the initialization.
+        Returns:
+            connect_to_bus (logical event): The event that triggers the connection to the FrostBus procedure.
+        '''
+        self.logger.info(f"Initializing FrostReactor: {self._get_reactor_name()}")
+
+        # Trigger the connection to the bus.
+        connect_to_bus.schedule(0)
+    =}
+}

@@ -1,6 +1,5 @@
 import logging
-from time_utils import TimeFormat, TimeUtils
-
+from time_utils import TimePrecision, f_convert
 
 reset_col = '\x1b[0m'
 max_name_l = 10
@@ -51,14 +50,13 @@ class LFormatter(logging.Formatter):
     def __init__(
             self, 
             lf_logical_elapsed,
-            ltf: TimeFormat = TimeFormat.NSECS,
-            fmt: str = "%(logical_time)s | %(levelname)s | %(name)s | %(message)s", 
-            colors: bool = True
+            time_precision: TimePrecision = TimePrecision.NSECS,
+            fmt: str = "%(logical_time)s | %(levelname)s | %(name)s | %(message)s"
             ) -> None:
         super().__init__(fmt)
         self._lf_logical_elapsed = lf_logical_elapsed
-        self._ltf = TimeUtils(time_precision=ltf)
-        self._unit = self.time_unit(ltf)
+        self._time_precision = time_precision
+        self._unit = self.time_unit(time_precision)
         self._levelname_color = {
             logging.DEBUG: '\x1b[38;21m',
             logging.INFO: '\x1b[38;5;39m',
@@ -73,7 +71,7 @@ class LFormatter(logging.Formatter):
             logging.ERROR: logging.Formatter(self._levelname_color[logging.ERROR] + fmt + reset_col),
             logging.CRITICAL: logging.Formatter(self._levelname_color[logging.CRITICAL] + fmt + reset_col)
         }
-        self._name_color_dict={}
+        self._name_color_dict = {}
         self._name_col_idx = 0
         # import random
         # random.seed(404)
@@ -83,50 +81,40 @@ class LFormatter(logging.Formatter):
     def get_col_name(self, name):
         if name not in self._name_color_dict:
             colors = self._color_list[self._name_col_idx]
-            self._name_col_idx+=1
-            self._name_col_idx = self._name_col_idx%len(self._color_list)
+            self._name_col_idx += 1
+            self._name_col_idx = self._name_col_idx % len(self._color_list)
             self._name_color_dict[name] = colors
         return self._name_color_dict[name]
 
     def format(self, record):
         global max_name_l
         logical_time = self._lf_logical_elapsed()
-        record.logical_time = '{:<20} ({})'.format(self._ltf.f_convert(logical_time, TimeFormat.NSECS), self._unit)
+        record.logical_time = f"{f_convert(logical_time, TimePrecision.NSECS, self._time_precision):<20} ({self._unit})"
         record.levelname = '{:<10}'.format(record.levelname)
         
-        name = record.name
         colors = self.get_col_name(record.name)
         record.name = colors[0]+colors[1]+record.name.ljust(max_name_l)+reset_col+self._levelname_color[record.levelno]
 
         log_fmt = self._formatters[record.levelno]
         return log_fmt.format(record)
     
-    def time_unit(self, ltf: TimeFormat):
-        if ltf == TimeFormat.WEEKS:
+    def time_unit(self, ltf: TimePrecision) -> str:
+        '''
+        Get the time unit string for the given time unit.
+        '''
+        if ltf == TimePrecision.WEEKS:
             return 'weeks'
-        if ltf == TimeFormat.DAYS:
+        if ltf == TimePrecision.DAYS:
             return 'days'
-        if ltf == TimeFormat.HOURS:
+        if ltf == TimePrecision.HOURS:
             return 'hours'
-        if ltf == TimeFormat.MINUTES:
+        if ltf == TimePrecision.MINUTES:
             return 'min'
-        if ltf == TimeFormat.SECS:
+        if ltf == TimePrecision.SECS:
             return 's'
-        if ltf == TimeFormat.MSECS:
+        if ltf == TimePrecision.MSECS:
             return 'ms'
-        if ltf == TimeFormat.USECS:
+        if ltf == TimePrecision.USECS:
             return 'us'
-        if ltf == TimeFormat.NSECS:
+        if ltf == TimePrecision.NSECS:
             return 'ns'
-    
-    def get_best_time_unit(self, time):
-        # TODO is it usefull?
-        if time > TimeFormat.SECS*10:
-            return TimeFormat.SECS, 's'
-        if time > TimeFormat.MSECS*10:
-            return TimeFormat.MSECS, 'ms'
-        if time > TimeFormat.USECS*10:
-            return TimeFormat.USECS, 'us'
-    
-        return TimeFormat.NSECS, 'ns'
-    

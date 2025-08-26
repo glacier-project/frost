@@ -1,0 +1,148 @@
+target Python;
+
+import FrostBase from "FrostBase.lf"
+import MessageFilter from "message_protocol/MessageFilter.lf" 
+
+reactor FrostInterface(width = 1) extends FrostBase{
+    '''Reactor implementing the communication protocol for Frost reactors.
+    This reactor handles the requests, responses, and errors related to Frost messages.
+
+    Args:
+        width (int): The width of the input and output channels.
+    Attributes:
+        connected (bool): Indicates whether the reactor is connected to the FrostBus.
+    '''
+
+    input[width]  channel_in
+    output[width] channel_out
+
+    logical action connect_to_bus
+    logical action connected_to_bus 
+
+    state connected = False
+
+    message_filter = new MessageFilter(
+        name = {=self.name+".message_filter"=}
+    )
+
+    // @label _configure_message_filter
+    reaction (startup) -> message_filter.message_type, message_filter.filter_callbacks{=
+        '''Configure the message filter with the specified message type and filter callbacks.
+
+        Args:
+            startup (input): The event that triggers the configuration of the message filter.
+        Returns:
+            message_filter.message_type (output): The output port where the message type is set.
+            message_filter.filter_callbacks (output): The output port where the filter callbacks are set.
+        '''
+        message_filter.message_type.set(FrostMessage)
+        message_filter.filter_callbacks.set([lambda msg: is_target_valid(msg, self._get_reactor_name())])
+    =}
+
+    method _create_registration_message(){=
+        '''Creates the registration message for the FrostBus.
+
+        Returns:
+            FrostMessage: A message that requests registration in the FrostBus.
+        '''
+        return FrostMessage(
+            sender=self._get_reactor_name(),
+            target="frost_bus",
+            identifier=str(uuid.uuid4()),
+            header=FrostHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.PROTOCOL,
+                msg_name=ProtocolMsgName.REGISTER,
+            ),
+            payload=ProtocolPayload(),
+        )
+    =}
+
+    // @label _connect_to_bus
+    reaction(connect_to_bus) -> channel_out, connect_to_bus{=
+        '''Check if the machine is registered to the bus. If not registered, it will send a registration message and re-schedule the check. 
+
+        Args:
+            connect_to_bus (logical action): The event that triggers the connection to the bus procedure.
+        Returns:
+            channel_out (output): The output port for sending messages to the bus.
+            connect_to_bus (logical action): The event that will be re-scheduled if the connection is not established.
+        '''
+        if self.connected:
+            return 0
+
+
+        # TODO: this should be set as a number of attempts!
+        if lf.time.logical_elapsed() > SEC(9):
+            raise Exception(f"Handshake failed:{self.name} unable to connect to the bus")
+        
+        # Generate and send the bus registration message.
+        self._set_channel_out_port(self._create_registration_message(), channel_out)
+        # Re-schedule the check in 3 seconds.
+        connect_to_bus.schedule(SEC(3))
+    =}
+
+    // @label _process_messages
+    reaction (channel_in) -> message_filter.messages{=
+        '''Forwards messages from the input channel to the message filter.
+
+        Args:
+            channel_in (input): The input port for incoming messages.
+        Returns:
+            message_filter.messages (output): The input port of the message filter where the messages are forwarded.
+        '''
+
+        values = self._get_input_values(channel_in)
+        messages = [(bank_index, m) for bank_index, bank_msgs in values for m in bank_msgs]
+
+        self._set_output_port(messages, message_filter.messages)
+    =}
+
+    method _validate_bus_connection(bank_index, message){=
+        '''Validate the bus connection response message.
+
+        Args:
+            bank_index (int): The index of the bank.
+            message (FrostMessage): The frost message to validate.
+        Returns:
+            bool: True if the bus connection is valid, False otherwise.
+        '''
+        
+        self.logger.debug(f"Connected to the FrostBus with name {self._get_reactor_name()}.")
+        self.connected = True
+
+        return True
+    =}
+
+    method _validate_subscription(bank_index, message){=
+        '''Validate a subscription response message.
+
+        Args:
+            bank_index (int): The index of the bank.
+            message (FrostMessage): The frost message to validate.
+        Returns:
+            bool: True if the subscription is valid, False otherwise.
+        '''
+        return True
+    =}
+
+    // @label _validate_response
+    reaction (message_filter.responses) -> connected_to_bus{=
+        '''Validate the response messages from the message filter and trigger the connected_to_bus action if the registration is successful.
+
+        Args:
+            message_filter.responses (input): The input port for response messages.
+        Returns:
+            connected_to_bus (output): The output port for the connected_to_bus action.
+        ''' 
+
+        for bank_index, message in message_filter.responses.value:
+            if message.header.namespace == MsgNamespace.PROTOCOL and message.header.msg_name == ProtocolMsgName.REGISTER and self._validate_bus_connection(bank_index, message):
+                connected_to_bus.schedule(0)
+
+            elif message.header.namespace == MsgNamespace.VARIABLE and message.header.msg_name == VariableMsgName.SUBSCRIBE and self._validate_subscription(bank_index, message):
+                self.logger.info(f"Subscribed to variable {message.payload.node}.")
+
+    =}
+}
