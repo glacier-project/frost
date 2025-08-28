@@ -8,6 +8,8 @@ reactor FMUWrapper(file_path = "", step = 1000) extends FrostBase{
         import fmpy
         import fmpy.fmi3 as fmi
     =}
+    state path = file_path
+    state time_step = step
     state fmu
     state fmu_time = 0.0
     state unzipdir
@@ -19,7 +21,7 @@ reactor FMUWrapper(file_path = "", step = 1000) extends FrostBase{
         '''
         Initialize the FMU by extracting it, reading the model description and schedule the first step.
         '''
-        self.unzipdir = self.fmpy.extract(self.file_path)
+        self.unzipdir = self.fmpy.extract(self.path)
         self.model_description = self.fmpy.read_model_description(self.unzipdir)
         self.fmu = self.fmpy.instantiate_fmu(self.unzipdir, self.model_description)
         self.fmu.enterInitializationMode()
@@ -35,8 +37,8 @@ reactor FMUWrapper(file_path = "", step = 1000) extends FrostBase{
         '''
         assert self.fmu != None, "FMU is not present"
 
-        self.fmu.doStep(currentCommunicationPoint = self.fmu_time, communicationStepSize = self.step)
-        self.fmu_time += self.step
+        self.fmu.doStep(currentCommunicationPoint = self.fmu_time, communicationStepSize = self.time_step)
+        self.fmu_time += self.time_step
     =}
 
     reaction(shutdown){=
