@@ -1,26 +1,36 @@
 target Python
 
-import FrostBase from "../FrostBase.lf"
+import SimModel from "SimModel.lf"
 
-reactor FMUWrapper(file_path = "", step = 1000) extends FrostBase{
+
+reactor FMUWrapper(file_path = "") extends SimModel{
 
     preamble{=
         import fmpy
         import fmpy.fmi3 as fmi
     =}
+
     state path = file_path
-    state time_step = step
+    state time_step
     state fmu
     state fmu_time = 0.0
     state unzipdir
     state model_description
     state vars = []
-    logical action doStep
 
-    reaction(startup) -> doStep {=
+    method simulate(args){=
+        assert self.fmu != None, "FMU is not present"
+        self.fmu.doStep(currentCommunicationPoint = self.fmu_time, communicationStepSize = self.time_step)
+        self.fmu_time += self.time_step
+        return True
+    =}
+
+    reaction(startup){=
         '''
         Initialize the FMU by extracting it, reading the model description and schedule the first step.
         '''
+        self.time_step = self.step / 1000
+        self.simulation_handler.register_handler(Operation.get_enum().SIMULATE, self.simulate)
         self.unzipdir = self.fmpy.extract(self.path)
         self.model_description = self.fmpy.read_model_description(self.unzipdir)
         self.fmu = self.fmpy.instantiate_fmu(self.unzipdir, self.model_description)
@@ -28,17 +38,6 @@ reactor FMUWrapper(file_path = "", step = 1000) extends FrostBase{
         self.fmu.exitInitializationMode()
         for variable in self.model_description.modelVariables:
             self.vars.append(variable.valueReference)
-        doStep.schedule(SEC(0))
-    =}
-
-    reaction(doStep){=
-        '''
-        Perform a step in the FMU, retrieve output values, and schedule the next step.
-        '''
-        assert self.fmu != None, "FMU is not present"
-
-        self.fmu.doStep(currentCommunicationPoint = self.fmu_time, communicationStepSize = self.time_step)
-        self.fmu_time += self.time_step
     =}
 
     reaction(shutdown){=

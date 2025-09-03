@@ -4,9 +4,12 @@ target Python{
         "../../frost/src/python_lib/frost.py",
         "../../frost/src/python_lib/l_formatter.py",
         "../../frost/src/python_lib/time_utils.py",
+        "../../frost/src/python_lib/simulation/simulation_message.py",
+        "../../frost/src/python_lib/simulation/simulation_message_handler.py",
+        "../../frost/src/python_lib/simulation/operation.py",
     ],
     fast: true,
-    logging: error,
+    logging: info,
     single-threaded: false,
 }
 
@@ -16,17 +19,24 @@ preamble{=
     import yaml
     import logging
     from frost import FROST_CONFIG
+    from simulation_message import SimulationMessageBuilder
+    from simulation_message import SimulationMessage
+    from operation import Operation
+    from simulation_message_handler import SimulationMessageHandler
 =}
 
 reactor Test extends FMUWrapper{
 
-    reaction(doStep) -> doStep {=
+    method getState(){=
+        return self.fmu.getReal(self.vars)
+    =}
+
+    reaction(request){=
         if self.fmu == None:
             return
 
-        logging.warning(f"Step at time {self.fmu_time}, LF time: {lf.time.logical_elapsed(), lf.tag().microstep}")
-        logging.warning(f"Variables: {self.fmu.getReal(self.vars)}")
-        doStep.schedule(MSEC(self.step))
+        self.logger.warning(f"Step at time {self.fmu_time}, LF time: {lf.time.logical_elapsed(), lf.tag().microstep}")
+        self.logger.info(f"Variables: {self.getState()}")
     =}
 }
 

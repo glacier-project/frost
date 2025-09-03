@@ -1,0 +1,43 @@
+target Python{
+    timeout: 10s,
+    files: [
+        "../../frost/src/python_lib/frost.py",
+        "../../frost/src/python_lib/l_formatter.py",
+        "../../frost/src/python_lib/time_utils.py",
+        "../../frost/src/python_lib/simulation/simulation_message.py",
+        "../../frost/src/python_lib/simulation/simulation_message_handler.py",
+        "../../frost/src/python_lib/simulation/operation.py",
+        "../../frost/src/python_lib/simulation/orchestrator.py",
+        "../../frost/src/python_lib/simulation/stepper.py",
+    ],
+    fast: true,
+    logging: warn,
+    single-threaded: false,
+}
+
+import Test from "FMUWrapperTest.lf"
+import AloneOrchestrator from "AloneOrchestrator.lf"
+
+preamble{=
+import uuid
+import yaml
+import math 
+import os 
+import logging
+from enum import Enum
+from frost import FROST_CONFIG, is_target_valid
+from simulation_message import SimulationMessageBuilder
+from simulation_message import SimulationMessage
+from operation import Operation
+from simulation_message_handler import SimulationMessageHandler
+from orchestrator import OrchestratorStepper
+=}
+
+main reactor{
+    O = new AloneOrchestrator(name = "orchestrator", width = 2, step = 1000)
+    T1 = new Test(name = "bouncingBall1", file_path = "resources/utils/bouncingBall1.fmu", step = 1000)
+    T2 = new Test(name = "bouncingBall2", file_path = "resources/utils/bouncingBall2.fmu", step = 1000)
+
+    O.models_out -> T1.request, T2.request after 0 msec
+    T1.result, T2.result -> O.models_in after 0 msec
+}

@@ -3,3 +3,4 @@ logging_level: WARNING
 reactors:
   bouncingBall:
     logging_level: WARNING
+    parameters: {}

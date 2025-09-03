@@ -1,0 +1,56 @@
+target Python
+
+import SimulationInterface from "SimulationInterface.lf"
+
+reactor Orchestrator(width = 1) extends SimulationInterface{
+
+    state neighbours = []
+    state neighbours_port = {={str: int}=}
+    state stepper
+
+    input[width] models_in
+    output[width] models_out
+
+    logical action wait_neighbours 
+    logical action command
+
+    reaction(wait_neighbours) -> wait_neighbours, command{=
+        if not self.neighbours:
+            wait_neighbours.schedule(0)         
+            return 0
+        else:
+            command.schedule(0)
+    =}
+
+    method register(sender){=
+        self.neighbours.append(sender)
+        self.neighbours_port[sender] = self.neighbours.index(sender)
+    =}
+
+    method response(args){=
+        self.stepper.add_step(args[0] * 1000)
+        return 0
+    =}
+
+    reaction(startup) -> wait_neighbours{=
+        self.simulation_handler.register_handler(Operation.get_enum().REGISTER, self.register)
+        self.simulation_handler.register_handler(Operation.get_enum().RESPONSE, self.response)
+        self.stepper = OrchestratorStepper(self.step, 0)
+        wait_neighbours.schedule(0)
+    =}
+
+    reaction (models_in) -> command{=
+        r = True
+        for i, p in enumerate(models_in):
+            if p.is_present:
+                msg = p.value
+                res = self.simulation_handler(msg)
+                if msg.operation == Operation.get_enum().REGISTER:
+                    r = False
+                self.logger.info(res)
+
+        if len(self.neighbours) == self.width and r:
+            command.schedule(MSEC(self.stepper()))
+    =}
+
+}

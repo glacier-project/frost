@@ -1,0 +1,19 @@
+target Python
+
+import Orchestrator from "../../src/lib/simulation/Orchestrator.lf"
+
+reactor AloneOrchestrator extends Orchestrator{    
+
+    reaction(command) -> models_out{=
+        for i, p in enumerate(models_out):
+            msg = SimulationMessageBuilder()\
+                .set_sender(self.name)\
+                .set_target(self.neighbours[i])\
+                .set_operation(Operation.get_enum().SIMULATE)\
+                .set_args([100])\
+                .build()
+            self.logger.info(f"Sending message: {msg}")
+            p.set(msg)
+    =}
+
+}

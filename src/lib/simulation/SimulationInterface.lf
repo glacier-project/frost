@@ -1,0 +1,7 @@
+target Python
+
+import FrostBase from "../FrostBase.lf"
+
+reactor SimulationInterface(step = 100) extends FrostBase{
+    state simulation_handler = {=SimulationMessageHandler(self.name)=}
+}

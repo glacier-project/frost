@@ -1,0 +1,26 @@
+target Python
+
+import SimulationInterface from "SimulationInterface.lf"
+
+reactor SimModel extends SimulationInterface {
+    input request
+    output result
+
+    reaction(startup) -> result{=
+        msg = SimulationMessageBuilder()\
+            .set_sender(self.name)\
+            .set_target(f"orchestrator")\
+            .set_operation(Operation.get_enum().REGISTER)\
+            .set_args([])\
+            .build()
+
+        result.set(msg)
+    =}
+
+    reaction(request) -> result{=
+        msg = request.value
+        self.logger.info(f"Received request: {msg}")
+        res = self.simulation_handler(msg)
+        result.set(res)
+    =}
+}
