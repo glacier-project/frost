@@ -72,6 +72,26 @@ reactor FrostDataModel(_data_model_path = "", update_interval=1 s) extends Frost
             self._set_channel_out_port(response, channel_out)
     =}
 
+    // @label _process_responses
+    reaction (message_filter.responses) -> channel_out{=
+        '''Handle a response message related to the data model.
+        Args:
+            message_filter.responses (input): The input port for response messages.
+        Returns:
+            channel_out (output): The output port for processed messages.
+        '''
+        for bank_index, message in message_filter.responses.value:
+            if message.header.namespace == MsgNamespace.PROTOCOL or message.target != self.name:
+                continue
+            self.logger.debug(f"Handling data model response: {message}")
+            response = self.protocol_mng.handle_request(message)
+
+            if not response:
+                continue
+
+            self._set_channel_out_port(response, channel_out)
+    =}  
+
 
     // @label _send_data_model_updates
     reaction (check_update) -> channel_out{=
