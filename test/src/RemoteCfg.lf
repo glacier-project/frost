@@ -10,18 +10,8 @@ import FrostReactor from "../../src/lib/FrostReactor.lf"
 preamble{=
     import uuid
     import os
-    os.environ["FROST_CONFIG"] = "resources/remote_cfg/frost_config.yml"
+    print(f"Frost library imported {os.environ.get('FROST_CONFIG')}")
     from frost import *
-    from machine_data_model.protocols.frost_v1.frost_message import FrostMessage
-    from machine_data_model.protocols.frost_v1.frost_header import MsgType, MsgNamespace, ProtocolMsgName, FrostHeader, MethodMsgName, VariableMsgName
-    from machine_data_model.protocols.frost_v1.frost_payload import VariablePayload, ProtocolPayload, MethodPayload, ErrorPayload
-    from machine_data_model.protocols.frost_v1.frost_protocol_mng import FrostProtocolMng
-    from machine_data_model.builder.data_model_builder import DataModelBuilder
-    from machine_data_model.protocols.protocol_mng import Message
-    from machine_data_model.nodes.method_node import MethodNode, AsyncMethodNode
-    from machine_data_model.nodes.composite_method.composite_method_node import CompositeMethodNode
-    from machine_data_model.nodes.variable_node import NumericalVariableNode, StringVariableNode, BooleanVariableNode, ObjectVariableNode
-    from machine_data_model.nodes.folder_node import FolderNode
 =}
 
 reactor Tester extends FrostReactor{
@@ -64,10 +54,11 @@ reactor Tester extends FrostReactor{
     reaction(message_filter.responses) {=
         for bank_index, message in message_filter.responses.value:
 
-            if message.correlation_id != self.correlation_id:
+            if message.correlation_id != self.correlation_id or message.header.msg_name == MethodMsgName.STARTED:
                 continue
 
             self.logger.info(f"Received response: {message}")
+            assert "product" in message.payload.ret and message.payload.ret["product"] == 15
     =}
 }
 
