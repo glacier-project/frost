@@ -17,6 +17,7 @@ preamble{=
 reactor Tester extends FrostReactor{
 
     state correlation_id
+    state response_received = False
 
     method create_method_request(s, t, method_path, args, kwargs){=
 
@@ -59,6 +60,12 @@ reactor Tester extends FrostReactor{
 
             self.logger.info(f"Received response: {message}")
             assert "product" in message.payload.ret and message.payload.ret["product"] == 15
+            self.response_received = True
+    =}
+
+    reaction(shutdown) {=
+        assert self.response_received, "Did not receive response from remote method call"
+        self.logger.info("Test completed successfully.")
     =}
 }
 
@@ -70,18 +77,31 @@ reactor RemoteMachine extends FrostMachine{
 
     state remote_variable
     state remote_product
+    state product_result 
+    timer delayed_update(10 sec, 10 sec)
 
     method product(n1, n2){=
         self.logger.info(f"Calculating product of {n1} and {n2}")
-        return n1 * n2
+        self.product_result = n1 * n2
+        return self.product_result
     =}
 
-    reaction(startup) {=
+    reaction(startup){=
         self.logger.info("RemoteMachine started.")
 
         self.remote_variable = self.data_model.get_node("RemoteMachine/RemoteVariable")
         self.remote_product = self.data_model.get_node("RemoteMachine/RemoteProduct")
         self.remote_product.callback = self.product
+    =}
+
+    reaction(delayed_update) {=
+        product = self.product_result
+        if product is None:
+            return 0
+
+        self.logger.info(f"Updating remote variable to {product}")
+        self.remote_variable.value = product
+        self.product_result = None
     =}
 }
 

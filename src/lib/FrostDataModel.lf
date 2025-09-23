@@ -83,10 +83,11 @@ reactor FrostDataModel(_data_model_path = "", update_interval=1 s) extends Frost
         for bank_index, message in message_filter.responses.value:
             if message.header.namespace == MsgNamespace.PROTOCOL or message.target != self.name:
                 continue
-            self.logger.debug(f"Handling data model response: {message}")
-            response = self.protocol_mng.handle_request(message)
 
-            if not response:
+            self.logger.debug(f"Handling data model response: {message}")
+            response = self.protocol_mng.handle_response(message)
+
+            if response is None:
                 continue
 
             self._set_channel_out_port(response, channel_out)

@@ -16,23 +16,24 @@ root:
       cfg:
         - !!ReadRemoteVariableNode
           variable: "/RemoteMachine/RemoteVariable"
-          sender_id: "machine"
           remote_id: "remote_machine"
           store_as: "n2"
         - !!CallRemoteMethodNode
           method: "/RemoteMachine/RemoteProduct"
-          sender_id: "machine"
           remote_id: "remote_machine"
           kwargs: 
             n1: "$n1"
             n2: "$n2"
         - !!WriteRemoteVariableNode
           variable: "/RemoteMachine/RemoteVariable"
-          sender_id: "machine"
           remote_id: "remote_machine"
           value: "$product"
         - !!ReadRemoteVariableNode
           variable: "/RemoteMachine/RemoteVariable"
-          sender_id: "machine"
           remote_id: "remote_machine"
           store_as: "product"
+        - !!WaitRemoteEventNode
+          variable: "/RemoteMachine/RemoteVariable"
+          remote_id: "remote_machine"
+          rhs: "$product"
+          operator: "=="
