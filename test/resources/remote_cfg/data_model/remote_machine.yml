@@ -1,0 +1,22 @@
+name: "remote_machine"
+root:
+  !!FolderNode
+  name: "RemoteMachine"
+  children:
+    - !!NumericalVariableNode
+      name: "RemoteVariable"
+      measure_unit: "NoneMeasureUnits.NONE"
+      initial_value: 3
+    - !!AsyncMethodNode
+      name: "RemoteProduct"
+      parameters: 
+        - !!NumericalVariableNode
+          name: "n1"
+          measure_unit: "NoneMeasureUnits.NONE"
+        - !!NumericalVariableNode
+          name: "n2"
+          measure_unit: "NoneMeasureUnits.NONE"
+      returns:
+        - !!NumericalVariableNode
+          name: "product"
+          measure_unit: "NoneMeasureUnits.NONE"

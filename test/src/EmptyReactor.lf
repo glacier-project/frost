@@ -13,5 +13,5 @@ reactor Empty extends FrostBase{
 }
 
 main reactor{
-    s = new Empty()
+    s = new Empty(name="empty")
 }

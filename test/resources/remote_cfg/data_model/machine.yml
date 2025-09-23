@@ -1,0 +1,39 @@
+name: "machine" 
+root:
+  !!FolderNode
+  name: "Machine"
+  description: ""
+  children:
+    - !!CompositeMethodNode
+      name: "RemoteProduct"
+      parameters: 
+        - !!NumericalVariableNode
+          name: "n1"
+          initial_value: 2
+      returns:
+        - !!NumericalVariableNode
+          name: "product"
+      cfg:
+        - !!ReadRemoteVariableNode
+          variable: "/RemoteMachine/RemoteVariable"
+          remote_id: "remote_machine"
+          store_as: "n2"
+        - !!CallRemoteMethodNode
+          method: "/RemoteMachine/RemoteProduct"
+          remote_id: "remote_machine"
+          kwargs: 
+            n1: "$n1"
+            n2: "$n2"
+        - !!WriteRemoteVariableNode
+          variable: "/RemoteMachine/RemoteVariable"
+          remote_id: "remote_machine"
+          value: "$product"
+        - !!ReadRemoteVariableNode
+          variable: "/RemoteMachine/RemoteVariable"
+          remote_id: "remote_machine"
+          store_as: "product"
+        - !!WaitRemoteEventNode
+          variable: "/RemoteMachine/RemoteVariable"
+          remote_id: "remote_machine"
+          rhs: "$product"
+          operator: "=="

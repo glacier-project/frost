@@ -1,0 +1,29 @@
+time_precision: NSECS
+logging_level: WARNING
+reactors:
+  machine:
+    logging_level: DEBUG
+    parameters:
+      data_model_path: "resources/remote_cfg/data_model/machine.yml"
+    reactors:
+      message_filter:
+        logging_level: WARNING
+  remote_machine:
+    logging_level: DEBUG
+    parameters:
+      data_model_path: "resources/remote_cfg/data_model/remote_machine.yml"
+    reactors:
+      message_filter:
+        logging_level: WARNING
+  bus:
+    logging_level: WARNING
+    parameters:
+      data_model_path: "resources/remote_cfg/data_model/bus.yml"
+    reactors:
+      message_filter:
+        logging_level: WARNING
+  tester:
+    logging_level: DEBUG
+    reactors:
+      message_filter:
+        logging_level: WARNING
