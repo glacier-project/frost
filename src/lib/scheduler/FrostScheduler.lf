@@ -1,0 +1,9 @@
+target Python;
+
+import FrostMachine from "../FrostMachine.lf"
+
+reactor FrostScheduler extends FrostMachine{
+
+
+
+}
