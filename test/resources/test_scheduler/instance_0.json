@@ -6,7 +6,7 @@
             "tasks": [
                 {
                     "id": "7c50eca4-bbf2-4328-807b-9fb74759f5db",
-                    "name": "T_0_0",
+                    "name": "StartTask1",
                     "processing_time": 7,
                     "requires": [
                         "capability_2"
@@ -15,7 +15,7 @@
                 },
                 {
                     "id": "efd468fd-67c9-4e7a-a683-cd3c951547ce",
-                    "name": "T_0_1",
+                    "name": "StartTask2",
                     "processing_time": 5,
                     "requires": [
                         "capability_1"
@@ -23,7 +23,7 @@
                 },
                 {
                     "id": "7cc1b280-214a-42cc-a660-151b19dc714f",
-                    "name": "T_0_2",
+                    "name": "StartTask3",
                     "processing_time": 10,
                     "dependencies": [
                         "efd468fd-67c9-4e7a-a683-cd3c951547ce",
@@ -42,14 +42,14 @@
     "machines": [
         {
             "id": "46652334-df31-4524-a6cc-0fbbd523002a",
-            "name": "M_1",
+            "name": "machine_1",
             "capabilities": [
                 "capability_1", "capability_2", "capability_3"
             ]
         },
         {
             "id": "dbb43f4b-d9ea-413c-9a7e-87a85632ed36",
-            "name": "M_2",
+            "name": "machine_2",
             "capabilities": [
                 "capability_1", "capability_2", "capability_3"
             ]

@@ -2,8 +2,93 @@ target Python;
 
 import FrostMachine from "../FrostMachine.lf"
 
-reactor FrostScheduler extends FrostMachine{
+reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1) extends FrostMachine{
+    state scheduling_instance = _scheduling_instance
+    state scheduling_interval = _scheduling_interval # in seconds
+    state _executor
+    state _active_tasks = {={}=}
+    logical action task_completed
+    logical action start_tasks
+    logical action update_schedule
 
+    reaction(startup) {=
+        self.scheduling_instance = load_instance_from_json(self.scheduling_instance)
+        self._executor = StaticExecutor(GeneticAlgorithmSolver(instance=self.scheduling_instance))
+    =}
 
+    method create_method_request(t, method_path, args, kwargs){=
+        return FrostMessage(
+            sender=self.data_model.name,
+            target=t,
+            identifier=str(uuid.uuid4()),
+            header=FrostHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.METHOD,
+                msg_name=MethodMsgName.INVOKE,
+            ),
+            payload=MethodPayload(
+                node=method_path,
+                args=args,
+                kwargs=kwargs
+            )
+        )
+    =}
+
+    // @label connected_to_bus
+    reaction(connected_to_bus) -> update_schedule{=
+        self.logger.info("Connected to bus. Starting scheduling...")
+        update_schedule.schedule(0)
+    =}
+
+    // @label update_schedule
+    reaction(update_schedule) -> update_schedule, start_tasks{=
+        executor = self._executor
+        logical_time = self._get_current_logical_time_sec()
+        self.logger.debug(f"Scheduling at logical time {logical_time} sec")
+        executor.update_task_status()
+        schedule = executor.update_schedule(start_time=logical_time)
+
+        # get the tasks that can be started now
+        next_tasks = executor.next_ready_tasks()
+        start_tasks.schedule(0, next_tasks)
+
+        scheduling_interval = SECS(self.scheduling_interval)
+        self.logger.debug(f"Scheduling next task in {scheduling_interval}...")
+        update_schedule.schedule(scheduling_interval)
+    =}
+
+    // @label run_tasks
+    reaction(start_tasks) {= 
+        self.logger.debug(f"Starting tasks: {start_tasks.value}")
+
+        for task, machine in start_tasks.value:
+            machine = machine.name
+            task_name = task.task.name
+            self.logger.info(f"Starting task {task_name} on machine {machine}")
+            task.start_time = self._get_current_logical_time_sec()
+            self._executor.task_started(task)
+
+            msg = self.create_method_request(self.data_model.name, f"/Scheduler/StartTask", args=[machine, f"/Machine/{task_name}"], kwargs={})
+            self._active_tasks[msg.correlation_id] = task
+            self.protocol_mng.handle_request(msg)
+
+    =}
+
+    reaction(message_filter.responses) {=
+        for bank_index, message in message_filter.responses.value:
+
+            if message.correlation_id not in self._active_tasks:
+                continue
+
+            if message.header.msg_name != MethodMsgName.COMPLETED:
+                continue
+
+            task = self._active_tasks.pop(message.correlation_id)
+            task.end_time = self._get_current_logical_time_sec()
+            self._executor.task_completed(task)
+            self.logger.warning(f"Task {task.task.name} completed on machine {task.machine.name}")
+
+    =}
 
 }
