@@ -1,6 +1,6 @@
 target Python{
     fast: true,
-    timeout: 30 min
+    timeout: 30 sec
 }
 
 import FrostScheduler from "../../src/lib/scheduler/FrostScheduler.lf"
@@ -11,86 +11,22 @@ preamble{=
     import uuid
     print(f"Frost library imported {os.environ.get('FROST_CONFIG')}")
     from frost import *
+    from frost_sheet.core.base import TaskStatus
     from frost_sheet.generator.instance_generator import load_instance_from_json
     from frost_sheet.solver.genetic_solver import GeneticAlgorithmSolver
+    from frost_sheet.executor.static_executor import StaticExecutor
     from frost_sheet.visualization.instance_dot_exporter import (
         export_instance_to_dot,
         render_dot_to_file,
     )
 =}
- 
+
 reactor Scheduler extends FrostScheduler{
-
-    state scheduling_instance
-    logical action task_completed
-    logical action start_task
-    timer check_ready_tasks(1 sec, 1 sec)
-
-    reaction(startup) {=
-        self.scheduling_instance = load_instance_from_json(self.scheduling_instance)
-        solver = GeneticAlgorithmSolver(instance=self.scheduling_instance)
-        solution = solver.schedule()
-
-        for task in solution.get_tasks():
-            self.logger.warning(f"Scheduled task: {task}")
-    =}
-
-    method create_method_request(s, t, method_path, args, kwargs){=
-
-        return FrostMessage(
-            sender=s,
-            target=t,
-            identifier=str(uuid.uuid4()),
-            header=FrostHeader(
-                type=MsgType.REQUEST,
-                version=(1, 0, 0),
-                namespace=MsgNamespace.METHOD,
-                msg_name=MethodMsgName.INVOKE,
-            ),
-            payload=MethodPayload(
-                node=method_path,
-                args=args,
-                kwargs=kwargs
-            )
-        )
-    =}
-
-    reaction(connected_to_bus) -> channel_out{=
-
-        # msg = self.create_method_request(
-        #     s="scheduler",
-        #     t="machine_1",
-        #     method_path="Machine/StartTask1",
-        #     args=[],
-        #     kwargs={}
-        # )
-        # self.logger.info(f"Sending request: {msg}")
-        # self._set_channel_out_port(msg, channel_out)
-        # msg = self.create_method_request(
-        #     s="scheduler",
-        #     t="machine_2",
-        #     method_path="Machine/StartTask2",
-        #     args=[],
-        #     kwargs={}
-        # )
-        # self.logger.info(f"Sending request: {msg}")
-        # self._set_channel_out_port(msg, channel_out)
-    =}
-
-    reaction(check_ready_tasks){=
-        self.logger.debug("Checking for ready tasks...")
-        ready_tasks = self.scheduling_instance.get_ready_tasks()
-
-    =}
-
-    // @label run_task
-    reaction(start_task){=
-        self.logger.warning(f"Starting task: {task}")
-    =}
-
-    // @label task_completed
-    reaction(task_completed){=
-        self.logger.warning(f"Task completed: {task}")
+    reaction(shutdown) {=
+        tasks = [task for job in self.scheduling_instance.jobs for task in job.tasks]
+        assert all(
+            task.status == TaskStatus.COMPLETED for task in tasks
+        ), "Not all tasks were completed"
     =}
 }
 
