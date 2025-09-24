@@ -1,0 +1,2 @@
+git+https://github.com/esd-univr/frost-sheet.git@develop
+git+https://github.com/esd-univr/machine-data-model.git@feature/remote_cfg_nodes
