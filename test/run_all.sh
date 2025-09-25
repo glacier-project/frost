@@ -33,7 +33,7 @@ show_progress() {
     local filled=$((current * bar_length / total))
     local empty=$((bar_length - filled))
     
-    printf "\r${CYAN}%s${RESET} [${GREEN}%s${RESET}%s] ${BOLD}%d/%d${RESET} ${YELLOW}(%d%%)${RESET} ${BLUE}> %s${RESET}" \
+    printf "\r\033[K${CYAN}%s${RESET} [${GREEN}%s${RESET}%s] ${BOLD}%d/%d${RESET} ${YELLOW}(%d%%)${RESET} ${BLUE}> %s${RESET}" \
         "$prefix" \
         "$(printf "%*s" $filled | tr ' ' '#')" \
         "$(printf "%*s" $empty | tr ' ' '.')" \
