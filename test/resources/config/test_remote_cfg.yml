@@ -4,14 +4,14 @@ reactors:
   machine:
     logging_level: DEBUG
     parameters:
-      data_model_path: "resources/test_remote_cfg/data_model/machine.yml"
+      data_model_path: "resources/data_model/test_remote_cfg/machine.yml"
     reactors:
       message_filter:
         logging_level: WARNING
   remote_machine:
     logging_level: DEBUG
     parameters:
-      data_model_path: "resources/test_remote_cfg/data_model/remote_machine.yml"
+      data_model_path: "resources/data_model/test_remote_cfg/remote_machine.yml"
     reactors:
       message_filter:
         logging_level: WARNING

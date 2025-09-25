@@ -201,7 +201,7 @@ run_tests() {
         # Convert the name to snake_case
         local snake_case_name=$(echo "$basename" | sed -r 's/([a-z])([A-Z])/\1_\2/g' | tr '[:upper:]' '[:lower:]')
         local binary_path="./bin/${basename}"
-        local config_path="resources/${snake_case_name}/frost_config.yml"
+        local config_path="resources/config/${snake_case_name}.yml"
         
         # Check if binary exists
         if [ ! -f "$binary_path" ]; then

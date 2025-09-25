@@ -4,22 +4,22 @@ reactors:
   scheduler:
     logging_level: INFO
     parameters:
-      data_model_path: "resources/test_scheduler/data_model/scheduler.yml"
-      scheduling_instance: "resources/test_scheduler/instance_0.json"
+      data_model_path: "resources/data_model/test_scheduler/scheduler.yml"
+      scheduling_instance: "resources/scheduling_instances/test_scheduler.json"
     reactors:
       message_filter:
         logging_level: WARNING
   machine_1:
     logging_level: INFO
     parameters:
-      data_model_path: "resources/test_scheduler/data_model/machine_1.yml"
+      data_model_path: "resources/data_model/test_scheduler/machine_1.yml"
     reactors:
       message_filter:
         logging_level: WARNING
   machine_2:
     logging_level: INFO
     parameters:
-      data_model_path: "resources/test_scheduler/data_model/machine_2.yml"
+      data_model_path: "resources/data_model/test_scheduler/machine_2.yml"
     reactors:
       message_filter:
         logging_level: WARNING
