@@ -9,7 +9,6 @@ import FrostReactor from "../../src/lib/FrostReactor.lf"
 
 preamble{=
     import uuid
-    print(f"Frost library imported {os.environ.get('FROST_CONFIG')}")
     from frost import *
 =}
 

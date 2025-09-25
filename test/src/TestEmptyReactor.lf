@@ -3,7 +3,6 @@ target Python
 import FrostBase from "../../src/lib/FrostBase.lf"
 
 preamble{=
-    print(f"Frost library imported {os.environ.get('FROST_CONFIG')}")
     from frost import *
 =}
 
