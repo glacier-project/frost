@@ -1,0 +1,52 @@
+target Python
+
+import FrostBus from "../../src/lib/FrostBus.lf"
+import FrostReactor from "../../src/lib/FrostReactor.lf"
+
+preamble{=
+    import yaml
+    import logging
+    import uuid
+    from frost import FROST_CONFIG
+    from enum import Enum
+    from frost import FROST_CONFIG, is_target_valid
+    from machine_data_model.protocols.frost_v1.frost_message import FrostMessage
+    from machine_data_model.protocols.frost_v1.frost_header import MsgType, MsgNamespace, ProtocolMsgName, FrostHeader
+    from machine_data_model.protocols.frost_v1.frost_payload import VariablePayload, ProtocolPayload, MethodPayload, ErrorPayload
+    from machine_data_model.protocols.frost_v1.frost_protocol_mng import FrostProtocolMng
+    from machine_data_model.protocols.protocol_mng import Message    
+    from machine_data_model.builder.data_model_builder import DataModelBuilder
+    from machine_data_model.nodes.method_node import MethodNode, AsyncMethodNode
+    from machine_data_model.nodes.composite_method.composite_method_node import CompositeMethodNode
+    from machine_data_model.nodes.variable_node import NumericalVariableNode, StringVariableNode, BooleanVariableNode, ObjectVariableNode
+    from machine_data_model.nodes.folder_node import FolderNode
+=}
+
+reactor Device extends FrostReactor{
+    logical action test_connection_time
+
+    reaction (startup) -> test_connection_time{=
+        self.logger.info(f"{self.name} starting up and will attempt to connect to the bus.")
+        test_connection_time.schedule(0)
+    =}
+
+    reaction (test_connection_time) -> test_connection_time{=
+        if self.connected:
+            self.logger.info(f"{self.name} is connected to the bus.")
+            lf.request_stop()
+        else:
+            self.logger.info(f"{self.name} attempting to connect to the bus...")
+        test_connection_time.schedule(0)
+    =}
+
+}
+
+main reactor{
+    device_1 = new Device(name="device_1")
+    device_2 = new Device(name="device_2")
+    device_3 = new Device(name="device_3")
+    bus = new FrostBus(name="bus", width=3)
+
+    device_1.channel_out, device_2.channel_out, device_3.channel_out -> bus.channel_in
+    bus.channel_out -> device_1.channel_in, device_2.channel_in, device_3.channel_in
+}

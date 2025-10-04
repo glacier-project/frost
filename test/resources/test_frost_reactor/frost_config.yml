@@ -1,0 +1,25 @@
+time_precision: NSECS
+logging_level: INFO
+reactors:
+  bus:
+    logging_level: WARNING
+    parameters:
+      data_model_path: "resources/test_frost_reactor/data_model/bus.yml"
+    reactors:
+      message_filter:
+        logging_level: WARNING
+  device_1:
+    logging_level: INFO
+    reactors:
+      message_filter:
+        logging_level: WARNING
+  device_2:
+    logging_level: INFO
+    reactors:
+      message_filter:
+        logging_level: WARNING
+  device_3:
+    logging_level: INFO
+    reactors:
+      message_filter:
+        logging_level: WARNING
