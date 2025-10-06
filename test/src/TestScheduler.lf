@@ -1,0 +1,86 @@
+target Python{
+    fast: true,
+    timeout: 30 sec
+}
+
+import FrostScheduler from "../../src/lib/scheduler/FrostScheduler.lf"
+import FrostBus from "../../src/lib/FrostBus.lf"
+import FrostMachine from "../../src/lib/FrostMachine.lf"
+
+preamble{=
+    import uuid
+    from frost import *
+    from frost_sheet.core.base import TaskStatus
+    from frost_sheet.generator.instance_generator import load_instance_from_json
+    from frost_sheet.solver.genetic_solver import GeneticAlgorithmSolver
+    from frost_sheet.executor.static_executor import StaticExecutor
+    from frost_sheet.visualization.instance_dot_exporter import (
+        export_instance_to_dot,
+        render_dot_to_file,
+    )
+=}
+
+reactor Scheduler extends FrostScheduler{
+    reaction(shutdown) {=
+        tasks = [task for job in self.scheduling_instance.jobs for task in job.tasks]
+        assert all(
+            task.status == TaskStatus.COMPLETED for task in tasks
+        ), "Not all tasks were completed"
+    =}
+}
+
+reactor Machine extends FrostMachine{
+ 
+    state busy
+    state operation_mode
+    state mode_duration = 0
+    state n_task_completed
+    timer check_mode_request(1 sec, 1 sec)
+    logical action to_idle
+
+    method switch_to_mode(duration, mode_id){=
+        if self.operation_mode.value > 0:
+            self.logger.warning(f"Machine is busy in mode {self.operation_mode.value}. Cannot switch to mode {mode_id}")
+            return False
+
+        self.operation_mode.value = mode_id
+        self.mode_duration = duration
+        self.logger.info(f"New operation mode set: {mode_id}")
+        return True
+    =}
+
+    reaction(check_mode_request) -> to_idle{=
+        if self.operation_mode.value <= 0 or self.busy.value:
+            return 0
+
+        self.logger.info(f"Operation mode {self.operation_mode.value} active. Switching to idle in {self.mode_duration} msec")
+        self.busy.value = True
+        to_idle.schedule(SECS(self.mode_duration))
+    =}
+
+    reaction(to_idle) {=
+        self.busy.value = False
+        self.operation_mode.value = 0
+        self.n_task_completed.value += 1
+        self.logger.info(f"Machine is now idle. Total tasks completed: {self.n_task_completed.value}")
+    =}
+
+    reaction(startup) {=
+        self.busy = self.data_model.get_node("/Machine/Busy")
+        self.operation_mode = self.data_model.get_node("/Machine/OperationMode")
+        self.n_task_completed = self.data_model.get_node("/Machine/#TasksCompleted")
+        switch_to_mode = self.data_model.get_node("/Machine/SwitchToOperationMode")
+        switch_to_mode.callback = self.switch_to_mode
+    =}
+
+}
+
+main reactor TestScheduler{
+    s = new Scheduler(name="scheduler")
+    bus = new FrostBus(name="bus", width=3)
+    machine_1 = new Machine(name="machine_1")
+    machine_2 = new Machine(name="machine_2")
+
+    s.channel_out, machine_1.channel_out, machine_2.channel_out -> bus.channel_in
+    bus.channel_out -> s.channel_in, machine_1.channel_in, machine_2.channel_in after 0
+}

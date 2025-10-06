@@ -3,9 +3,7 @@ target Python
 import FrostBase from "../../src/lib/FrostBase.lf"
 
 preamble{=
-    import yaml
-    import logging
-    from frost import FROST_CONFIG
+    from frost import *
 =}
 
 reactor Empty extends FrostBase{

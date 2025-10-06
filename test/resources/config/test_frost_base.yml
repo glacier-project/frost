@@ -1,0 +1,16 @@
+time_precision: MSECS
+logging_level: WARNING
+reactors:
+  base:
+    logging_level: INFO
+    parameters:
+      dynamic_var: 100
+      test_int_param: 42 
+      test_str_param: "Hello, World!"
+      test_float_param: 3.14
+      test_bool_param: true
+      test_list_param: [1, 2, 3, 4, 5]
+      test_dict_param:
+        key1: "value1"
+        key2: "value2"
+        key3: "value3"

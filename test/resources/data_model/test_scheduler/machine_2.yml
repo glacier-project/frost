@@ -1,0 +1,50 @@
+name: "machine_2" 
+root:
+  !!FolderNode
+  name: "Machine"
+  children:
+    - !!BooleanVariableNode
+      name: "Busy"
+      initial_value: false
+    - !!NumericalVariableNode
+      name: "OperationMode"
+      initial_value: 0
+    - !!NumericalVariableNode
+      name: "#TasksCompleted"
+      initial_value: 0
+    - !!AsyncMethodNode
+      name: "SwitchToOperationMode"
+      parameters: 
+        - !!NumericalVariableNode
+          name: "duration"
+          measure_unit: "DurationUnits.Second"
+        - !!NumericalVariableNode
+          name: "mode_id"
+          measure_unit: "NoneMeasureUnits.NONE"
+      returns: 
+        - !!BooleanVariableNode
+          name: "switched"
+    - !!CompositeMethodNode
+      name: "StartTask1"
+      cfg:
+        - !!CallMethodNode
+          method: "/Machine/SwitchToOperationMode"
+          kwargs:
+            duration: 5
+            mode_id: 1
+    - !!CompositeMethodNode
+      name: "StartTask2"
+      cfg:
+        - !!CallMethodNode
+          method: "/Machine/SwitchToOperationMode"
+          kwargs:
+            duration: 7
+            mode_id: 2
+    - !!CompositeMethodNode
+      name: "StartTask3"
+      cfg:
+        - !!CallMethodNode
+          method: "/Machine/SwitchToOperationMode"
+          kwargs:
+            duration: 10
+            mode_id: 3

@@ -1,0 +1,40 @@
+target Python{
+    fast: true
+}
+
+import FrostBase from "../../src/lib/FrostBase.lf"
+
+
+preamble{=
+    from frost import *
+=}
+
+reactor Base extends FrostBase{
+    state test_int_param = 0
+    state test_str_param = ""
+    state test_float_param = 0.0
+    state test_bool_param = false
+    state test_list_param = []
+    state test_dict_param = {={}=}
+
+    reaction(startup) {=
+        assert self.name == "base", f"Reactor name mismatch. Expected 'base', got {self.name}"
+        assert self.logger is not None, "Logger is not initialized"
+        
+        assert hasattr(self, "dynamic_var"), "Dynamic variable 'dynamic_var' not found"
+        assert self.dynamic_var == 100, f"Dynamic variable 'dynamic_var' has incorrect value. Expected 100, got {self.dynamic_var}"
+        assert self.to_override == 0, f"Parameter override failed for 'to_override'. Expected 0, got {self.to_override}"
+        assert self.test_int_param == 42, f"Parameter override failed for 'test_int_param'. Expected 42, got {self.test_int_param}"
+        assert self.test_str_param == "Hello, World!", f"Parameter override failed for 'test_str_param'. Expected 'Hello, World!', got {self.test_str_param}"
+        assert abs(self.test_float_param - 3.14) < 1e-6, f"Parameter override failed for 'test_float_param'. Expected 3.14, got {self.test_float_param}"
+        assert self.test_bool_param is True, f"Parameter override failed for 'test_bool_param'. Expected True, got {self.test_bool_param}"
+        assert self.test_list_param == [1, 2, 3, 4, 5], f"Parameter override failed for 'test_list_param'. Expected [1, 2, 3, 4, 5], got {self.test_list_param}"
+        expected_dict = {"key1": "value1", "key2": "value2", "key3": "value3"}
+        assert self.test_dict_param == expected_dict, f"Parameter override failed for 'test_dict_param'. Expected {expected_dict}, got {self.test_dict_param}"
+        print("All parameter overrides successful.")
+    =}
+}
+
+main reactor{
+    s = new FrostBase(name="base")
+}
