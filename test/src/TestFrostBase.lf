@@ -1,5 +1,7 @@
-target Python
-
+target Python{
+    fast: true,
+    timeout: 1 h 
+}
 import FrostBase from "../../src/lib/FrostBase.lf"
 
 preamble{=

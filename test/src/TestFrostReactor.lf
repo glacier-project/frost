@@ -1,5 +1,7 @@
-target Python
-
+target Python{
+    fast: true,
+    timeout: 1 h 
+}
 import FrostBus from "../../src/lib/FrostBus.lf"
 import FrostReactor from "../../src/lib/FrostReactor.lf"
 

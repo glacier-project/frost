@@ -1,5 +1,7 @@
-target Python
-
+target Python{
+    fast: true,
+    timeout: 1 h 
+}
 import FrostInterface from "../../src/lib/FrostInterface.lf"
 import MessageFilter from "../../src/lib/message_protocol/MessageFilter.lf"
 import FrostBase from "../../src/lib/FrostBase.lf"
