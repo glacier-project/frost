@@ -22,12 +22,17 @@ reactor test_child extends FrostBase{
     =}
 
     reaction(from_parent) -> to_parent{=
+        if not self._get_input_values(from_parent)[0][1][0] == 1:
+            raise Exception(f"Parent should have sent 1, got {self._get_input_values(from_parent)[0][1][0]}")
         self.logger.warning(f"Received from parent: {self._get_input_values(from_parent)}")
-        #[(None, [1])]
         self._set_channel_out_port(self._get_input_values(from_parent)[0][1][0] + 1, to_parent)
     =}
 
     reaction(multiport_from_parent){=
+        if not self._get_input_values(multiport_from_parent)[0][1][0] == 3:
+            raise Exception(f"Parent should have sent 1, got {self._get_input_values(multiport_from_parent)[0][1][0]}")
+        if not self._get_input_values(multiport_from_parent)[0][0] == 0:
+            raise Exception(f"Parent should have sent 4, got {self._get_input_values(multiport_from_parent)[1][1][0]}")
         self.logger.warning(f"Received from parent multiport: {self._get_input_values(multiport_from_parent)}")
     =}
 
@@ -55,6 +60,8 @@ reactor test_frost_base extends FrostBase{
     =}
 
     reaction(John.to_parent) -> John.multiport_from_parent{=
+        if not self._get_input_values(John.to_parent)[0][1][0] == 2:
+            raise Exception(f"John should have sent 2, got {self._get_input_values(John.to_parent)[0][1][0]}")
         self.logger.warning(f"Received from child: {self._get_input_values(John.to_parent)}")
         self._set_output_multiport(self._get_input_values(John.to_parent)[0][1][0] + 1, John.multiport_from_parent, [1])
     =}
