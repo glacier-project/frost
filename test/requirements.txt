@@ -1,0 +1,2 @@
+git+https://github.com/esd-univr/frost-planner.git@develop
+git+https://github.com/esd-univr/machine-data-model.git@dev
