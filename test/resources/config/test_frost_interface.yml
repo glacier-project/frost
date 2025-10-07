@@ -1,0 +1,17 @@
+time_precision: NSECS
+logging_level: INFO
+reactors:
+  unnamed_reactor:
+    logging_level: INFO
+  frost_bus:
+    logging_level: INFO
+    parameters:
+      data_model_path: "resources/data_model/test_frost_interface/bus.yml"
+    reactors:
+      message_filter:
+        logging_level: INFO
+  test:
+    logging_level: INFO
+    reactors:
+      message_filter:
+        logging_level: INFO

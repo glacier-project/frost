@@ -1,0 +1,96 @@
+target Python{
+    fast: true,
+    timeout: 1 h 
+}
+import FrostBase from "../../src/lib/FrostBase.lf"
+
+preamble{=
+    import yaml
+    import logging
+    from frost import FROST_CONFIG
+=}
+
+reactor test_child extends FrostBase{
+    state technician_name = ""
+    input from_parent
+    output to_parent
+
+    input[2] multiport_from_parent
+
+    reaction(startup){=
+        if not self.technician_name == "John":
+            raise Exception(f"technician_name should be John, got {self.technician_name}")
+        self.logger.info(f"This should not be printed since the logging level is WARNING")
+    =}
+
+    reaction(from_parent) -> to_parent{=
+        if not self._get_input_values(from_parent)[0][1][0] == 1:
+            raise Exception(f"Parent should have sent 1, got {self._get_input_values(from_parent)[0][1][0]}")
+        self.logger.warning(f"Received from parent: {self._get_input_values(from_parent)}")
+        self._set_channel_out_port(self._get_input_values(from_parent)[0][1][0] + 1, to_parent)
+    =}
+
+    reaction(multiport_from_parent){=
+        if not self._get_input_values(multiport_from_parent)[0][1][0] == 3:
+            raise Exception(f"Parent should have sent 1, got {self._get_input_values(multiport_from_parent)[0][1][0]}")
+        if not self._get_input_values(multiport_from_parent)[0][0] == 0:
+            raise Exception(f"Parent should have sent 4, got {self._get_input_values(multiport_from_parent)[1][1][0]}")
+        self.logger.warning(f"Received from parent multiport: {self._get_input_values(multiport_from_parent)}")
+    =}
+
+}
+
+reactor test_frost_base extends FrostBase{
+    state laboratory_name = ""
+    state current_year = 0
+    state open = False
+    state test_int_param = 0
+    state test_str_param = ""
+    state test_float_param = 0.0
+    state test_bool_param = True
+    state test_list_param = []
+    state test_dict_param = {={}=}
+
+
+
+    John = new test_child(name={=self.name + ".technician_test"=})
+
+    reaction(startup) -> John.from_parent{=
+        if not self.laboratory_name == "ICE":
+            raise Exception(f"laboratory_name should be ICE, got {self.laboratory_name}")
+        if not self.current_year == 2025:
+            raise Exception(f"current_year should be 2025, got {self.current_year}")
+        if not self.open == True:
+            raise Exception(f"open should be True, got {self.open}")
+
+        self.logger.warning(f"Initialized {self._get_reactor_name()}")
+        self._set_channel_out_port(1, John.from_parent)
+
+        
+        assert self.name == "test_frost_base", f"Reactor name mismatch. Expected 'base', got {self.name}"
+        assert self.logger is not None, "Logger is not initialized"
+        
+        assert hasattr(self, "dynamic_var"), "Dynamic variable 'dynamic_var' not found"
+        assert self.dynamic_var == 100, f"Dynamic variable 'dynamic_var' has incorrect value. Expected 100, got {self.dynamic_var}"
+        assert self.test_int_param == 42, f"Parameter override failed for 'test_int_param'. Expected 42, got {self.test_int_param}"
+        assert self.test_str_param == "Hello, World!", f"Parameter override failed for 'test_str_param'. Expected 'Hello, World!', got {self.test_str_param}"
+        assert abs(self.test_float_param - 3.14) < 1e-6, f"Parameter override failed for 'test_float_param'. Expected 3.14, got {self.test_float_param}"
+        assert self.test_bool_param is True, f"Parameter override failed for 'test_bool_param'. Expected True, got {self.test_bool_param}"
+        assert self.test_list_param == [1, 2, 3, 4, 5], f"Parameter override failed for 'test_list_param'. Expected [1, 2, 3, 4, 5], got {self.test_list_param}"
+        expected_dict = {"key1": "value1", "key2": "value2", "key3": "value3"}
+        assert self.test_dict_param == expected_dict, f"Parameter override failed for 'test_dict_param'. Expected {expected_dict}, got {self.test_dict_param}"
+        print("All parameter overrides successful.")
+    =}
+
+    reaction(John.to_parent) -> John.multiport_from_parent{=
+        if not self._get_input_values(John.to_parent)[0][1][0] == 2:
+            raise Exception(f"John should have sent 2, got {self._get_input_values(John.to_parent)[0][1][0]}")
+        self.logger.warning(f"Received from child: {self._get_input_values(John.to_parent)}")
+        self._set_output_multiport(self._get_input_values(John.to_parent)[0][1][0] + 1, John.multiport_from_parent, [1])
+    =}
+
+}
+
+main reactor{
+    s = new test_frost_base(name="test_frost_base")
+}

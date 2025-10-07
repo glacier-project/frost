@@ -1,0 +1,142 @@
+target Python{
+    fast: true,
+    timeout: 1 h 
+}
+import FrostDataModel from "../../src/lib/FrostDataModel.lf"
+import FrostBase from "../../src/lib/FrostBase.lf"
+
+preamble{=
+    import uuid
+    from frost import *
+=}
+
+reactor test_data_model extends FrostDataModel{
+    timer init(0, 1 s)
+
+    reaction(init){=
+        self.data_model.get_node("machine/temperature").value += 1
+    =}
+
+    reaction(startup){=
+        assert self.data_model is not None, "Data model not loaded"
+        def start_machine():
+            self.logger.info("Machine started")
+            self.data_model.get_node("machine/is_running").value = True
+            return True
+
+        def stop_machine():
+            self.logger.info("Machine stopped")
+            self.data_model.get_node("machine/is_running").value = False
+            return True
+
+        self.data_model.get_node("machine/start_machine").callback = start_machine
+        self.data_model.get_node("machine/stop_machine").callback = stop_machine
+
+        def is_running(prev, curr):
+            self.logger.info(f"is_running value updated: {prev} -> {curr}")
+
+        self.data_model.get_node("machine/is_running")._post_update_value = lambda prev, curr: is_running(prev, curr)
+    =}
+
+}
+
+main reactor extends FrostBase{
+    logical action send_message
+    test = new test_data_model(
+        name = "test"
+    )
+    state message_list = []
+    reaction(startup)->send_message{=
+        #Subscribe
+        message = FrostMessage(
+            sender="main",
+            target="test",
+            identifier=str(uuid.uuid4()),
+            header=FrostHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.VARIABLE,
+                msg_name=VariableMsgName.SUBSCRIBE,
+            ),
+            payload=SubscriptionPayload(node="machine/temperature")
+        )
+        self.message_list.append(message)
+        #Call
+        message = FrostMessage(
+            sender="main",
+            target="test",
+            identifier=str(uuid.uuid4()),
+            header=FrostHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.METHOD,
+                msg_name=MethodMsgName.INVOKE,
+            ),
+            payload=MethodPayload(
+                node ="machine/start_machine",
+            ))
+        self.message_list.append(message)
+        #Write
+        message = FrostMessage(
+            sender="main",
+            target="test",
+            identifier=str("response"),
+            header=FrostHeader(
+                type=MsgType.RESPONSE,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.VARIABLE,
+                msg_name=VariableMsgName.WRITE,
+            ),
+            payload=VariablePayload(
+                node="is_running", value=True
+            ))
+        self.message_list.append(message)
+        #Stop
+        message = FrostMessage(
+            sender="main",
+            target="test",
+            identifier=str(uuid.uuid4()),
+            header=FrostHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.METHOD,
+                msg_name=MethodMsgName.INVOKE,
+            ),
+            payload=MethodPayload(
+                node ="machine/stop_machine",
+            ))
+        self.message_list.append(message)
+        send_message.schedule(SEC(1))
+    =}
+    state counter = 0
+    reaction(send_message) -> send_message, test.channel_in{= 
+        if self.counter == 4:
+            lf.request_stop()
+            return 0       
+        self._set_output_port(self.message_list[self.counter], test.channel_in)
+        self.counter += 1
+        send_message.schedule(SEC(1))
+    =}
+
+    reaction(test.channel_out){=
+        message = self._get_input_values(test.channel_out)[0][1][0]
+        self.logger.info(f"Received message from data model: {message}")
+        if message.header.msg_name == VariableMsgName.SUBSCRIBE:
+            if message.payload.node != "machine/temperature":
+                raise Exception(f"Subscription to wrong node: {message.payload.node}")
+        elif message.header.msg_name == VariableMsgName.UPDATE:
+            if message.payload.node == "machine/temperature":
+                if message.payload.value is None:
+                    raise Exception(f"No value received for machine/temperature: {message.payload}")
+            if not isinstance(message.payload.value, (int, float)):
+                raise Exception(f"Invalid value type for machine/temperature: {message.payload.value}")
+        elif message.header.msg_name == MethodMsgName.INVOKE:
+            if message.payload.node == "machine/start_machine":
+                if not message.payload.ret["started_successfully"]:
+                    raise Exception(f"Machine should be running after start_machine call {message.payload.ret}")
+            if message.payload.node == "machine/stop_machine":
+                if not message.payload.ret["stopped_successfully"]:
+                    raise Exception(f"Machine should be stopped after stop_machine call {message.payload.ret}")
+    =}
+
+}

@@ -1,0 +1,108 @@
+target Python{
+    fast: true,
+    timeout: 1 h 
+}
+
+import FrostBus from "../../src/lib/FrostBus.lf"
+import FrostBase from "../../src/lib/FrostBase.lf"
+
+preamble{=
+    import uuid
+    from frost import *
+=}
+
+main reactor(width = 1) extends FrostBase{
+
+    frost_bus = new FrostBus(
+        name = "frost_bus",
+        width = 4
+    )
+    state messages = []
+
+    state verify_dict = {={"unnamed_reactor" : 0, "test": 1, "port3": 2, "port4": 3}=}
+
+    logical action test_bus
+    reaction(startup) -> test_bus{=
+        test_bus.schedule(SEC(1))
+        self.messages.append(FrostMessage(
+            sender=self._get_reactor_name(),
+            target="frost_bus",
+            identifier=str(uuid.uuid4()),
+            header=FrostHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.PROTOCOL,
+                msg_name=ProtocolMsgName.REGISTER,
+            ),
+            payload=ProtocolPayload(),
+        ))
+        self.messages.append(FrostMessage(
+            sender="test",
+            target="frost_bus",
+            identifier=str(uuid.uuid4()),
+            header=FrostHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.PROTOCOL,
+                msg_name=ProtocolMsgName.REGISTER,
+            ),
+            payload=ProtocolPayload(),
+        ))
+        self.messages.append(FrostMessage(
+            sender="port3",
+            target="frost_bus",
+            identifier=str(uuid.uuid4()),
+            header=FrostHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.PROTOCOL,
+                msg_name=ProtocolMsgName.REGISTER,
+            ),
+            payload=ProtocolPayload(),
+        ))
+        self.messages.append(FrostMessage(
+            sender="port4",
+            target="frost_bus",
+            identifier=str(uuid.uuid4()),
+            header=FrostHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.PROTOCOL,
+                msg_name=ProtocolMsgName.REGISTER,
+            ),
+            payload=ProtocolPayload(),
+        ))
+    =}
+    state counter = 0
+    reaction(test_bus) -> frost_bus.channel_in{=
+        if self.counter == 4:
+            return 0
+        
+        self._set_output_port(self.messages.pop(0), frost_bus.channel_in[self.counter])
+        test_bus.schedule(SEC(1))
+        self.counter += 1
+    =}
+
+    reaction(frost_bus.channel_out){=
+        for bank_index, message in self._get_input_values(frost_bus.channel_out):
+            if frost_bus.channel_out[bank_index].is_present:
+                self.logger.info(f"Received message from bus on port {bank_index}: {message}")
+                if self.verify_dict[message[0].target] != bank_index:
+                    raise Exception(f"Message received on wrong port: {message.target} on port {bank_index}")
+
+        if not self.messages:
+            self.messages.append(FrostMessage(
+                sender="port4",
+                target="port3",
+                identifier=str(uuid.uuid4()),
+                header=FrostHeader(
+                    type=MsgType.REQUEST,
+                    version=(1, 0, 0),
+                    namespace=MsgNamespace.VARIABLE ,
+                    msg_name=VariableMsgName.READ,
+                ),
+                payload=VariablePayload(node="unknown"),
+            ))
+    =}
+
+}

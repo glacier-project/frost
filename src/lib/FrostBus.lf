@@ -1,0 +1,119 @@
+target Python
+
+import FrostDataModel from "FrostDataModel.lf"
+ 
+reactor FrostBus extends FrostDataModel{
+    '''Reactor implementing a BUS for Frost components.
+    This reactor manages the routing of messages between Frost components and handles registration requests from FrostMachines.
+    
+    Attributes:
+        routing_map (dict): A mapping of Frost component names to their respective indices in the bus.
+        bus_node (DataModelNode): The node representing the FrostBus in the data model.
+        number_of_machines (DataModelNode): The node that keeps track of the number of machines registered in the bus.
+        machine_info_nodes (DataModelNode): The node that contains information about each registered machine.
+    '''
+
+    state routing_map 
+    state bus_node 
+    state number_of_machines 
+    state machine_info_nodes 
+
+    // @label _initialize_frost_bus
+    reaction(startup) {=
+        '''Initialize the FrostBus reactor.
+        
+        Args:
+            startup (input): The event that triggers the configuration of the message filter.
+        '''
+        self.routing_map = {}
+        self.bus_node = self.data_model.get_node("FrostBus")
+        self.machine_info_nodes = self.data_model.get_node("FrostBus/MachineInfo")
+        self.number_of_machines = self.data_model.get_node("FrostBus/#Machines")
+        self.number_of_machines.value = 0
+    =}
+
+    method _set_channel_out_port(value, channel_out){=
+        '''Set the output value for the channel_out port. If a value is already set, it will append the new value to the existing one.
+
+        Args:
+            value: The value to set for the channel_out port.
+            channel_out (output): The channel_out port to set the value for.
+        '''
+        for message in value:
+            if message.target not in self.routing_map:
+                self.logger.warning(f"Cannot route message {message} to unknown target {message.target}.")
+                continue
+
+            index = self.routing_map[message.target]
+            self._set_output_port(message, channel_out[index])
+            self.logger.debug(f"FrostBus sent message {message} to target {message.target} at index {index}.")
+    =}
+
+    // @label _handle_registration_request
+    reaction(message_filter.requests) -> channel_out{=
+        '''Handle the registration request from a FrostMachine.
+
+        Args:
+            message_filter.requests (input): The input port for request messages.
+        Returns:
+            channel_out (output): The output port for processed messages.
+        '''
+
+        for bank_index, message in message_filter.requests.value:
+            if message.header.namespace != MsgNamespace.PROTOCOL or message.header.msg_name != ProtocolMsgName.REGISTER:
+                continue
+            # Check if the sender is already registered.
+            if message.sender in self.routing_map:
+                continue
+
+            # Register sender to the map.
+            self.routing_map[message.sender] = bank_index
+
+            # Add the machine to the routing map.
+            machine_info = FolderNode(name = message.sender)
+            self.machine_info_nodes.add_child(machine_info)
+            machine_info.add_child(
+                NumericalVariableNode(
+                    name = "Index",
+                    description = "Index of the machine in the bus",
+                    value = bank_index,
+                )
+            )
+            self.logger.info(f"Frost component {message.sender} registered to the bus with index {bank_index}.")
+
+            # Increment the number of machines.
+            self.number_of_machines.value += 1
+
+            # Return a response message to acknowledge the registration.
+            response = FrostMessage(
+                sender=self.name,
+                target=message.sender,
+                identifier=str(uuid.uuid4()),
+                header=FrostHeader(
+                    type=MsgType.RESPONSE,
+                    version=(1, 0, 0),
+                    namespace=MsgNamespace.PROTOCOL,
+                    msg_name=ProtocolMsgName.REGISTER,
+                ),
+                payload=ProtocolPayload(),
+            )
+            self._set_channel_out_port([response], channel_out)
+
+    =}
+
+    // @label _forward_message
+    reaction(message_filter.discarded_messages) -> channel_out{=
+        '''Forward messages that do not match the filter criteria to the specified target.
+
+        Args:
+            discarded_messages (output): The output port for messages that do not match the filter criteria.
+        '''
+        if not message_filter.discarded_messages.value:
+            return 0
+
+        messages = [
+            message for bank_index, message in message_filter.discarded_messages.value
+        ]
+        self._set_channel_out_port(messages, channel_out)
+    =}
+}
