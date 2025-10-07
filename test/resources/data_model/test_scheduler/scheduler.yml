@@ -13,10 +13,10 @@ root:
           name: "remote_method"
       cfg:
         - !!CallRemoteMethodNode
-          method: "$remote_method"
-          remote_id: "$remote_machine"
+          method: "${remote_method}"
+          remote_id: "${remote_machine}"
         - !!WaitRemoteEventNode
           variable: "/Machine/Busy"
-          remote_id: "$remote_machine"
+          remote_id: "${remote_machine}"
           rhs: false
           operator: "=="
