@@ -12,7 +12,7 @@ for file in os.listdir(os.path.dirname(__file__)):
         base_module = importlib.import_module(base_name)
         break
 
-from time_utils import TimePrecision
+from time_utils import TimePrecision, convert_time_float, convert_time
 from l_formatter import LFormatter    
 from machine_data_model.protocols.frost_v1.frost_message import FrostMessage
 from machine_data_model.protocols.frost_v1.frost_header import MsgType, MsgNamespace, ProtocolMsgName, FrostHeader, MethodMsgName, VariableMsgName

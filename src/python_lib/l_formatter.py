@@ -1,5 +1,5 @@
 import logging
-from time_utils import TimePrecision, f_convert
+from time_utils import TimePrecision, convert_time_float
 
 reset_col = '\x1b[0m'
 max_name_l = 10
@@ -89,7 +89,7 @@ class LFormatter(logging.Formatter):
     def format(self, record):
         global max_name_l
         logical_time = self._lf_logical_elapsed()
-        record.logical_time = f"{f_convert(logical_time, TimePrecision.NSECS, self._time_precision):<20} ({self._unit})"
+        record.logical_time = f"{convert_time_float(logical_time, TimePrecision.NSECS, self._time_precision):<20} ({self._unit})"
         record.levelname = '{:<10}'.format(record.levelname)
         
         colors = self.get_col_name(record.name)
