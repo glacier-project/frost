@@ -10,11 +10,11 @@ import FrostMachine from "../../src/lib/FrostMachine.lf"
 preamble{=
     import uuid
     from frost import *
-    from frost_sheet.core.base import TaskStatus
-    from frost_sheet.generator.instance_generator import load_instance_from_json
-    from frost_sheet.solver.genetic_solver import GeneticAlgorithmSolver
-    from frost_sheet.executor.static_executor import StaticExecutor
-    from frost_sheet.visualization.instance_dot_exporter import (
+    from frost_planner.core.base import TaskStatus
+    from frost_planner.generator.instance_generator import load_instance_from_json
+    from frost_planner.solver.genetic_solver import GeneticAlgorithmSolver
+    from frost_planner.executor.static_executor import StaticExecutor
+    from frost_planner.visualization.instance_dot_exporter import (
         export_instance_to_dot,
         render_dot_to_file,
     )
