@@ -1,0 +1,34 @@
+name: "test" # name of the machine
+machine_category: "unknown" # category of the machine
+machine_type: "unknown" # type of the machine
+machine_model: "unknown" # model of the machine
+description: "" # description of the machine
+root:
+  !!FolderNode
+  name: "machine"
+  description: ""
+  children:
+    - !!BooleanVariableNode
+      name: "is_running"
+      description: ""
+      initial_value: false
+    - !!NumericalVariableNode
+      name: "temperature"
+      description: ""
+      initial_value: 20
+    - !!AsyncMethodNode
+      name: "start_machine"
+      description: ""
+      returns:
+        - !!BooleanVariableNode
+          name: "started_successfully"
+          description: ""
+          initial_value: false
+    - !!AsyncMethodNode
+      name: "stop_machine"
+      description: ""
+      returns:
+        - !!BooleanVariableNode
+          name: "stopped_successfully"
+          description: ""
+          initial_value: false

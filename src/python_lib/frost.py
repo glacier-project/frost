@@ -16,7 +16,7 @@ from time_utils import TimePrecision, convert_time_float, convert_time
 from l_formatter import LFormatter    
 from machine_data_model.protocols.frost_v1.frost_message import FrostMessage
 from machine_data_model.protocols.frost_v1.frost_header import MsgType, MsgNamespace, ProtocolMsgName, FrostHeader, MethodMsgName, VariableMsgName
-from machine_data_model.protocols.frost_v1.frost_payload import VariablePayload, ProtocolPayload, MethodPayload, ErrorPayload
+from machine_data_model.protocols.frost_v1.frost_payload import VariablePayload, ProtocolPayload, MethodPayload, ErrorPayload, SubscriptionPayload, ErrorMessages, ErrorCode
 from machine_data_model.protocols.frost_v1.frost_protocol_mng import FrostProtocolMng
 from machine_data_model.builder.data_model_builder import DataModelBuilder
 from machine_data_model.protocols.protocol_mng import Message
