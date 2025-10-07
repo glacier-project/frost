@@ -35,7 +35,7 @@ reactor FrostDataModel(_data_model_path = "", update_interval=1 s) extends Frost
         '''
         if not os.path.exists(self.data_model_path) and not os.path.isfile(self.data_model_path):
             self.logger.error(f"Data model file not found: {self.data_model_path}")
-            sys.exit(1)
+            lf.request_stop()
 
         self.data_model = DataModelBuilder().get_data_model(self.data_model_path)
         self.protocol_mng = FrostProtocolMng(self.data_model)

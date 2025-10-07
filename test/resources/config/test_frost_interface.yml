@@ -6,7 +6,7 @@ reactors:
   frost_bus:
     logging_level: INFO
     parameters:
-      data_model_path: "resources/test_frost_interface/data_model/bus.yml"
+      data_model_path: "resources/data_model/test_frost_interface/bus.yml"
     reactors:
       message_filter:
         logging_level: INFO

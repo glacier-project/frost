@@ -9,7 +9,7 @@ reactors:
   test:
     logging_level: INFO
     parameters:
-      data_model_path: "resources/test_frost_data_model/data_model/machine.yml"
+      data_model_path: "resources/data_model/test_frost_data_model/machine.yml"
     reactors:
       message_filter:
         logging_level: INFO

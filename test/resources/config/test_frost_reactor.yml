@@ -4,7 +4,7 @@ reactors:
   bus:
     logging_level: WARNING
     parameters:
-      data_model_path: "resources/test_frost_reactor/data_model/bus.yml"
+      data_model_path: "resources/common/data_model/bus.yml"
     reactors:
       message_filter:
         logging_level: WARNING

@@ -1,14 +1,17 @@
 time_precision: NSECS
 logging_level: WARNING
 reactors:
-  test_FrostBase:
+  test_frost_base:
     logging_level: INFO
     parameters:
+      laboratory_name: "ICE"
+      current_year: 2025
+      open: True
       dynamic_var: 100
       test_int_param: 42 
       test_str_param: "Hello, World!"
       test_float_param: 3.14
-      test_bool_param: true
+      test_bool_param: True
       test_list_param: [1, 2, 3, 4, 5]
       test_dict_param:
         key1: "value1"
