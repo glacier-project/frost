@@ -74,3 +74,16 @@ main reactor{
 ## Examples
 
 - [ICE Laboratory](examples/ICE): The directory contains an implementation of the production line of the [ICE Laboratory](https://www.icelab.di.univr.it/) of Verona, Italy. A Scheduler controls the production by sending requests to the different machines of the plant The example is still under development and will be updated soon.
+
+## Citation ##
+
+If you use **Frost**, please cite it as below.:
+
+```
+@InProceedings{frost:indin:2025,
+  author    = {Turco, Pietro and Gaiardelli, Sebastiano and Fraccaroli, Enrico and Lora, Michele and Chakraborty, Samarjit and Fummi, Franco},
+  booktitle = {2025 IEEE 23rd International Conference on Industrial Informatics (INDIN)},
+  title     = {{Frost: A Simulation Platform for Early Validation and Testing of Manufacturing Software}},
+  year      = {2025}
+}
+```

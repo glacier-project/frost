@@ -1,0 +1,45 @@
+cff-version: 1.2.0
+message: "If you use Frost, please cite it as below."
+type: software
+title: "Frost: A Simulation Platform for Early Validation and Testing of Manufacturing Software"
+authors:
+  - family-names: "Turco"
+    given-names: "Pietro"
+  - family-names: "Gaiardelli"
+    given-names: "Sebastiano"
+  - family-names: "Fraccaroli"
+    given-names: "Enrico"
+  - family-names: "Lora"
+    given-names: "Michele"
+  - family-names: "Chakraborty"
+    given-names: "Samarjit"
+  - family-names: "Fummi"
+    given-names: "Franco"
+repository-code: "https://github.com/glacier-project/frost"
+url: "https://glacier-project.github.io/glacier-website/"
+license: BSD-2-Clause
+preferred-citation:
+  type: conference-paper
+  title: "Frost: A Simulation Platform for Early Validation and Testing of Manufacturing Software"
+  authors:
+    - family-names: "Turco"
+      given-names: "Pietro"
+    - family-names: "Gaiardelli"
+      given-names: "Sebastiano"
+    - family-names: "Fraccaroli"
+      given-names: "Enrico"
+    - family-names: "Lora"
+      given-names: "Michele"
+    - family-names: "Chakraborty"
+      given-names: "Samarjit"
+    - family-names: "Fummi"
+      given-names: "Franco"
+  collection-title: "2025 IEEE 23rd International Conference on Industrial Informatics (INDIN)"
+  conference:
+    name: "IEEE International Conference on Industrial Informatics"
+    acronym: "INDIN"
+    date-start: 2025-07-12
+    date-end: 2025-07-15
+  year: 2025
+  publisher:
+    name: "IEEE"
