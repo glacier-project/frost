@@ -80,7 +80,7 @@ main reactor{
 If you use **Frost**, please cite it as below.:
 
 ```
-@InProceedings{frost:indin:2025,
+@inproceedings{frost:indin:2025,
   author    = {Turco, Pietro and Gaiardelli, Sebastiano and Fraccaroli, Enrico and Lora, Michele and Chakraborty, Samarjit and Fummi, Franco},
   booktitle = {2025 IEEE 23rd International Conference on Industrial Informatics (INDIN)},
   title     = {{Frost: A Simulation Platform for Early Validation and Testing of Manufacturing Software}},
