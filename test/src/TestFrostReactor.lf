@@ -1,0 +1,40 @@
+target Python{
+    fast: true,
+    timeout: 1 h 
+}
+import FrostBus from "../../src/lib/FrostBus.lf"
+import FrostReactor from "../../src/lib/FrostReactor.lf"
+
+preamble{=
+    import uuid
+    from frost import *
+=}
+
+reactor Device extends FrostReactor{
+    logical action test_connection_time
+
+    reaction (startup) -> test_connection_time{=
+        self.logger.info(f"{self.name} starting up and will attempt to connect to the bus.")
+        test_connection_time.schedule(0)
+    =}
+
+    reaction (test_connection_time) -> test_connection_time{=
+        if self.connected:
+            self.logger.info(f"{self.name} is connected to the bus.")
+            lf.request_stop()
+        else:
+            self.logger.info(f"{self.name} attempting to connect to the bus...")
+        test_connection_time.schedule(0)
+    =}
+
+}
+
+main reactor{
+    device_1 = new Device(name="device_1")
+    device_2 = new Device(name="device_2")
+    device_3 = new Device(name="device_3")
+    bus = new FrostBus(name="bus", width=3)
+
+    device_1.channel_out, device_2.channel_out, device_3.channel_out -> bus.channel_in
+    bus.channel_out -> device_1.channel_in, device_2.channel_in, device_3.channel_in
+}

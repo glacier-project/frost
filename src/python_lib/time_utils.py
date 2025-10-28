@@ -11,9 +11,9 @@ class TimePrecision(IntEnum):
     DAYS = HOURS*24
     WEEKS = DAYS*7
 
-def convert(time: float, tf_from: TimePrecision, tf_to: TimePrecision, rounding: bool = False) -> int:
+def convert_time(time: float, tf_from: TimePrecision, tf_to: TimePrecision, rounding: bool = False) -> int:
     value = time * (tf_from / tf_to)
     return int(round(value)) if rounding else math.floor(value)
 
-def f_convert(time: float, tf_from: TimePrecision, tf_to: TimePrecision) -> float:
+def convert_time_float(time: float, tf_from: TimePrecision, tf_to: TimePrecision) -> float:
     return time * (tf_from/tf_to)

@@ -1,0 +1,32 @@
+time_precision: MSECS
+logging_level: WARNING
+reactors:
+  scheduler:
+    logging_level: INFO
+    parameters:
+      data_model_path: "resources/data_model/test_scheduler/scheduler.yml"
+      scheduling_instance: "resources/scheduling_instances/test_scheduler.json"
+    reactors:
+      message_filter:
+        logging_level: WARNING
+  machine_1:
+    logging_level: INFO
+    parameters:
+      data_model_path: "resources/data_model/test_scheduler/machine_1.yml"
+    reactors:
+      message_filter:
+        logging_level: WARNING
+  machine_2:
+    logging_level: INFO
+    parameters:
+      data_model_path: "resources/data_model/test_scheduler/machine_2.yml"
+    reactors:
+      message_filter:
+        logging_level: WARNING
+  bus:
+    logging_level: WARNING
+    parameters:
+      data_model_path: "resources/common/data_model/bus.yml"
+    reactors:
+      message_filter:
+        logging_level: WARNING

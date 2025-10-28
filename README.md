@@ -5,14 +5,14 @@ Frost is an open-source framework for the development, testing, and deployment o
 Frost enables the development and testing of software applications in a virtual environment (i.e., a Digital Twin) before deploying them on the actual machine. Once the software is validated in the virtual environment, it can be deployed on the real system with minimal/no changes.
 
 Frost is built on top of the [Lingua Franca framework (LF)](https://www.lf-lang.org/), which ensures deterministic execution, enhancing the reliability of soft-ware prototyping and testing.
-Frost is part of the [Glacier project](https://esd-univr.github.io/glacier-website/). 
+Frost is part of the [Glacier project](https://glacier-project.github.io/glacier-website/). 
 
 ## Frost components
 
 *FrostMachine* and *FrostBus* are the main components of the Frost framework. 
 The former implements a ready-to-use reactor that can be extended to implement the machine behavior, while the latter implements a message broker that connects all the components of the system being represented.
 Both components extend the base class *FrostReactor*, which implements some basic functionalities such as logging and message handling.
-The *FrostReactor* relies on the [data model library](https://github.com/esd-univr/machine-data-model) to implement the component interfaces.
+The *FrostReactor* relies on the [data model library](https://github.com/glacier-project/machine-data-model) to implement the component interfaces.
 Custom components can be developed by extending the *FrostReactor* class and implementing the desired behavior.
 
 ## How to develop new machine interfaces?

@@ -1,0 +1,146 @@
+target Python{
+    fast: true,
+    timeout: 1 h 
+}
+import FrostInterface from "../../src/lib/FrostInterface.lf"
+import MessageFilter from "../../src/lib/message_protocol/MessageFilter.lf"
+import FrostBase from "../../src/lib/FrostBase.lf"
+
+preamble{=
+    import uuid
+    from frost import *
+=}
+
+reactor test_frost_interface extends FrostInterface{
+    output to_main
+    message_filter = new MessageFilter(
+        name = {=self.name+".message_filter"=}
+    )
+
+    reaction(message_filter.requests) -> to_main{=
+        request_message = self._get_input_values(message_filter.requests)[0][1][0][1]
+        if request_message.identifier != "request":
+            raise Exception(f"Filtered message: {self._get_input_values(message_filter.requests)}")
+
+        self.logger.info(f"Successfully filtered request")
+        to_main.set([""])
+    =}
+
+    reaction(message_filter.errors)-> to_main{=
+        error_message = self._get_input_values(message_filter.errors)[0][1][0][1]
+        if error_message.payload.error_message != ErrorMessages.BAD_REQUEST.value:
+            raise Exception(f"Filtered error: {self._get_input_values(message_filter.errors)}")
+
+        self.logger.info(f"Successfully filtered error")
+        to_main.set([""])
+    =}
+
+    reaction(message_filter.discarded_messages)-> to_main{=
+        discarded = self._get_input_values(message_filter.discarded_messages)[0][1][0][1]
+        if discarded.identifier != "discarded":
+            raise Exception(f"Discarded message: {self._get_input_values(message_filter.discarded_messages)}")
+        
+        self.logger.info(f"Successfully discarded message")
+        to_main.set([""])
+    =}
+
+    reaction(message_filter.responses)-> to_main{=
+        response_message = self._get_input_values(message_filter.responses)[0][1][0][1]
+        to_main.set([""])
+        if isinstance(response_message.payload, ProtocolPayload):
+            return 0
+
+        if response_message.identifier != "response":
+            raise Exception(f"Filtered response: {response_message}")
+
+        self.logger.info(f"Successfully filtered response")
+        to_main.set([""])
+    =}
+}
+
+main reactor extends FrostBase{
+    test = new test_frost_interface(name="test")
+
+    state message_list = []
+    state counter = 0
+    logical action send_message
+    reaction(send_message)-> test.channel_in {=
+        if self.counter >= len(self.message_list):
+            self.logger.info("All messages sent and processed.")
+            lf.request_stop()
+            return
+
+        message = self.message_list[self.counter]
+        self._set_channel_out_port(message, test.channel_in)
+        self.counter += 1
+    =}
+
+    reaction(startup) -> send_message{=
+        #Test invalid message this shall be discarded
+        message = FrostMessage(
+            sender="main",
+            target="test_filter_callback",
+            identifier=str("discarded"),
+            header=FrostHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.PROTOCOL,
+                msg_name=ProtocolMsgName.REGISTER,
+            ),
+            payload=ProtocolPayload()
+        )
+        self.message_list.append(message)
+        #Test error message
+        message = FrostMessage(
+            sender="main",
+            target="test",
+            identifier=str("error"),
+            header=FrostHeader(
+                type=MsgType.ERROR,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.VARIABLE,
+                msg_name=VariableMsgName.READ,
+            ),
+            payload=ErrorPayload(
+                error_code=-1,
+                error_message=ErrorMessages.BAD_REQUEST.value,
+            ))
+        self.message_list.append(message)
+        #Test request message
+        message = FrostMessage(
+            sender="main",
+            target="test",
+            identifier=str("request"),
+            header=FrostHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.VARIABLE,
+                msg_name=VariableMsgName.WRITE,
+            ),
+            payload=VariablePayload(
+                node="var1", value=[0]
+            ))
+        self.message_list.append(message)
+        #Test response message
+        message = FrostMessage(
+            sender="main",
+            target="test",
+            identifier=str("response"),
+            header=FrostHeader(
+                type=MsgType.RESPONSE,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.VARIABLE,
+                msg_name=VariableMsgName.READ,
+            ),
+            payload=VariablePayload(
+                node="var1", value=[0]
+            ))
+        self.message_list.append(message)
+        send_message.schedule(SEC(1))
+    =}
+
+    reaction(test.to_main) -> send_message{=
+        send_message.schedule(0)
+    =}
+
+}

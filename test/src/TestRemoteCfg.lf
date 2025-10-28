@@ -1,0 +1,114 @@
+target Python{
+    fast: true,
+    timeout: 1 h 
+}
+
+import FrostMachine from "../../src/lib/FrostMachine.lf"
+import FrostBus from "../../src/lib/FrostBus.lf"
+import FrostReactor from "../../src/lib/FrostReactor.lf"
+
+preamble{=
+    import uuid
+    from frost import *
+=}
+
+reactor Tester extends FrostReactor{
+
+    state correlation_id
+    state response_received = False
+
+    method create_method_request(s, t, method_path, args, kwargs){=
+
+        return FrostMessage(
+            sender=s,
+            target=t,
+            identifier=str(uuid.uuid4()),
+            header=FrostHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.METHOD,
+                msg_name=MethodMsgName.INVOKE,
+            ),
+            payload=MethodPayload(
+                node=method_path,
+                args=args,
+                kwargs=kwargs
+            )
+        )
+    =}
+
+    reaction(connected_to_bus) -> channel_out{=
+
+        msg = self.create_method_request(
+            s="tester",
+            t="machine",
+            method_path="Machine/RemoteProduct",
+            args=[5],
+            kwargs={}
+        )
+        self.correlation_id = msg.correlation_id
+        self._set_channel_out_port(msg, channel_out)
+    =}
+
+    reaction(message_filter.responses) {=
+        for bank_index, message in message_filter.responses.value:
+
+            if message.correlation_id != self.correlation_id or message.header.msg_name == MethodMsgName.STARTED:
+                continue
+
+            self.logger.info(f"Received response: {message}")
+            assert "product" in message.payload.ret and message.payload.ret["product"] == 15
+            self.response_received = True
+    =}
+
+    reaction(shutdown) {=
+        assert self.response_received, "Did not receive response from remote method call"
+        self.logger.info("Test completed successfully.")
+    =}
+}
+
+reactor Machine extends FrostMachine{
+    
+}
+
+reactor RemoteMachine extends FrostMachine{
+
+    state remote_variable
+    state remote_product
+    state product_result 
+    timer delayed_update(10 sec, 10 sec)
+
+    method product(n1, n2){=
+        self.logger.info(f"Calculating product of {n1} and {n2}")
+        self.product_result = n1 * n2
+        return self.product_result
+    =}
+
+    reaction(startup){=
+        self.logger.info("RemoteMachine started.")
+
+        self.remote_variable = self.data_model.get_node("RemoteMachine/RemoteVariable")
+        self.remote_product = self.data_model.get_node("RemoteMachine/RemoteProduct")
+        self.remote_product.callback = self.product
+    =}
+
+    reaction(delayed_update) {=
+        product = self.product_result
+        if product is None:
+            return 0
+
+        self.logger.info(f"Updating remote variable to {product}")
+        self.remote_variable.value = product
+        self.product_result = None
+    =}
+}
+
+main reactor{
+    m = new Machine(name="machine")   
+    t = new Tester(name="tester")
+    remote_m = new RemoteMachine(name="remote_machine")
+    bus = new FrostBus(name="bus", width=3)
+
+    m.channel_out, t.channel_out, remote_m.channel_out -> bus.channel_in
+    bus.channel_out -> m.channel_in, t.channel_in, remote_m.channel_in after 0
+}

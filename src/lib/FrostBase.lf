@@ -130,6 +130,41 @@ reactor FrostBase(name = "unnamed_reactor"){
         return values
     =}
 
+    method _get_current_logical_time(unit){=
+        '''Get the current logical time in the specified unit.'''
+        return convert_time(lf.time.logical_elapsed(), TimePrecision.NSECS, unit)
+    =}
+
+    method _get_current_logical_time_ns(){=
+        '''Get the current logical time in nanoseconds.'''
+        return lf.time.logical_elapsed()
+    =}
+
+    method _get_current_logical_time_us(){=
+        '''Get the current logical time in microseconds.'''
+        return self._get_current_logical_time(TimePrecision.USECS)
+    =}
+
+    method _get_current_logical_time_ms(){=
+        '''Get the current logical time in milliseconds.'''
+        return self._get_current_logical_time(TimePrecision.MSECS)
+    =}
+
+    method _get_current_logical_time_sec(){=
+        '''Get the current logical time in seconds.'''
+        return self._get_current_logical_time(TimePrecision.SECS)
+    =}
+
+    method _get_current_logical_time_min(){=
+        '''Get the current logical time in minutes.'''
+        return self._get_current_logical_time(TimePrecision.MINUTES)
+    =}
+
+    method _get_current_logical_time_hour(){=
+        '''Get the current logical time in hours.'''
+        return self._get_current_logical_time(TimePrecision.HOURS)
+    =}
+
     // @label _init_base
     reaction (startup){=
         '''Initialize the logger and override the reactor's parameters.
