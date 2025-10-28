@@ -1,5 +1,4 @@
-from traitlets import Dict
-from typing import Callable, Any, Optional, List
+from typing import Callable, Any, Optional
 from simulation_message import SimulationMessage, SimulationMessageBuilder
 from operation import Operation
 
@@ -14,7 +13,7 @@ class SimulationMessageHandler:
         Initializes the SimulationMessageHandler.
         """
         self._name: str = name
-        self._handlers: Dict[Operation, Callable[[List[Any]], Any]] = {}
+        self._handlers: dict[Operation, Callable[[list[Any]], Any]] = {}
 
     def register_handler(self, operation: Operation, handler: Callable[[SimulationMessage], Any]) -> bool:
         """
