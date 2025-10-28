@@ -5,10 +5,10 @@ from simulation_message import Operation
 class Stepper:
     def __init__(self, step: int, current_simulation_time: int):
         """
-        Inizializza lo step.
+        Initializes the step.
 
-        :param step: Il tempo da simulare in questo step (es. nanosecondi).
-        :param current_simulation_time: Il tempo di simulazione corrente.
+        :param step: The time to simulate in this step (e.g., nanoseconds).
+        :param current_simulation_time: The current simulation time.
         """
         self._step = step
         self._current_simulation_time = current_simulation_time
@@ -16,57 +16,58 @@ class Stepper:
     @property
     def step(self) -> int:
         """
-        Restituisce il tempo da simulare in questo step.
+        Returns the time to simulate in this step.
 
-        :return: Il tempo da simulare.
+        :return: The time to simulate.
         """
         return self._step
     
     @step.getter
     def step(self) -> int:
         """
-        Restituisce il tempo da simulare in questo step.
+        Returns the time to simulate in this step.
 
-        :return: Il tempo da simulare.
+        :return: The time to simulate.
         """
         return self._step
 
     @step.setter
     def step(self, value: int) -> None:
         """
-        Imposta il tempo da simulare in questo step.
+        Sets the time to simulate in this step.
 
-        :param value: Il nuovo tempo da simulare.
+        :param value: The new time to simulate.
         """
         self._step = value
 
     @property
     def current_simulation_time(self) -> int:
         """
-        Restituisce il tempo di simulazione corrente.
+        Returns the current simulation time.
 
-        :return: Il tempo di simulazione corrente.
+        :return: The current simulation time.
         """
         return self._current_simulation_time
 
     @current_simulation_time.getter
     def current_simulation_time(self) -> int:
         """
-        Restituisce il tempo di simulazione corrente.
+        Returns the current simulation time.
 
-        :return: Il tempo di simulazione corrente.
+        :return: The current simulation time.
         """
         return self._current_simulation_time
 
     @current_simulation_time.setter
     def current_simulation_time(self, value: int) -> None:
         """
-        Imposta il tempo di simulazione corrente.
+        Sets the current simulation time.
 
-        :param value: Il nuovo tempo di simulazione corrente.
+        :param value: The new current simulation time.
         """
         self._current_simulation_time = value
 
     def __call__(self) -> None:
         return None
     
+

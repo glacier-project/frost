@@ -40,28 +40,27 @@ class DryRunOperation(Operation):
     _operations = ["dry_run"]
 
 if __name__ == '__main__':
-    # Ottiene il valore dell'operazione REGISTER
+    # Get the value of the REGISTER operation
     register_value = Operation.get_enum().REGISTER.value
 
-    # Verifica se il valore è un'operazione valida
+    # Check if the value is a valid operation
     if register_value in Operation.get_enum():
-        print(f"'{register_value}' è un'operazione valida.")
-        # Stampa il valore
-        print(f"Il valore di REGISTER è: {register_value}")
+        print(f"'{register_value}' is a valid operation.")
+        # Print the value
+        print(f"The value of REGISTER is: {register_value}")
 
-    # Esempio con la sottoclasse
-    print("\n--- Esempio con DryRunOperation ---")
+    # Example with the subclass
+    print("\n--- Example with DryRunOperation ---")
     
-    # DryRunOperation eredita le operazioni da Operation
+    # DryRunOperation inherits operations from Operation
     if Operation.get_enum().REGISTER in DryRunOperation.get_enum():
-        print(f"'{Operation.get_enum().REGISTER}' è un'operazione valida anche in DryRunOperation.")
+        print(f"'{Operation.get_enum().REGISTER}' is also a valid operation in DryRunOperation.")
 
-    # E ha anche le sue operazioni specifiche
+    # And it also has its own specific operations
     dry_run_value = DryRunOperation.get_enum().DRY_RUN
     if dry_run_value in DryRunOperation.get_enum():
-        print(f"'{dry_run_value.value}' è una nuova operazione in DryRunOperation.")
+        print(f"'{dry_run_value.value}' is a new operation in DryRunOperation.")
 
-    # L'operazione della sottoclasse non è nella classe base
+    # The subclass operation is not in the base class
     if dry_run_value not in Operation.get_enum():
-        print(f"'{dry_run_value.value}' non è un'operazione valida nella classe base Operation.")
-
+        print(f"'{dry_run_value.value}' is not a valid operation in the base Operation class.")

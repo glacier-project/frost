@@ -1,0 +1,47 @@
+target Python{
+    timeout: 10s,
+    files: [
+        "../../src/python_lib/frost.py",
+        "../../src/python_lib/l_formatter.py",
+        "../../src/python_lib/time_utils.py",
+        "../../src/python_lib/simulation/simulation_message.py",
+        "../../src/python_lib/simulation/simulation_message_handler.py",
+        "../../src/python_lib/simulation/operation.py",
+        "../../src/python_lib/simulation/orchestrator.py",
+        "../../src/python_lib/simulation/stepper.py",
+    ],
+    fast: true,
+    logging: info,
+    single-threaded: false,
+}
+
+import FMUWrapper from "../../src/lib/simulation/FMUWrapper.lf"
+
+preamble{=
+import uuid
+from frost import *
+from simulation_message import SimulationMessageBuilder
+from simulation_message import SimulationMessage
+from operation import Operation
+from simulation_message_handler import SimulationMessageHandler
+from orchestrator import OrchestratorStepper
+=}
+
+reactor Test extends FMUWrapper{
+
+    method getState(){=
+        return self.fmu.getReal(self.vars)
+    =}
+
+    reaction(request){=
+        if self.fmu == None:
+            return
+
+        self.logger.warning(f"Step at time {self.fmu_time}, LF time: {lf.time.logical_elapsed(), lf.tag().microstep}")
+        self.logger.info(f"Variables: {self.getState()}")
+    =}
+}
+
+main reactor{
+    fmu_test = new Test(name = "bouncingBall", step = 100)
+}

@@ -1,0 +1,55 @@
+target Python{
+    timeout: 10s,
+    files: [
+        "../../src/python_lib/frost.py",
+        "../../src/python_lib/l_formatter.py",
+        "../../src/python_lib/time_utils.py",
+        "../../src/python_lib/simulation/simulation_message.py",
+        "../../src/python_lib/simulation/simulation_message_handler.py",
+        "../../src/python_lib/simulation/operation.py",
+        "../../src/python_lib/simulation/orchestrator.py",
+        "../../src/python_lib/simulation/stepper.py",
+    ],
+    fast: true,
+    logging: warn,
+    single-threaded: false,
+}
+
+import Test from "TestFmuWrapper.lf"
+import Orchestrator from "../../src/lib/simulation/Orchestrator.lf"
+
+preamble{=
+import uuid
+from frost import *
+from simulation_message import SimulationMessageBuilder
+from simulation_message import SimulationMessage
+from operation import Operation
+from simulation_message_handler import SimulationMessageHandler
+from orchestrator import OrchestratorStepper
+=}
+
+reactor SimpleOrchestrator extends Orchestrator{
+
+    reaction(command) -> models_out{=
+        for i, p in enumerate(models_out):
+            msg = SimulationMessageBuilder()\
+                .set_sender(self.name)\
+                .set_target(self.neighbours[i])\
+                .set_operation(Operation.get_enum().SIMULATE)\
+                .set_args([100])\
+                .build()
+            self.logger.info(f"Sending message: {msg}")
+            p.set(msg)
+    =}
+
+}
+
+
+main reactor{
+    O = new SimpleOrchestrator(name = "orchestrator", width = 2, step = 1000)
+    T1 = new Test(name = "bouncingBall1", step = 1000)
+    T2 = new Test(name = "bouncingBall2", step = 1000)
+
+    O.models_out -> T1.request, T2.request after 0 msec
+    T1.result, T2.result -> O.models_in after 0 msec
+}

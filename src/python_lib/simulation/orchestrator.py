@@ -5,50 +5,44 @@ from typing_extensions import override
 
 class OrchestratorStepper(Stepper):
     """
-    Classe di utilità per orchestrare gli step.
+    Utility class for orchestrating steps.
     """
     def __init__(self, step: int, current_simulation_time: int):
         """
-        Inizializza l'OrchestratorStep.
+        Initializes the OrchestratorStep.
 
-        :param step: Il tempo da simulare in questo step.
-        :param current_simulation_time: Il tempo di simulazione corrente.
+        :param step: The time to simulate in this step.
+        :param current_simulation_time: The current simulation time.
         """
         super().__init__(step, current_simulation_time)
         self._steps: List[int] = []
 
     def add_step(self, step: int) -> None:
         """
-        Aggiunge un nuovo valore alla lista degli step
+        Adds a new value to the list of steps.
         """
         self._steps.append(step)
 
     def compute_next_step(self, values: List[int]) -> int:
         """
-        Calcola il valore minimo da una lista di interi.
+        Calculates the minimum value from a list of integers.
 
-        :param values: Una lista di valori interi.
-        :return: Il valore minimo nella lista.
+        :param values: A list of integer values.
+        :return: The minimum value in the list.
         """
         if not values:
-            raise ValueError("La lista dei valori non può essere vuota.")
+            raise ValueError("The list of values cannot be empty.")
         return min(values)
     
     @override
     def __call__(self) -> int:
         """
-        Restituisce il prossimo step da eseguire.
+        Returns the next step to be executed.
 
-        :return: Il prossimo step come intero.
+        :return: The next step as an integer.
         """
         if not self._steps:
-            raise ValueError("Nessuno step è stato aggiunto.")
+            raise ValueError("No steps have been added.")
         next_step = self.compute_next_step(self._steps)
         self._steps.clear()
         return next_step
-
-    
-
-    
-    
-
