@@ -4,7 +4,8 @@ import FrostBase from "FrostBase.lf"
 import MessageFilter from "message_protocol/MessageFilter.lf" 
 
 reactor FrostInterface(width = 1) extends FrostBase{
-    '''Reactor implementing the communication protocol for Frost reactors.
+    '''
+    Reactor implementing the communication protocol for Frost reactors.
     This reactor handles the requests, responses, and errors related to Frost messages.
 
     Args:
@@ -27,7 +28,8 @@ reactor FrostInterface(width = 1) extends FrostBase{
 
     // @label _configure_message_filter
     reaction (startup) -> message_filter.message_type, message_filter.filter_callbacks{=
-        '''Configure the message filter with the specified message type and filter callbacks.
+        '''
+        Configure the message filter with the specified message type and filter callbacks.
 
         Args:
             startup (input): The event that triggers the configuration of the message filter.
@@ -40,7 +42,8 @@ reactor FrostInterface(width = 1) extends FrostBase{
     =}
 
     method _create_registration_message(){=
-        '''Creates the registration message for the FrostBus.
+        '''
+        Creates the registration message for the FrostBus.
 
         Returns:
             FrostMessage: A message that requests registration in the FrostBus.
@@ -59,9 +62,11 @@ reactor FrostInterface(width = 1) extends FrostBase{
         )
     =}
 
+    state number_of_attempts = 0
     // @label _connect_to_bus
     reaction(connect_to_bus) -> channel_out, connect_to_bus{=
-        '''Check if the machine is registered to the bus. If not registered, it will send a registration message and re-schedule the check. 
+        '''
+        Check if the machine is registered to the bus. If not registered, it will send a registration message and re-schedule the check. 
 
         Args:
             connect_to_bus (logical action): The event that triggers the connection to the bus procedure.
@@ -71,10 +76,10 @@ reactor FrostInterface(width = 1) extends FrostBase{
         '''
         if self.connected:
             return 0
+        self.number_of_attempts += 1
 
-
-        # TODO: this should be set as a number of attempts!
-        if lf.time.logical_elapsed() > SEC(9):
+        
+        if self.number_of_attempts > 4:
             raise Exception(f"Handshake failed:{self.name} unable to connect to the bus")
         
         # Generate and send the bus registration message.
@@ -85,7 +90,8 @@ reactor FrostInterface(width = 1) extends FrostBase{
 
     // @label _process_messages
     reaction (channel_in) -> message_filter.messages{=
-        '''Forwards messages from the input channel to the message filter.
+        '''
+        Forwards messages from the input channel to the message filter.
 
         Args:
             channel_in (input): The input port for incoming messages.
@@ -100,7 +106,8 @@ reactor FrostInterface(width = 1) extends FrostBase{
     =}
 
     method _validate_bus_connection(bank_index, message){=
-        '''Validate the bus connection response message.
+        '''
+        Validate the bus connection response message.
 
         Args:
             bank_index (int): The index of the bank.
@@ -116,7 +123,8 @@ reactor FrostInterface(width = 1) extends FrostBase{
     =}
 
     method _validate_subscription(bank_index, message){=
-        '''Validate a subscription response message.
+        '''
+        Validate a subscription response message.
 
         Args:
             bank_index (int): The index of the bank.
@@ -129,7 +137,8 @@ reactor FrostInterface(width = 1) extends FrostBase{
 
     // @label _validate_response
     reaction (message_filter.responses) -> connected_to_bus{=
-        '''Validate the response messages from the message filter and trigger the connected_to_bus action if the registration is successful.
+        '''
+        Validate the response messages from the message filter and trigger the connected_to_bus action if the registration is successful.
 
         Args:
             message_filter.responses (input): The input port for response messages.

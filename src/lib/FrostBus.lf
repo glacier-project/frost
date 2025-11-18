@@ -3,7 +3,8 @@ target Python
 import FrostDataModel from "FrostDataModel.lf"
  
 reactor FrostBus extends FrostDataModel{
-    '''Reactor implementing a BUS for Frost components.
+    '''
+    Reactor implementing a BUS for Frost components.
     This reactor manages the routing of messages between Frost components and handles registration requests from FrostMachines.
     
     Attributes:
@@ -20,7 +21,8 @@ reactor FrostBus extends FrostDataModel{
 
     // @label _initialize_frost_bus
     reaction(startup) {=
-        '''Initialize the FrostBus reactor.
+        '''
+        Initialize the FrostBus reactor.
         
         Args:
             startup (input): The event that triggers the configuration of the message filter.
@@ -33,7 +35,8 @@ reactor FrostBus extends FrostDataModel{
     =}
 
     method _set_channel_out_port(value, channel_out){=
-        '''Set the output value for the channel_out port. If a value is already set, it will append the new value to the existing one.
+        '''
+        Set the output value for the channel_out port. If a value is already set, it will append the new value to the existing one.
 
         Args:
             value: The value to set for the channel_out port.
@@ -51,7 +54,8 @@ reactor FrostBus extends FrostDataModel{
 
     // @label _handle_registration_request
     reaction(message_filter.requests) -> channel_out{=
-        '''Handle the registration request from a FrostMachine.
+        '''
+        Handle the registration request from a FrostMachine.
 
         Args:
             message_filter.requests (input): The input port for request messages.
@@ -103,7 +107,8 @@ reactor FrostBus extends FrostDataModel{
 
     // @label _forward_message
     reaction(message_filter.discarded_messages) -> channel_out{=
-        '''Forward messages that do not match the filter criteria to the specified target.
+        '''
+        Forward messages that do not match the filter criteria to the specified target.
 
         Args:
             discarded_messages (output): The output port for messages that do not match the filter criteria.

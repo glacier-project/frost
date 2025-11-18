@@ -74,3 +74,6 @@ main reactor{
 ## Examples
 
 - [ICE Laboratory](examples/ICE): The directory contains an implementation of the production line of the [ICE Laboratory](https://www.icelab.di.univr.it/) of Verona, Italy. A Scheduler controls the production by sending requests to the different machines of the plant The example is still under development and will be updated soon.
+
+## Development
+Before committing changes, make sure to run ```bash test/run_all.sh``` and ```bin/act```. 

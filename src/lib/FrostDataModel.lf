@@ -3,7 +3,8 @@ target Python;
 import FrostInterface from "FrostInterface.lf" 
 
 reactor FrostDataModel(_data_model_path = "", update_interval=1 s) extends FrostInterface{
-    '''Reactor implementing the common logic used to handle incoming data model-related messages, such as variable updates, method invocations, and protocol registrations.
+    '''
+    Reactor implementing the common logic used to handle incoming data model-related messages, such as variable updates, method invocations, and protocol registrations.
     
     Args:
         _data_model_path (str): Path to the data model file.
@@ -28,7 +29,8 @@ reactor FrostDataModel(_data_model_path = "", update_interval=1 s) extends Frost
 
     // @label _initialize_data_model
     reaction (startup) {=
-        '''Initializes the FrostDataModel reactor.
+        '''
+        Initializes the FrostDataModel reactor.
         
         Args:
             startup (input): The event that triggers the configuration of the message filter.
@@ -41,11 +43,14 @@ reactor FrostDataModel(_data_model_path = "", update_interval=1 s) extends Frost
         self.protocol_mng = FrostProtocolMng(self.data_model)
     =}
 
-    # TODO: why we need this?
+    # If there MethodNode (not Composite or Async) invokation, request will be queued and processed in a separate reaction
     state method_queue = []
+    logical action new_method_request
+    state method_action_scheduled = False
     // @label _process_requests
-    reaction (message_filter.requests) -> channel_out{=
-        '''Handle a request message related to the data model.
+    reaction (message_filter.requests) -> channel_out, new_method_request {=
+        '''
+        Handle a request message related to the data model.
 
         Args:
             message_filter.requests (input): The input port for request messages.
@@ -65,6 +70,10 @@ reactor FrostDataModel(_data_model_path = "", update_interval=1 s) extends Frost
                 # TODO: this check here should be simplified 
                 if isinstance(method_node, MethodNode) and not isinstance(method_node, AsyncMethodNode) and not isinstance(method_node, CompositeMethodNode):
                     self.method_queue.append(message)
+                    if self.method_action_scheduled:
+                        continue
+                    new_method_request.schedule(NSEC(0))
+                    self.method_action_scheduled = True
                     continue
 
             # TODO: Handle other request types here!
@@ -74,7 +83,9 @@ reactor FrostDataModel(_data_model_path = "", update_interval=1 s) extends Frost
 
     // @label _process_responses
     reaction (message_filter.responses) -> channel_out{=
-        '''Handle a response message related to the data model.
+        '''
+        Handle a response message related to the data model.
+
         Args:
             message_filter.responses (input): The input port for response messages.
         Returns:
@@ -96,7 +107,8 @@ reactor FrostDataModel(_data_model_path = "", update_interval=1 s) extends Frost
 
     // @label _send_data_model_updates
     reaction (check_update) -> channel_out{=
-        '''Check if there are any updates in the data model and send them to the subscribers.
+        '''
+        Check if there are any updates in the data model and send them to the subscribers.
         
         Args:
             check_update (input): The event that triggers the check for updates.
@@ -110,8 +122,7 @@ reactor FrostDataModel(_data_model_path = "", update_interval=1 s) extends Frost
             return 0
 
         self._set_channel_out_port(update_messages, channel_out)
-        self.protocol_mng.clear_update_messages()
-            
+        self.protocol_mng.clear_update_messages()            
     =}
 
 }
