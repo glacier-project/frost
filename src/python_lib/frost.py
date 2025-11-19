@@ -15,6 +15,7 @@ for file in os.listdir(os.path.dirname(__file__)):
 from time_utils import TimePrecision, convert_time_float, convert_time
 from l_formatter import LFormatter    
 from machine_data_model.protocols.frost_v1.frost_message import FrostMessage
+from machine_data_model.protocols.frost_v1.frost_message_builder import FrostMessageBuilder
 from machine_data_model.protocols.frost_v1.frost_header import MsgType, MsgNamespace, ProtocolMsgName, FrostHeader, MethodMsgName, VariableMsgName
 from machine_data_model.protocols.frost_v1.frost_payload import VariablePayload, ProtocolPayload, MethodPayload, ErrorPayload, SubscriptionPayload, ErrorMessages, ErrorCode
 from machine_data_model.protocols.frost_v1.frost_protocol_mng import FrostProtocolMng
@@ -24,7 +25,6 @@ from machine_data_model.nodes.method_node import MethodNode, AsyncMethodNode
 from machine_data_model.nodes.composite_method.composite_method_node import CompositeMethodNode
 from machine_data_model.nodes.variable_node import NumericalVariableNode, StringVariableNode, BooleanVariableNode, ObjectVariableNode
 from machine_data_model.nodes.folder_node import FolderNode
-
 
 # load configuration file
 FROST_CONFIG = os.environ.get("FROST_CONFIG", "resources/frost_config.yml")

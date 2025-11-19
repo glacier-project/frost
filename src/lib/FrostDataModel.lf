@@ -41,12 +41,12 @@ reactor FrostDataModel(_data_model_path = "", update_interval=1 s) extends Frost
 
         self.data_model = DataModelBuilder().get_data_model(self.data_model_path)
         self.protocol_mng = FrostProtocolMng(self.data_model)
+        self.message_builder = self.protocol_mng.get_message_builder()
+        assert self.message_builder is not None, "Message builder is None"
     =}
 
     # If there MethodNode (not Composite or Async) invokation, request will be queued and processed in a separate reaction
-    state method_queue = []
     logical action new_method_request
-    state method_action_scheduled = False
     // @label _process_requests
     reaction (message_filter.requests) -> channel_out, new_method_request {=
         '''
@@ -57,6 +57,8 @@ reactor FrostDataModel(_data_model_path = "", update_interval=1 s) extends Frost
         Returns:
             channel_out (output): The output port for processed messages.
         '''
+        method_queue = []
+        method_action_scheduled = False
         for bank_index, message in message_filter.requests.value:
             if message.header.namespace == MsgNamespace.PROTOCOL or message.target != self.name:
                 continue
@@ -67,36 +69,34 @@ reactor FrostDataModel(_data_model_path = "", update_interval=1 s) extends Frost
                 method_node = self.data_model.get_node(message.payload.node)
                 self.logger.debug(f"method: {method_node.name} is_async: {method_node.is_async()}")
 
-                # TODO: this check here should be simplified 
-                if isinstance(method_node, MethodNode) and not isinstance(method_node, AsyncMethodNode) and not isinstance(method_node, CompositeMethodNode):
-                    self.method_queue.append(message)
-                    if self.method_action_scheduled:
-                        continue
-                    new_method_request.schedule(NSEC(0))
-                    self.method_action_scheduled = True
-                    continue
+                if type(method_node) == MethodNode:
+                    method_queue.append(message)
+                    method_action_scheduled = True
+                   
 
             # TODO: Handle other request types here!
-            response = self.protocol_mng.handle_request(message)
+            response = self.protocol_mng.handle_message(message)
+            assert response is not None, f"Response is None for message: {message}"
             self._set_channel_out_port(response, channel_out)
+
+        if method_action_scheduled:
+            new_method_request.schedule(NSEC(0), method_queue)
     =}
 
-    // @label _process_responses
-    reaction (message_filter.responses) -> channel_out{=
+
+    // @label _process_other_updates
+    reaction (other_updates) -> channel_out{=
         '''
         Handle a response message related to the data model.
 
         Args:
-            message_filter.responses (input): The input port for response messages.
+            other_updates (input): The input port for response messages.
         Returns:
             channel_out (output): The output port for processed messages.
         '''
-        for bank_index, message in message_filter.responses.value:
-            if message.header.namespace == MsgNamespace.PROTOCOL or message.target != self.name:
-                continue
-
+        for bank_index, message in other_updates.value:
             self.logger.debug(f"Handling data model response: {message}")
-            response = self.protocol_mng.handle_response(message)
+            response = self.protocol_mng.handle_message(message)
 
             if response is None:
                 continue

@@ -17,30 +17,24 @@ reactor Tester extends FrostReactor{
     state correlation_id
     state response_received = False
 
-    method create_method_request(s, t, method_path, args, kwargs){=
+    reaction(startup){=
+        self.message_builder = FrostMessageBuilder(
+            sender="tester",
+            protocol_version=(1,0,0)
+        )
+    =}
 
-        return FrostMessage(
-            sender=s,
+    method create_method_request(t, method_path, args, kwargs){=
+        return self.message_builder.build_invoke_method_message(
             target=t,
-            identifier=str(uuid.uuid4()),
-            header=FrostHeader(
-                type=MsgType.REQUEST,
-                version=(1, 0, 0),
-                namespace=MsgNamespace.METHOD,
-                msg_name=MethodMsgName.INVOKE,
-            ),
-            payload=MethodPayload(
-                node=method_path,
-                args=args,
-                kwargs=kwargs
-            )
+            node=method_path,
+            args=args,
+            kwargs=kwargs
         )
     =}
 
     reaction(connected_to_bus) -> channel_out{=
-
         msg = self.create_method_request(
-            s="tester",
             t="machine",
             method_path="Machine/RemoteProduct",
             args=[5],
@@ -50,8 +44,8 @@ reactor Tester extends FrostReactor{
         self._set_channel_out_port(msg, channel_out)
     =}
 
-    reaction(message_filter.responses) {=
-        for bank_index, message in message_filter.responses.value:
+    reaction(other_updates) {=
+        for bank_index, message in other_updates.value:
 
             if message.correlation_id != self.correlation_id or message.header.msg_name == MethodMsgName.STARTED:
                 continue

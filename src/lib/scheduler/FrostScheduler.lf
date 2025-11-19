@@ -17,21 +17,11 @@ reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1)
     =}
 
     method create_method_request(t, method_path, args, kwargs){=
-        return FrostMessage(
-            sender=self.data_model.name,
+        return self.message_builder.build_invoke_method_message(
             target=t,
-            identifier=str(uuid.uuid4()),
-            header=FrostHeader(
-                type=MsgType.REQUEST,
-                version=(1, 0, 0),
-                namespace=MsgNamespace.METHOD,
-                msg_name=MethodMsgName.INVOKE,
-            ),
-            payload=MethodPayload(
-                node=method_path,
-                args=args,
-                kwargs=kwargs
-            )
+            node=method_path,
+            args=args,
+            kwargs=kwargs
         )
     =}
 
@@ -75,8 +65,8 @@ reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1)
 
     =}
 
-    reaction(message_filter.responses) {=
-        for bank_index, message in message_filter.responses.value:
+    reaction(other_updates) {=
+        for bank_index, message in other_updates.value:
 
             if message.correlation_id not in self._active_tasks:
                 continue

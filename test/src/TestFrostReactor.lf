@@ -35,6 +35,6 @@ main reactor{
     device_3 = new Device(name="device_3")
     bus = new FrostBus(name="bus", width=3)
 
-    device_1.channel_out, device_2.channel_out, device_3.channel_out -> bus.channel_in
+    device_1.channel_out, device_2.channel_out, device_3.channel_out -> bus.channel_in after 0
     bus.channel_out -> device_1.channel_in, device_2.channel_in, device_3.channel_in
 }

@@ -44,12 +44,9 @@ reactor test_frost_interface extends FrostInterface{
         to_main.set([""])
     =}
 
-    reaction(message_filter.responses)-> to_main{=
-        response_message = self._get_input_values(message_filter.responses)[0][1][0][1]
+    reaction(other_updates)-> to_main{=
+        response_message = other_updates.value[0][1]
         to_main.set([""])
-        if isinstance(response_message.payload, ProtocolPayload):
-            return 0
-
         if response_message.identifier != "response":
             raise Exception(f"Filtered response: {response_message}")
 
