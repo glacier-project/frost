@@ -5,10 +5,10 @@
 SHELL := /bin/bash
 
 # Test script
-RUN_SCRIPT := ./run_all.sh
+RUN_SCRIPT := test/run_all.sh
 
 # Source directory
-SRC_DIR := src
+SRC_DIR := test/src
 
 # Find all .lf files in src directory
 LF_FILES := $(shell find $(SRC_DIR) -name "*.lf" 2>/dev/null)
@@ -39,9 +39,9 @@ run:
 .PHONY: clean
 clean:
 	@echo "🧹 Cleaning generated files..."
-	rm -rf bin/
-	rm -rf include/
-	rm -rf src-gen/
+	rm -rf test/bin/
+	rm -rf test/include/
+	rm -rf test/src-gen/
 	@echo "✅ Clean complete"
 
 # Individual test targets (build and run specific test)

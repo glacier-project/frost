@@ -32,9 +32,13 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install setuptools wheel
-        # Install any Python dependencies your tests might need
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        if [ -f test/requirements.txt ]; then pip install -r test/requirements.txt; fi
+        if [ -f requirements.txt ]; then pip install --no-cache-dir --upgrade --force-reinstall -r requirements.txt; fi
+    
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
     
     - name: Install Lingua Franca Compiler
       run: |
@@ -52,7 +56,7 @@ jobs:
       run: chmod +x test/run_all.sh
     
     - name: Run all tests
-      run: make -C test test
+      run: make test
     
     - name: Upload test results on failure
       if: failure()
@@ -66,7 +70,7 @@ jobs:
     
     - name: Clean up
       if: always()
-      run: make -C test clean
+      run: make clean
 
   test-summary:
     name: Test Summary

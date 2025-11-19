@@ -6,6 +6,28 @@
 # Don't stop on failures - collect all results for final report
 set +e
 
+# Check and install Python dependencies if needed
+check_dependencies() {
+    local requirements_file="requirements.txt"
+    if [ -f "$requirements_file" ]; then
+        echo "📦 Checking Python dependencies..."
+        if ! python3 -m pip install -q -r "$requirements_file" 2>/dev/null; then
+            echo "⚠️  Warning: Failed to install some dependencies from $requirements_file"
+        fi
+    fi
+}
+
+# Print Python version information
+print_python_version() {
+    echo "🐍 Python version: $(python3 --version 2>&1 | cut -d' ' -f2)"
+}
+
+# Install dependencies at the start
+check_dependencies
+
+# Print Python version
+print_python_version
+
 # Colors for output
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -42,7 +64,7 @@ show_progress() {
 
 # Get all the files in the src directory
 get_all_lf_files() {
-    find src -type f -name "*.lf" 2>/dev/null || true
+    find test/src -type f -name "*.lf" 2>/dev/null || true
 }
 
 # Display usage information
@@ -141,6 +163,9 @@ run_tests() {
     local runnable_files=()
     local skipped_count=0
     
+    # Change to the test directory
+    pushd test > /dev/null
+
     # Filter files to only include successfully built tests
     for file in "${files[@]}"; do
         local basename=$(basename "$file" .lf)
@@ -149,7 +174,7 @@ run_tests() {
         # If BUILD_PASSED is empty (e.g., --run-only mode), check if binary exists
         if [ ${#BUILD_PASSED[@]} -eq 0 ]; then
             # In run-only mode, check if the binary exists
-            if [ -f "./bin/${basename}" ]; then
+            if [ -f "bin/${basename}" ]; then
                 is_built=true
             fi
         else
@@ -176,6 +201,7 @@ run_tests() {
         else
             echo "No files to run"
         fi
+        popd > /dev/null
         return 0
     fi
     
@@ -192,7 +218,9 @@ run_tests() {
         local basename=$(basename "$file" .lf)
         show_progress $current $total_to_run "Running" "$basename"
         
-        if ! validate_file "$file"; then
+        # The file path is relative to the root, so we need to adjust it
+        local adjusted_file="../$file"
+        if ! validate_file "$adjusted_file"; then
             RUN_FAILED+=("$basename")
             failed_runs=$((failed_runs + 1))
             continue
@@ -238,6 +266,9 @@ run_tests() {
     done
     
     echo  # Clear progress bar line
+    
+    # Return to the original directory
+    popd > /dev/null
     
     if [ $failed_runs -gt 0 ]; then
         printf "${RED}⚠️  Warning: $failed_runs test(s) failed${RESET}\n" >&2
