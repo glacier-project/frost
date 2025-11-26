@@ -31,8 +31,9 @@ jobs:
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
+        pip cache purge
         pip install setuptools wheel
-        if [ -f requirements.txt ]; then pip install --no-cache-dir --upgrade --force-reinstall -r requirements.txt; fi
+        if [ -f requirements.txt ]; then pip install --no-cache-dir -r requirements.txt; fi
     
     - name: Set up Java
       uses: actions/setup-java@v4
