@@ -8,11 +8,16 @@ set +e
 
 # Check and install Python dependencies if needed
 check_dependencies() {
+    # Look for requirements.txt in project root (parent of test/ if we're in test/)
     local requirements_file="requirements.txt"
+    if [ ! -f "$requirements_file" ] && [ -f "../requirements.txt" ]; then
+        requirements_file="../requirements.txt"
+    fi
+    
     if [ -f "$requirements_file" ]; then
         echo "📦 Checking Python dependencies..."
-        if ! python3 -m pip install -q -r "$requirements_file" 2>/dev/null; then
-            echo "⚠️  Warning: Failed to install some dependencies from $requirements_file"
+        if ! python3 -m pip install -q -r "$requirements_file"; then
+            echo "⚠️  Warning: Failed to install some dependencies from $requirements_file" >&2
         fi
     fi
 }
@@ -22,11 +27,23 @@ print_python_version() {
     echo "🐍 Python version: $(python3 --version 2>&1 | cut -d' ' -f2)"
 }
 
+# Check if lfc is available
+check_lfc() {
+    if ! command -v lfc &> /dev/null; then
+        echo "❌ Error: lfc (Lingua Franca Compiler) not found in PATH" >&2
+        echo "Please install lfc first: https://www.lf-lang.org/docs/installation" >&2
+        exit 1
+    fi
+}
+
 # Install dependencies at the start
 check_dependencies
 
 # Print Python version
 print_python_version
+
+# Verify lfc is available
+check_lfc
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -137,8 +154,8 @@ build_tests() {
         if build_output=$(lfc "$file" 2>&1); then
             BUILD_PASSED+=("$basename")
         else
-            printf "\n"  # New line to preserve progress bar
-            echo "Error: Failed to build $file" >&2
+            printf "\r\033[K"  # Clear progress bar line completely
+            echo "${RED}Error: Failed to build $basename${RESET}" >&2
             echo "$build_output" >&2
             BUILD_FAILED+=("$basename")
             failed_builds=$((failed_builds + 1))
@@ -233,8 +250,8 @@ run_tests() {
         
         # Check if binary exists
         if [ ! -f "$binary_path" ]; then
-            printf "\n"  # New line to preserve progress bar
-            echo "Error: Binary '$binary_path' not found. Did you build the test first?" >&2
+            printf "\r\033[K"  # Clear progress bar line completely
+            echo "${RED}Error: Binary '$binary_path' not found. Did you build the test first?${RESET}" >&2
             RUN_FAILED+=("$basename")
             failed_runs=$((failed_runs + 1))
             continue
@@ -245,9 +262,9 @@ run_tests() {
             if run_output=$("$binary_path" 2>&1); then
                 RUN_PASSED+=("$basename")
             else
-                printf "\n"  # New line to preserve progress bar
-                echo "Warning: Config file '$config_path' not found"
-                echo "Error: Failed to run $basename" >&2
+                printf "\r\033[K"  # Clear progress bar line completely
+                echo "${YELLOW}Warning: Config file '$config_path' not found${RESET}"
+                echo "${RED}Error: Failed to run $basename${RESET}" >&2
                 echo "$run_output" >&2
                 RUN_FAILED+=("$basename")
                 failed_runs=$((failed_runs + 1))
@@ -256,8 +273,8 @@ run_tests() {
             if run_output=$(export FROST_CONFIG="$config_path" && "$binary_path" 2>&1); then
                 RUN_PASSED+=("$basename")
             else
-                printf "\n"  # New line to preserve progress bar
-                echo "Error: Failed to run $basename" >&2
+                printf "\r\033[K"  # Clear progress bar line completely
+                echo "${RED}Error: Failed to run $basename${RESET}" >&2
                 echo "$run_output" >&2
                 RUN_FAILED+=("$basename")
                 failed_runs=$((failed_runs + 1))

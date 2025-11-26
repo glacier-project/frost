@@ -26,8 +26,8 @@ reactor FrostReactor extends FrostInterface{
         return True
     =}
 
-    // @label _validate_response
-    reaction(protocol_updates)-> connected_to_bus{=
+    // @label _validate_protocol_responses
+    reaction(response_protocol_messages) -> connected_to_bus{=
         '''
         Validate the response messages from the message filter and trigger the connected_to_bus action if the registration is successful.
 
@@ -36,10 +36,10 @@ reactor FrostReactor extends FrostInterface{
         Returns:
             connect_to_bus (logical action): The output port for the connect_to_bus action.
         ''' 
-        for bank_index, message in protocol_updates.value:
+        for bank_index, message in response_protocol_messages.value:
             if message.header.namespace == MsgNamespace.PROTOCOL and message.header.msg_name == ProtocolMsgName.REGISTER:
                 self._validate_bus_connection(bank_index, message)
-                connected_to_bus.schedule(NSEC(0))
+                connected_to_bus.schedule(0)
     =}
 
     logical action connect_to_bus
@@ -55,7 +55,6 @@ reactor FrostReactor extends FrostInterface{
             target="frost_bus"
         )
     =}    
-
 
     state number_of_attempts = 0
     // @label _connect_to_bus

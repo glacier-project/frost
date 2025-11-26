@@ -69,11 +69,13 @@ reactor FrostInterface(width = 1) extends FrostBase{
         return True
     =}
 
-    logical action protocol_updates
-    logical action other_updates
+    logical action response_protocol_messages
+    logical action request_protocol_messages
+    logical action response_messages
+    logical action request_messages
 
-    // @label _validate_response
-    reaction (message_filter.responses) -> protocol_updates, other_updates {=
+    // @label _process_responses
+    reaction (message_filter.responses) -> response_protocol_messages, response_messages {=
         '''
         Validate the response messages from the message filter and trigger the connected_to_bus action if the registration is successful.
 
@@ -94,8 +96,32 @@ reactor FrostInterface(width = 1) extends FrostBase{
             other_list.append((bank_index, message))
         
         if protocol_list:
-            protocol_updates.schedule(NSEC(0), protocol_list)
+            response_protocol_messages.schedule(NSEC(0), protocol_list)
         if other_list:
-            other_updates.schedule(NSEC(0), other_list)        
+            response_messages.schedule(NSEC(0), other_list)        
+    =}
+
+    // @label _process_requests
+    reaction (message_filter.requests) -> request_protocol_messages, request_messages {=
+        '''
+        Handle request messages related to the Frost protocol.
+
+        Args:
+            message_filter.requests (input): The input port for request messages.
+        Returns:
+            channel_out (output): The output port for processed messages.
+        '''
+        protocol_list = []
+        other_list = []
+        for bank_index, message in message_filter.requests.value:
+            if message.header.namespace == MsgNamespace.PROTOCOL:
+                protocol_list.append((bank_index, message))
+                continue
+            other_list.append((bank_index, message))
+
+        if protocol_list:
+            request_protocol_messages.schedule(NSEC(0), protocol_list)
+        if other_list:
+            request_messages.schedule(NSEC(0), other_list)
     =}
 }

@@ -65,8 +65,8 @@ reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1)
 
     =}
 
-    reaction(other_updates) {=
-        for bank_index, message in other_updates.value:
+    reaction(response_messages) {=
+        for bank_index, message in response_messages.value:
 
             if message.correlation_id not in self._active_tasks:
                 continue

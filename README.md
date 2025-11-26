@@ -17,6 +17,33 @@ Custom components can be developed by extending the *FrostReactor* class and imp
 
 ## How to develop new machine interfaces?
 
+### Prerequisites
+
+To build and run this project, you will need the following prerequisites:
+
+- **Lingua Franca:** This project is built using the Lingua Franca framework. You can find installation instructions on the [Lingua Franca website](https://www.lf-lang.org/docs/handbook/getting-started).
+
+    You can install Lingua Franca using the following command:
+
+    ```bash
+    curl -Ls https://install.lf-lang.org | bash -s cli
+    ```
+
+    After installation, you may need to add the Lingua Franca binary to your PATH. Follow the instructions provided by the installer.
+
+
+- **Python:** Python 3.11 or later is required. You can download it from the [Python website](https://www.python.org/).
+
+- **Python Packages:** The project requires several Python packages. You can install them by running the following command in the root of the project:
+
+  ```bash
+  pip install -r requirements.txt
+  ```
+
+- **Make:** The `make` build automation tool is used to simplify the build and test process.
+
+### Development
+
 The development is summarized in the following step:
 
 1) Extend *Frost Machine* reactor.
@@ -75,5 +102,50 @@ main reactor{
 
 - [ICE Laboratory](examples/ICE): The directory contains an implementation of the production line of the [ICE Laboratory](https://www.icelab.di.univr.it/) of Verona, Italy. A Scheduler controls the production by sending requests to the different machines of the plant The example is still under development and will be updated soon.
 
-## Development
-Before committing changes, make sure to run ```bash test/run_all.sh``` and ```bin/act```. 
+## Contributing
+
+Contributions are welcome! If you have suggestions for improvements or features, please open an issue or submit a pull request.
+
+### Development Setup
+
+The development environment is managed with `pip`. To set up the development environment, follow these steps:
+
+1. **Clone the repository:**
+   ```bash
+   git clone <repository-url>
+   cd frost
+   ```
+
+2. **Create a virtual environment (recommended):**
+    ```bash
+    python -m venv .venv
+    source .venv/bin/activate
+    ```
+
+3. **Install dependencies:**
+   Execute the following command to install the required Python packages:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+### Development
+
+To ensure the stability and correctness of the codebase, it is important to run the test suite before committing any changes. The project provides a convenient `Makefile` target for this purpose.
+
+To build and run all the tests, execute the following command from the root of the project:
+
+```bash
+make test
+```
+
+This command will:
+1.  Find all the `.lf` test files in the `test/src` directory.
+2.  Build each test using the Lingua Franca compiler.
+3.  Run the compiled test binaries.
+4.  Provide a summary of the test results, indicating which tests passed and which failed.
+
+This process is managed by the `test/run_all.sh` script, which is invoked by the `Makefile`.
+
+This project uses [act](https://github.com/nektos/act) to enable local execution of GitHub Actions workflows. This allows you to test CI/CD pipelines locally before pushing changes to the repository.
+
+ 

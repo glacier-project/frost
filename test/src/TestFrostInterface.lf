@@ -44,7 +44,7 @@ reactor test_frost_interface extends FrostInterface{
         to_main.set([""])
     =}
 
-    reaction(other_updates)-> to_main{=
+    reaction()-> to_main{=
         response_message = other_updates.value[0][1]
         to_main.set([""])
         if response_message.identifier != "response":

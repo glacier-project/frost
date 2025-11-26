@@ -20,20 +20,20 @@ all: test
 # Build and run all tests
 .PHONY: test
 test:
-	@echo "🧪 Running all tests..."
-	$(RUN_SCRIPT)
+	@chmod +x $(RUN_SCRIPT) 2>/dev/null || true
+	@$(RUN_SCRIPT)
 
 # Build tests only
 .PHONY: build
 build:
-	@echo "🔨 Building all tests..."
-	$(RUN_SCRIPT) --build-only
+	@chmod +x $(RUN_SCRIPT) 2>/dev/null || true
+	@$(RUN_SCRIPT) --build-only
 
 # Run tests only (assumes binaries exist)
 .PHONY: run
 run:
-	@echo "🚀 Running all tests..."
-	$(RUN_SCRIPT) --run-only
+	@chmod +x $(RUN_SCRIPT) 2>/dev/null || true
+	@$(RUN_SCRIPT) --run-only
 
 # Clean generated files
 .PHONY: clean
@@ -47,8 +47,8 @@ clean:
 # Individual test targets (build and run specific test)
 .PHONY: test-%
 test-%:
+	@chmod +x $(RUN_SCRIPT) 2>/dev/null || true
 	@if [ -f "$(SRC_DIR)/$*.lf" ]; then \
-		echo "🧪 Running test: $*"; \
 		$(RUN_SCRIPT) "$(SRC_DIR)/$*.lf"; \
 	else \
 		echo "❌ Test file $(SRC_DIR)/$*.lf not found"; \
@@ -58,8 +58,8 @@ test-%:
 # Individual build targets
 .PHONY: build-%
 build-%:
+	@chmod +x $(RUN_SCRIPT) 2>/dev/null || true
 	@if [ -f "$(SRC_DIR)/$*.lf" ]; then \
-		echo "🔨 Building test: $*"; \
 		$(RUN_SCRIPT) --build-only "$(SRC_DIR)/$*.lf"; \
 	else \
 		echo "❌ Test file $(SRC_DIR)/$*.lf not found"; \
@@ -69,8 +69,8 @@ build-%:
 # Individual run targets
 .PHONY: run-%
 run-%:
+	@chmod +x $(RUN_SCRIPT) 2>/dev/null || true
 	@if [ -f "$(SRC_DIR)/$*.lf" ]; then \
-		echo "🚀 Running test: $*"; \
 		$(RUN_SCRIPT) --run-only "$(SRC_DIR)/$*.lf"; \
 	else \
 		echo "❌ Test file $(SRC_DIR)/$*.lf not found"; \
