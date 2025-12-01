@@ -22,9 +22,11 @@ reactor FMUWrapper(file_path = "") extends SimModel{
         assert self.fmu != None, "FMU is not present"
         self.fmu.doStep(currentCommunicationPoint = self.fmu_time, communicationStepSize = self.time_step)
         self.fmu_time += self.time_step
+        self.logger.info(f"FMU simulated to time {self.fmu_time}")
         return True
     =}
 
+    // @label _initialize_fmu
     reaction(startup){=
         '''
         Initialize the FMU by extracting it, reading the model description and schedule the first step.
@@ -38,8 +40,10 @@ reactor FMUWrapper(file_path = "") extends SimModel{
         self.fmu.exitInitializationMode()
         for variable in self.model_description.modelVariables:
             self.vars.append(variable.valueReference)
+        self.logger.info(f"Initialized FMU from {self.path} at time {self.fmu_time}")
     =}
 
+    // @label _shutdown_fmu
     reaction(shutdown){=
         '''
         Free the FMU instance and clean up resources.
@@ -47,6 +51,7 @@ reactor FMUWrapper(file_path = "") extends SimModel{
         if self.fmu is None:
             return 0
 
+        self.logger.info(f"Shutting down FMU at time {self.fmu_time}")
         self.fmu.terminate()
         self.fmu.freeInstance()
         self.fmu = None          

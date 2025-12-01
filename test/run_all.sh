@@ -6,45 +6,6 @@
 # Don't stop on failures - collect all results for final report
 set +e
 
-# Check and install Python dependencies if needed
-check_dependencies() {
-    # Look for requirements.txt in project root (parent of test/ if we're in test/)
-    local requirements_file="requirements.txt"
-    if [ ! -f "$requirements_file" ] && [ -f "../requirements.txt" ]; then
-        requirements_file="../requirements.txt"
-    fi
-    
-    if [ -f "$requirements_file" ]; then
-        echo "📦 Checking Python dependencies..."
-        if ! python3 -m pip install -q -r "$requirements_file"; then
-            echo "⚠️  Warning: Failed to install some dependencies from $requirements_file" >&2
-        fi
-    fi
-}
-
-# Print Python version information
-print_python_version() {
-    echo "🐍 Python version: $(python3 --version 2>&1 | cut -d' ' -f2)"
-}
-
-# Check if lfc is available
-check_lfc() {
-    if ! command -v lfc &> /dev/null; then
-        echo "❌ Error: lfc (Lingua Franca Compiler) not found in PATH" >&2
-        echo "Please install lfc first: https://www.lf-lang.org/docs/installation" >&2
-        exit 1
-    fi
-}
-
-# Install dependencies at the start
-check_dependencies
-
-# Print Python version
-print_python_version
-
-# Verify lfc is available
-check_lfc
-
 # Colors for output
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -81,7 +42,10 @@ show_progress() {
 
 # Get all the files in the src directory
 get_all_lf_files() {
-    find test/src -type f -name "*.lf" 2>/dev/null || true
+    # Always search in test/src, regardless of where the script is called from
+    local script_dir=$(dirname "$(readlink -f "$0")")
+    local project_root=$(dirname "$script_dir")
+    find "$project_root/test/src" -type f -name "*.lf" 2>/dev/null || true
 }
 
 # Display usage information
@@ -154,8 +118,8 @@ build_tests() {
         if build_output=$(lfc "$file" 2>&1); then
             BUILD_PASSED+=("$basename")
         else
-            printf "\r\033[K"  # Clear progress bar line completely
-            echo "${RED}Error: Failed to build $basename${RESET}" >&2
+            printf "\n"  # New line to preserve progress bar
+            echo "Error: Failed to build $file" >&2
             echo "$build_output" >&2
             BUILD_FAILED+=("$basename")
             failed_builds=$((failed_builds + 1))
@@ -180,9 +144,6 @@ run_tests() {
     local runnable_files=()
     local skipped_count=0
     
-    # Change to the test directory
-    pushd test > /dev/null
-
     # Filter files to only include successfully built tests
     for file in "${files[@]}"; do
         local basename=$(basename "$file" .lf)
@@ -191,7 +152,7 @@ run_tests() {
         # If BUILD_PASSED is empty (e.g., --run-only mode), check if binary exists
         if [ ${#BUILD_PASSED[@]} -eq 0 ]; then
             # In run-only mode, check if the binary exists
-            if [ -f "bin/${basename}" ]; then
+            if [ -f "./bin/${basename}" ]; then
                 is_built=true
             fi
         else
@@ -218,7 +179,6 @@ run_tests() {
         else
             echo "No files to run"
         fi
-        popd > /dev/null
         return 0
     fi
     
@@ -235,9 +195,7 @@ run_tests() {
         local basename=$(basename "$file" .lf)
         show_progress $current $total_to_run "Running" "$basename"
         
-        # The file path is relative to the root, so we need to adjust it
-        local adjusted_file="../$file"
-        if ! validate_file "$adjusted_file"; then
+        if ! validate_file "$file"; then
             RUN_FAILED+=("$basename")
             failed_runs=$((failed_runs + 1))
             continue
@@ -245,13 +203,16 @@ run_tests() {
         
         # Convert the name to snake_case
         local snake_case_name=$(echo "$basename" | sed -r 's/([a-z])([A-Z])/\1_\2/g' | tr '[:upper:]' '[:lower:]')
-        local binary_path="./bin/${basename}"
-        local config_path="resources/config/${snake_case_name}.yml"
+        
+        # Get script directory to build absolute paths
+        local script_dir=$(dirname "$(readlink -f "$0")")
+        local binary_path="${script_dir}/bin/${basename}"
+        local config_path="${script_dir}/resources/config/${snake_case_name}.yml"
         
         # Check if binary exists
         if [ ! -f "$binary_path" ]; then
-            printf "\r\033[K"  # Clear progress bar line completely
-            echo "${RED}Error: Binary '$binary_path' not found. Did you build the test first?${RESET}" >&2
+            printf "\n"  # New line to preserve progress bar
+            echo "Error: Binary '$binary_path' not found. Did you build the test first?" >&2
             RUN_FAILED+=("$basename")
             failed_runs=$((failed_runs + 1))
             continue
@@ -259,22 +220,22 @@ run_tests() {
         
         # Check if config exists (optional warning)
         if [ ! -f "$config_path" ]; then
-            if run_output=$("$binary_path" 2>&1); then
+            if run_output=$(cd "$script_dir" && "$binary_path" 2>&1); then
                 RUN_PASSED+=("$basename")
             else
-                printf "\r\033[K"  # Clear progress bar line completely
-                echo "${YELLOW}Warning: Config file '$config_path' not found${RESET}"
-                echo "${RED}Error: Failed to run $basename${RESET}" >&2
+                printf "\n"  # New line to preserve progress bar
+                echo "Warning: Config file '$config_path' not found"
+                echo "Error: Failed to run $basename" >&2
                 echo "$run_output" >&2
                 RUN_FAILED+=("$basename")
                 failed_runs=$((failed_runs + 1))
             fi
         else
-            if run_output=$(export FROST_CONFIG="$config_path" && "$binary_path" 2>&1); then
+            if run_output=$(cd "$script_dir" && export FROST_CONFIG="$config_path" && "$binary_path" 2>&1); then
                 RUN_PASSED+=("$basename")
             else
-                printf "\r\033[K"  # Clear progress bar line completely
-                echo "${RED}Error: Failed to run $basename${RESET}" >&2
+                printf "\n"  # New line to preserve progress bar
+                echo "Error: Failed to run $basename" >&2
                 echo "$run_output" >&2
                 RUN_FAILED+=("$basename")
                 failed_runs=$((failed_runs + 1))
@@ -283,9 +244,6 @@ run_tests() {
     done
     
     echo  # Clear progress bar line
-    
-    # Return to the original directory
-    popd > /dev/null
     
     if [ $failed_runs -gt 0 ]; then
         printf "${RED}⚠️  Warning: $failed_runs test(s) failed${RESET}\n" >&2

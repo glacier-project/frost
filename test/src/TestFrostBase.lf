@@ -79,7 +79,6 @@ reactor test_frost_base extends FrostBase{
         assert self.test_list_param == [1, 2, 3, 4, 5], f"Parameter override failed for 'test_list_param'. Expected [1, 2, 3, 4, 5], got {self.test_list_param}"
         expected_dict = {"key1": "value1", "key2": "value2", "key3": "value3"}
         assert self.test_dict_param == expected_dict, f"Parameter override failed for 'test_dict_param'. Expected {expected_dict}, got {self.test_dict_param}"
-        print("All parameter overrides successful.")
     =}
 
     reaction(John.to_parent) -> John.multiport_from_parent{=

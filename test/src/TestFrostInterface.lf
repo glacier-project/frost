@@ -17,10 +17,10 @@ reactor test_frost_interface extends FrostInterface{
         name = {=self.name+".message_filter"=}
     )
 
-    reaction(message_filter.requests) -> to_main{=
-        request_message = self._get_input_values(message_filter.requests)[0][1][0][1]
-        if request_message.identifier != "request":
-            raise Exception(f"Filtered message: {self._get_input_values(message_filter.requests)}")
+    reaction(request_messages) -> to_main{=
+        for bank_index, request_message in request_messages.value:
+            if request_message.identifier != "request":
+                raise Exception(f"Filtered message: {self._get_input_values(message_filter.requests)}")
 
         self.logger.info(f"Successfully filtered request")
         to_main.set([""])
@@ -44,11 +44,10 @@ reactor test_frost_interface extends FrostInterface{
         to_main.set([""])
     =}
 
-    reaction()-> to_main{=
-        response_message = other_updates.value[0][1]
-        to_main.set([""])
-        if response_message.identifier != "response":
-            raise Exception(f"Filtered response: {response_message}")
+    reaction(response_messages)-> to_main{=
+        for bank_index, response_message in response_messages.value:
+            if response_message.identifier != "response":
+                raise Exception(f"Filtered response: {response_message}")
 
         self.logger.info(f"Successfully filtered response")
         to_main.set([""])

@@ -27,6 +27,12 @@ reactor Device extends FrostReactor{
         test_connection_time.schedule(0)
     =}
 
+    reaction (shutdown){=
+        if not self.connected:
+            raise Exception(f"{self.name} failed to connect to the bus before shutdown.")
+        self.logger.info(f"{self.name} shutting down.")
+    =}
+
 }
 
 main reactor{

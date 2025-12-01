@@ -33,6 +33,7 @@ reactor Test extends FMUWrapper{
         return self.fmu.getReal(self.vars)
     =}
 
+    // @label _simulate_fmu
     reaction(request){=
         if self.fmu == None:
             return
@@ -44,4 +45,14 @@ reactor Test extends FMUWrapper{
 
 main reactor{
     fmu_test = new Test(name = "bouncingBall", step = 100)
+
+    reaction(startup) -> fmu_test.request{=
+        msg = SimulationMessageBuilder()\
+            .set_sender("tester")\
+            .set_target("bouncingBall")\
+            .set_operation(Operation.get_enum().SIMULATE)\
+            .set_args([])\
+            .build()
+        fmu_test.request.set(msg)
+    =}
 }

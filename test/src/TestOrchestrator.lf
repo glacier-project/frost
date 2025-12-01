@@ -1,5 +1,5 @@
 target Python{
-    timeout: 10s,
+    timeout: 11s,
     files: [
         "../../src/python_lib/frost.py",
         "../../src/python_lib/l_formatter.py",

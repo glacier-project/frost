@@ -14,6 +14,7 @@ reactor Orchestrator(width = 1) extends SimulationInterface{
     logical action wait_neighbours 
     logical action command
 
+    // @label _orchestrator_wait_neighbours
     reaction(wait_neighbours) -> wait_neighbours, command{=
         if not self.neighbours:
             wait_neighbours.schedule(0)         
@@ -32,6 +33,7 @@ reactor Orchestrator(width = 1) extends SimulationInterface{
         return 0
     =}
 
+    // @label _orchestrator_handle_models
     reaction(startup) -> wait_neighbours{=
         self.simulation_handler.register_handler(Operation.get_enum().REGISTER, self.register)
         self.simulation_handler.register_handler(Operation.get_enum().RESPONSE, self.response)
@@ -39,6 +41,7 @@ reactor Orchestrator(width = 1) extends SimulationInterface{
         wait_neighbours.schedule(0)
     =}
 
+    // @label _orchestrator_process_models
     reaction (models_in) -> command{=
         r = True
         for i, p in enumerate(models_in):

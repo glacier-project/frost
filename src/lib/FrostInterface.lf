@@ -36,7 +36,7 @@ reactor FrostInterface(width = 1) extends FrostBase{
         '''
         message_filter.message_type.set(FrostMessage)
         message_filter.filter_callbacks.set([lambda msg: is_target_valid(msg, self._get_reactor_name())])
-        self.message_builder = FrostMessageBuilder(sender=self.name, protocol_version=(0,0,0))
+        self.message_builder = FrostMessageBuilder(sender=self.name)
     =}
 
     // @label _process_messages

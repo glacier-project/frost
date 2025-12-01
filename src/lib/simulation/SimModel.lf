@@ -6,6 +6,8 @@ reactor SimModel extends SimulationInterface {
     input request
     output result
 
+    
+    // @label _initialize_sim_model
     reaction(startup) -> result{=
         msg = SimulationMessageBuilder()\
             .set_sender(self.name)\
@@ -17,6 +19,7 @@ reactor SimModel extends SimulationInterface {
         result.set(msg)
     =}
 
+    // @label _handle_simulation_request
     reaction(request) -> result{=
         msg = request.value
         self.logger.info(f"Received request: {msg}")
