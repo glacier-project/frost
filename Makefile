@@ -20,19 +20,16 @@ all: test
 # Build and run all tests
 .PHONY: test
 test:
-	@chmod +x $(RUN_SCRIPT) 2>/dev/null || true
 	@$(RUN_SCRIPT)
 
 # Build tests only
 .PHONY: build
 build:
-	@chmod +x $(RUN_SCRIPT) 2>/dev/null || true
 	@$(RUN_SCRIPT) --build-only
 
 # Run tests only (assumes binaries exist)
 .PHONY: run
 run:
-	@chmod +x $(RUN_SCRIPT) 2>/dev/null || true
 	@$(RUN_SCRIPT) --run-only
 
 # Clean generated files
@@ -47,7 +44,6 @@ clean:
 # Individual test targets (build and run specific test)
 .PHONY: test-%
 test-%:
-	@chmod +x $(RUN_SCRIPT) 2>/dev/null || true
 	@if [ -f "$(SRC_DIR)/$*.lf" ]; then \
 		$(RUN_SCRIPT) "$(SRC_DIR)/$*.lf"; \
 	else \
@@ -58,7 +54,6 @@ test-%:
 # Individual build targets
 .PHONY: build-%
 build-%:
-	@chmod +x $(RUN_SCRIPT) 2>/dev/null || true
 	@if [ -f "$(SRC_DIR)/$*.lf" ]; then \
 		$(RUN_SCRIPT) --build-only "$(SRC_DIR)/$*.lf"; \
 	else \
@@ -69,7 +64,6 @@ build-%:
 # Individual run targets
 .PHONY: run-%
 run-%:
-	@chmod +x $(RUN_SCRIPT) 2>/dev/null || true
 	@if [ -f "$(SRC_DIR)/$*.lf" ]; then \
 		$(RUN_SCRIPT) --run-only "$(SRC_DIR)/$*.lf"; \
 	else \
