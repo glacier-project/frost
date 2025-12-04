@@ -44,7 +44,7 @@ reactor Test extends FMUWrapper{
 }
 
 main reactor{
-    fmu_test = new Test(name = "bouncingBall", step = 100)
+    fmu_test = new Test(name = "bouncingBall", _time_step = 100)
 
     reaction(startup) -> fmu_test.request{=
         msg = SimulationMessageBuilder()\

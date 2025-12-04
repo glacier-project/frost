@@ -2,7 +2,7 @@ target Python;
 
 import FrostReactor from "FrostReactor.lf" 
 import FrostDataModel from "FrostDataModel.lf" 
- 
+
 reactor FrostMachine(_update_step = 1000 msec) extends FrostDataModel, FrostReactor{
     '''
     Reactor implementing the common logic for Frost machines.

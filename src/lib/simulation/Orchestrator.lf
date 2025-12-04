@@ -8,6 +8,7 @@ reactor Orchestrator(width = 1) extends SimulationInterface{
     state neighbours_port = {={str: int}=}
     state stepper
 
+    state time_step = {=self._time_step=}
     input[width] models_in
     output[width] models_out
 
@@ -37,7 +38,7 @@ reactor Orchestrator(width = 1) extends SimulationInterface{
     reaction(startup) -> wait_neighbours{=
         self.simulation_handler.register_handler(Operation.get_enum().REGISTER, self.register)
         self.simulation_handler.register_handler(Operation.get_enum().RESPONSE, self.response)
-        self.stepper = OrchestratorStepper(self.step, 0)
+        self.stepper = OrchestratorStepper(self._time_step, 0)
         wait_neighbours.schedule(0)
     =}
 
