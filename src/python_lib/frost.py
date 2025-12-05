@@ -25,11 +25,11 @@ from machine_data_model.nodes.method_node import MethodNode, AsyncMethodNode
 from machine_data_model.nodes.composite_method.composite_method_node import CompositeMethodNode
 from machine_data_model.nodes.variable_node import NumericalVariableNode, StringVariableNode, BooleanVariableNode, ObjectVariableNode
 from machine_data_model.nodes.folder_node import FolderNode
-from simulation.simulation_message import SimulationMessageBuilder
-from simulation.simulation_message import SimulationMessage
-from simulation.simulation_message_handler import SimulationMessageHandler
-from simulation.operation import Operation
-from simulation.orchestrator import OrchestratorStepper
+from simulation_message import SimulationMessageBuilder
+from simulation_message import SimulationMessage
+from simulation_message_handler import SimulationMessageHandler
+from operation import Operation
+from orchestrator import OrchestratorStepper
 from fmpy import read_model_description, extract
 from fmpy.fmi3 import FMU3Slave
 
