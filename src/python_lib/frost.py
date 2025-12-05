@@ -5,6 +5,7 @@ import yaml
 import os 
 import sys
 import importlib
+import time
 
 for file in os.listdir(os.path.dirname(__file__)):
     if file.startswith("LinguaFranca") and file.endswith(".so"):
@@ -25,6 +26,7 @@ from machine_data_model.nodes.method_node import MethodNode, AsyncMethodNode
 from machine_data_model.nodes.composite_method.composite_method_node import CompositeMethodNode
 from machine_data_model.nodes.variable_node import NumericalVariableNode, StringVariableNode, BooleanVariableNode, ObjectVariableNode
 from machine_data_model.nodes.folder_node import FolderNode
+from machine_data_model.utils.timestamp import set_timestamp_provider
 from simulation_message import SimulationMessageBuilder
 from simulation_message import SimulationMessage
 from simulation_message_handler import SimulationMessageHandler
@@ -57,6 +59,10 @@ logger.setLevel(LOGGING_LEVEL)
 # Add the handler only if it hasn't been added yet
 if not any(isinstance(h, logging.StreamHandler) for h in logger.handlers):
     logger.addHandler(handler)
+
+# Setup timestamp callback 
+timestamp_ns = time.time_ns()
+set_timestamp_provider(lambda: timestamp_ns + base_module.time.logical_elapsed())
 
 def is_target_valid(message: tuple[int, FrostMessage], target: str) -> bool:
     """Check if the target of the message matches the given target.
