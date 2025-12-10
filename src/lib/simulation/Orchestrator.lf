@@ -4,29 +4,29 @@ import SimulationInterface from "SimulationInterface.lf"
 
 reactor Orchestrator(width = 1) extends SimulationInterface{
 
-    state neighbours = []
-    state neighbours_port = {={str: int}=}
+    state models = []
+    state model_port = {={str: int}=}
     state stepper
 
     state time_step = {=self._time_step=}
     input[width] models_in
     output[width] models_out
 
-    logical action wait_neighbours 
+    logical action wait_models 
     logical action command
 
-    // @label _orchestrator_wait_neighbours
-    reaction(wait_neighbours) -> wait_neighbours, command{=
-        if not self.neighbours:
-            wait_neighbours.schedule(0)         
+    // @label _orchestrator_wait_models
+    reaction(wait_models) -> wait_models, command{=
+        if not self.models:
+            wait_models.schedule(0)         
             return 0
         else:
             command.schedule(0)
     =}
 
     method register(sender){=
-        self.neighbours.append(sender)
-        self.neighbours_port[sender] = self.neighbours.index(sender)
+        self.models.append(sender)
+        self.model_port[sender] = self.models.index(sender)
     =}
 
     method response(args){=
@@ -35,11 +35,11 @@ reactor Orchestrator(width = 1) extends SimulationInterface{
     =}
 
     // @label _orchestrator_handle_models
-    reaction(startup) -> wait_neighbours{=
+    reaction(startup) -> wait_models{=
         self.simulation_handler.register_handler(Operation.get_enum().REGISTER, self.register)
         self.simulation_handler.register_handler(Operation.get_enum().RESPONSE, self.response)
         self.stepper = OrchestratorStepper(self._time_step, 0)
-        wait_neighbours.schedule(0)
+        wait_models.schedule(0)
     =}
 
     // @label _orchestrator_process_models
@@ -53,7 +53,7 @@ reactor Orchestrator(width = 1) extends SimulationInterface{
                     r = False
                 self.logger.info(res)
 
-        if len(self.neighbours) == self.width and r:
+        if len(self.models) == self.width and r:
             command.schedule(MSEC(self.stepper()))
     =}
 
