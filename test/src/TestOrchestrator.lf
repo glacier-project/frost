@@ -29,7 +29,7 @@ reactor SimpleOrchestrator extends Orchestrator{
         for i, p in enumerate(models_out):
             msg = SimulationMessageBuilder()\
                 .set_sender(self.name)\
-                .set_target(self.neighbours[i])\
+                .set_target(self.models[i])\
                 .set_operation(Operation.get_enum().SIMULATE)\
                 .set_args([100])\
                 .build()
