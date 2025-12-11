@@ -2,11 +2,17 @@ target Python;
 
 import FrostMachine from "../FrostMachine.lf"
 
-reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1) extends FrostMachine{
+reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1) extends FrostMachine {
     state scheduling_instance = _scheduling_instance
     state scheduling_interval = _scheduling_interval # in seconds
     state _executor
-    state _active_tasks = {={}=}
+    state _active_tasks = {= {} =}
+
+    state task_mapping = {= {} =}  # dictionary (<schedule task name>, <CompositeMethodNode path>)
+
+    state jobs_scopes = {= {} =}    # dictionary (job.id, <job scope>)
+    state tasks_to_jobs = {= {} =}  # dictionary (task.id, job.id)
+
     logical action task_completed
     logical action start_tasks
     logical action update_schedule
@@ -14,9 +20,15 @@ reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1)
     reaction(startup) {=
         self.scheduling_instance = load_instance_from_json(self.scheduling_instance)
         self._executor = StaticExecutor(GeneticAlgorithmSolver(instance=self.scheduling_instance))
+
+        # prepare the scope handling states
+        for job in self.scheduling_instance.jobs:
+            self.jobs_scopes[job.id] = {}
+            for task in job.tasks:
+                self.tasks_to_jobs[task.id] = job.id
     =}
 
-    method create_method_request(t, method_path, args, kwargs){=
+    method create_method_request(t, method_path, args, kwargs) {=
         return self.message_builder.build_invoke_method_message(
             target=t,
             node=method_path,
@@ -26,13 +38,16 @@ reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1)
     =}
 
     // @label connected_to_bus
-    reaction(connected_to_bus) -> update_schedule{=
+    reaction(connected_to_bus) -> update_schedule {=
         self.logger.info("Connected to bus. Starting scheduling...")
         update_schedule.schedule(0)
     =}
 
     // @label update_schedule
-    reaction(update_schedule) -> update_schedule, start_tasks{=
+    reaction(update_schedule) -> update_schedule, start_tasks {=
+        '''
+        Update the current schedule to run new tasks.
+        '''
         executor = self._executor
         logical_time = self._get_current_logical_time_sec()
         self.logger.debug(f"Scheduling at logical time {logical_time} sec")
@@ -49,7 +64,13 @@ reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1)
     =}
 
     // @label run_tasks
-    reaction(start_tasks) {= 
+    reaction(start_tasks) {=
+        '''
+        When there are new tasks to run, send a method invoke request
+        to the scheduler's CompositeMethodNode that has the same name of the task to run.
+
+        The CompositeMethodNode, which handles the task, has access to the job's scope.
+        '''
         self.logger.debug(f"Starting tasks: {start_tasks.value}")
 
         for task, machine in start_tasks.value:
@@ -59,13 +80,34 @@ reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1)
             task.start_time = self._get_current_logical_time_sec()
             self._executor.task_started(task)
 
-            msg = self.create_method_request(self.data_model.name, f"/Scheduler/StartTask", args=[machine, f"/Machine/{task_name}"], kwargs={})
+            # given the current task, retrieve the scope of its job
+            parent_job_id = self.tasks_to_jobs[task.task.id]
+            job_scope = self.jobs_scopes[parent_job_id]
+
+            assert task_name in self.task_mapping, f"Task '{task_name}' has no mapping to its CompositeMethodNode path. Add it to the frost config file using the 'task_mapping' parameter."
+            composite_method_node_path = self.task_mapping[task_name]
+            msg = self.create_method_request(self.data_model.name, composite_method_node_path, args=[machine], kwargs=job_scope)
             self._active_tasks[msg.correlation_id] = task
             self.protocol_mng.handle_request(msg)
+    =}
 
+    method merge_scopes(scope1, scope2) {=
+        '''
+        Given two scopes, returns a new scope
+        which contains the values of `scope1`,
+        modified by the values inside of `scope2`
+        '''
+        new_scope = copy.deepcopy(scope1)
+        new_scope.update(scope2)
+        return new_scope
     =}
 
     reaction(response_messages) {=
+        '''
+        When the scheduler receives response messages,
+        check if a task was completed and save its
+        return values inside the parent job's scope.
+        '''
         for bank_index, message in response_messages.value:
 
             if message.correlation_id not in self._active_tasks:
@@ -76,9 +118,15 @@ reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1)
 
             task = self._active_tasks.pop(message.correlation_id)
             task.end_time = self._get_current_logical_time_sec()
+
+            # save return values in the job's scope
+            returned_values = message.payload.ret
+            parent_job_id = self.tasks_to_jobs[task.task.id]
+            job_scope = self.jobs_scopes[parent_job_id]
+            self.jobs_scopes[parent_job_id] = self.merge_scopes(job_scope, returned_values)
+            self.logger.debug(f"[response_messages] {self.jobs_scopes=}")
+
             self._executor.task_completed(task)
             self.logger.warning(f"Task {task.task.name} completed on machine {task.machine.name}")
-
     =}
-
 }
