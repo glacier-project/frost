@@ -6,6 +6,10 @@ reactors:
     parameters:
       data_model_path: "resources/data_model/test_scheduler/scheduler.yml"
       scheduling_instance: "resources/scheduling_instances/test_scheduler.json"
+      task_mapping:
+        StartTask1: "/Scheduler/StartTask1"
+        StartTask2: "/Scheduler/StartTask2"
+        StartTask3: "/Scheduler/StartTask3"
     reactors:
       message_filter:
         logging_level: WARNING
