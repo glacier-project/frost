@@ -120,4 +120,11 @@ reactor FrostDataModel(_data_model_path = "", update_interval=1 s) extends Frost
         self.protocol_mng.clear_update_messages()            
     =}
 
+    reaction (shutdown) {=
+        '''
+        Disconnects from all the remote servers.
+        '''
+        self.logger.debug("[shutdown] Closing connectors in the data model")
+        self.data_model.close_connectors()
+    =}
 }
