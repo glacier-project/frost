@@ -60,9 +60,6 @@ reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1)
 
         if len(next_tasks) > 0:
             start_tasks.schedule(0, next_tasks)
-
-            scheduling_interval = SECS(self.scheduling_interval)
-            self.logger.debug(f"Scheduling next task in {scheduling_interval}...")
     =}
 
     // @label run_tasks
@@ -144,6 +141,7 @@ reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1)
                 lf.request_stop()
             else:
                 scheduling_interval = SECS(self.scheduling_interval)
+                self.logger.debug(f"Scheduling next task in {scheduling_interval}...")
                 update_schedule.schedule(scheduling_interval)
     =}
 }
