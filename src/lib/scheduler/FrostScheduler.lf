@@ -9,6 +9,7 @@ preamble {=
 reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1) extends FrostMachine {
     state scheduling_instance = _scheduling_instance
     state scheduling_interval = _scheduling_interval # in seconds
+    state delay = 20 s
     state _executor
     state _active_tasks = {= {} =}
 
@@ -22,7 +23,7 @@ reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1)
 
     reaction(startup) {=
         self.scheduling_instance = load_instance_from_json(self.scheduling_instance)
-        self._executor = StaticExecutor(GeneticAlgorithmSolver(instance=self.scheduling_instance))
+        self._executor = StaticExecutor(DummySolver(instance=self.scheduling_instance))
 
         # prepare the scope handling states
         for job in self.scheduling_instance.jobs:
@@ -41,7 +42,7 @@ reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1)
     // @label connected_to_bus
     reaction(connected_to_bus) -> update_schedule {=
         self.logger.info("Connected to bus. Starting scheduling...")
-        update_schedule.schedule(0)
+        update_schedule.schedule(self.delay)
     =}
 
     // @label update_schedule
@@ -87,7 +88,8 @@ reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1)
             composite_method_node_path = self.task_mapping[task_name]
             msg = self.create_method_request(self.data_model.name, composite_method_node_path, args=[machine], kwargs=job_scope)
             self._active_tasks[msg.correlation_id] = task
-            self.protocol_mng.handle_request(msg)
+            response = self.protocol_mng.handle_request(msg)
+            self.logger.debug(f"Requesting method start with msg {msg}, got response {response}")
     =}
 
     method merge_scopes(scope1, scope2) {=
@@ -140,8 +142,8 @@ reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1)
             if self.are_all_tasks_completed():
                 lf.request_stop()
             else:
-                scheduling_interval = SECS(self.scheduling_interval)
-                self.logger.debug(f"Scheduling next task in {scheduling_interval}...")
-                update_schedule.schedule(scheduling_interval)
+                # scheduling_interval = SECS(self.scheduling_interval)
+                # self.logger.debug(f"Scheduling next task in {scheduling_interval}...")
+                update_schedule.schedule(0)
     =}
 }
