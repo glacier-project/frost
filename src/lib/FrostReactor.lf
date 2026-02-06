@@ -74,7 +74,8 @@ reactor FrostReactor extends FrostInterface{
 
         
         if self.number_of_attempts > 4:
-            raise Exception(f"Handshake failed:{self.name} unable to connect to the bus")
+            self.logger.warning(f"Failed to connect to the FrostBus after {self.number_of_attempts} attempts.")
+            return 0
         
         # Generate and send the bus registration message.
         self._set_channel_out_port(self._create_registration_message(), channel_out)

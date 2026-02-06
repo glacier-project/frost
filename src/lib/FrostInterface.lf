@@ -17,6 +17,8 @@ reactor FrostInterface(width = 1) extends FrostBase{
     input[width]  channel_in
     output[width] channel_out    
 
+    state targets
+
     message_filter = new MessageFilter(
         name = {=self.name+".message_filter"=}
     )
@@ -34,9 +36,20 @@ reactor FrostInterface(width = 1) extends FrostBase{
             message_filter.message_type (output): The output port where the message type is set.
             message_filter.filter_callbacks (output): The output port where the filter callbacks are set.
         '''
+        self.targets = {}
         message_filter.message_type.set(FrostMessage)
         message_filter.filter_callbacks.set([lambda msg: is_target_valid(msg, self._get_reactor_name())])
         self.message_builder = FrostMessageBuilder(sender=self.name)
+    =}
+
+    method _register_targets(messages){=
+        '''
+        Register the targets for the given messages.
+
+        Args:
+            messages (list): List of tuples containing bank index and FrostMessage.
+        '''
+        return 0
     =}
 
     // @label _process_messages
@@ -52,6 +65,8 @@ reactor FrostInterface(width = 1) extends FrostBase{
 
         values = self._get_input_values(channel_in)
         messages = [(bank_index, m) for bank_index, bank_msgs in values for m in bank_msgs]
+
+        self._register_targets(messages)
 
         self._set_output_port(messages, message_filter.messages)
     =}
