@@ -54,7 +54,7 @@ LOGGING_LEVEL = FROST_CONFIG["logging_level"].upper()
 
 # setup logging
 handler = logging.StreamHandler()
-handler.setFormatter(LFormatter(base_module.time.logical_elapsed, TIME_PRECISION))
+handler.setFormatter(LFormatter(base_module.time.physical_elapsed, TIME_PRECISION))
 logger = logging.getLogger()
 logger.setLevel(LOGGING_LEVEL)
 # Add the handler only if it hasn't been added yet
@@ -63,7 +63,7 @@ if not any(isinstance(h, logging.StreamHandler) for h in logger.handlers):
 
 # Setup timestamp callback 
 timestamp_ns = time.time_ns()
-set_timestamp_provider(lambda: timestamp_ns + base_module.time.logical_elapsed())
+set_timestamp_provider(lambda: timestamp_ns + base_module.time.physical_elapsed())
 
 def is_target_valid(message: tuple[int, FrostMessage], target: str) -> bool:
     """Check if the target of the message matches the given target.
