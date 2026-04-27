@@ -1,0 +1,241 @@
+target Python{
+    fast: true,
+    timeout: 1 h 
+}
+
+import FrostBase from "../../src/lib/FrostBase.lf"
+import FrostDataModel from "../../src/lib/FrostDataModel.lf"
+preamble{=
+    import uuid
+    from frost import *
+=}
+
+main reactor(width = 1) extends FrostBase{
+   test1 = new FrostDataModel(
+        _data_model_path = "resources/data_model/test_frost_data_model/machine.yml",
+        update_interval = 1 s,
+        name = "test1",
+        width = 2
+    )
+
+    test2 = new FrostDataModel(
+        _data_model_path = "resources/data_model/test_frost_data_model/machine.yml",
+        update_interval = 1 s,
+        name = "test2",
+        width = 2
+    )
+
+    test3 = new FrostDataModel(
+        _data_model_path = "resources/data_model/test_frost_data_model/machine.yml",
+        update_interval = 1 s,
+        name = "test3",
+        width = 2
+    )
+
+    logical action send
+    state messages = []
+    state i = 0
+    reaction(startup) -> send{=
+        self.messages.append(FrostMessage(
+            sender="Mario",
+            target="test1",
+            identifier=str(uuid.uuid4()),
+            header=FrostHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.PROTOCOL,
+                msg_name=ProtocolMsgName.REGISTER,
+            ),
+            payload=ProtocolPayload(),
+        ))
+        self.messages.append(FrostMessage(
+            sender="Luigi",
+            target="test2",
+            identifier=str(uuid.uuid4()),
+            header=FrostHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.PROTOCOL,
+                msg_name=ProtocolMsgName.REGISTER,
+            ),
+            payload=ProtocolPayload(),
+        ))
+        self.messages.append(FrostMessage(
+            sender="Toad",
+            target="test3",
+            identifier=str(uuid.uuid4()),
+            header=FrostHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.PROTOCOL,
+                msg_name=ProtocolMsgName.REGISTER,
+            ),
+            payload=ProtocolPayload(),
+        ))
+        #testing second port 
+        self.messages.append(FrostMessage(
+            sender="Peach",
+            target="test1",
+            identifier=str(uuid.uuid4()),
+            header=FrostHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.PROTOCOL,
+                msg_name=ProtocolMsgName.REGISTER,
+            ),
+            payload=ProtocolPayload(),
+        ))
+        self.messages.append(FrostMessage(
+            sender="Daisy",
+            target="test2",
+            identifier=str(uuid.uuid4()),
+            header=FrostHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.PROTOCOL,
+                msg_name=ProtocolMsgName.REGISTER,
+            ),
+            payload=ProtocolPayload(),
+        ))
+        self.messages.append(FrostMessage(
+            sender="Bowser",
+            target="test3",
+            identifier=str(uuid.uuid4()),
+            header=FrostHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.PROTOCOL,
+                msg_name=ProtocolMsgName.REGISTER,
+            ),
+            payload=ProtocolPayload(),
+        ))
+        #testing second port 
+        self.messages.append(FrostMessage(
+            sender="Peach",
+            target="test1",
+            identifier=str(uuid.uuid4()),
+            header=FrostHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.PROTOCOL,
+                msg_name=ProtocolMsgName.REGISTER,
+            ),
+            payload=ProtocolPayload(),
+        ))
+        self.messages.append(FrostMessage(
+            sender="Daisy",
+            target="test2",
+            identifier=str(uuid.uuid4()),
+            header=FrostHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.PROTOCOL,
+                msg_name=ProtocolMsgName.REGISTER,
+            ),
+            payload=ProtocolPayload(),
+        ))
+        self.messages.append(FrostMessage(
+            sender="Bowser",
+            target="test3",
+            identifier=str(uuid.uuid4()),
+            header=FrostHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.PROTOCOL,
+                msg_name=ProtocolMsgName.REGISTER,
+            ),
+            payload=ProtocolPayload(),
+        ))
+        self.messages.append(FrostMessage(
+            sender="Peach",
+            target="test1",
+            identifier=str(uuid.uuid4()),
+            header=FrostHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.VARIABLE,
+                msg_name=VariableMsgName.READ,
+            ),
+            payload=VariablePayload(
+                node="machine/is_running"
+            )
+        ))
+        self.messages.append(FrostMessage(
+            sender="Daisy",
+            target="test",
+            identifier=str("response"),
+            header=FrostHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.VARIABLE,
+                msg_name=VariableMsgName.READ,
+            ),
+            payload=VariablePayload(
+                node="machine/is_running"
+            )
+        ))
+        self.messages.append(FrostMessage(
+            sender="Bowser",
+            target="test3",
+            identifier=str(uuid.uuid4()),
+            header=FrostHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.VARIABLE,
+                msg_name=VariableMsgName.READ,
+            ),
+            payload=VariablePayload(
+                node="machine/is_running"
+            )
+        ))
+
+        send.schedule(SEC(1))
+    =}
+
+    reaction(send) -> test1.channel_in, test2.channel_in, test3.channel_in{=
+        if self.messages:
+            message = self.messages.pop(0)
+            if message.target == "test1":
+                self._set_output_port(message, test1.channel_in[self.i])
+            elif message.target == "test2":
+                self._set_output_port(message, test2.channel_in[self.i])
+            elif message.target == "test3":
+                self._set_output_port(message, test3.channel_in[self.i])
+        
+        if self.messages:
+            if self.i == 0:
+                self.i = 1
+            send.schedule(SEC(3))
+    =}
+
+    reaction(test1.channel_out) -> send {=
+        for i, port in enumerate(test1.channel_out):
+            if port.is_present:
+                for message in port.value:
+                    self.logger.info(f"Received message on test1[{i}]: {message}")
+                    if message.header.namespace == MsgNamespace.PROTOCOL and message.header.msg_name == ProtocolMsgName.REGISTER:
+                        self.logger.info(f"Test1 registered to the bus with sender: {message.sender}")
+                    if i == 1:
+                        assert message.target == "Peach", f"Expected message target to be 'Peach', but got '{message.target}'"
+        send.schedule(SEC(1))
+    =}
+
+    reaction(test2.channel_out) -> send {=
+        for i, port in enumerate(test2.channel_out):
+            if port.is_present:
+                for message in port.value:
+                    self.logger.info(f"Received message on test2[{i}]: {message}")
+                    if message.header.namespace == MsgNamespace.PROTOCOL and message.header.msg_name == ProtocolMsgName.REGISTER:
+                        self.logger.info(f"Test2 registered to the bus with sender: {message.sender}")
+        send.schedule(SEC(1))
+    =}
+
+    reaction(test3.channel_out) {=
+        for i, port in enumerate(test3.channel_out):
+            if port.is_present:
+                for message in port.value:
+                    self.logger.info(f"Received message on test3[{i}]: {message}")
+                    if message.header.namespace == MsgNamespace.PROTOCOL and message.header.msg_name == ProtocolMsgName.REGISTER:
+                        self.logger.info(f"Test3 registered to the bus with sender: {message.sender}")
+    =}
+}

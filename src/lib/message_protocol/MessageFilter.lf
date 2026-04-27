@@ -107,13 +107,6 @@ reactor MessageFilter extends FrostBase{
                 if isinstance(message, tuple):
                     if isinstance(message[1], list):
                         list_of_messages.extend((message[0], item) for item in message[1]) 
-                        continue
-                    elif isinstance(message[1], message_type):
-                        self._handle_message(message, requests, responses, errors)
-                        continue   
-                
-                self.logger.warning(f"Received invalid message: {message}")                
-                continue
 
             if not self._should_process_message(message):
                 self.logger.debug(f"Message {message} does not match the filter criteria, skipping.")

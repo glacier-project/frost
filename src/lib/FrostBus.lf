@@ -32,6 +32,7 @@ reactor FrostBus extends FrostDataModel{
         self.number_of_machines.value = 0
     =}
 
+    // @override
     method _set_channel_out_port(value, channel_out){=
         '''Set the output value for the channel_out port. If a value is already set, it will append the new value to the existing one.
 
@@ -39,6 +40,8 @@ reactor FrostBus extends FrostDataModel{
             value: The value to set for the channel_out port.
             channel_out (output): The channel_out port to set the value for.
         '''
+        if not isinstance(value, list):
+            value = [value]
         for message in value:
             if message.target not in self.routing_map:
                 self.logger.warning(f"Cannot route message {message} to unknown target {message.target}.")

@@ -93,7 +93,7 @@ reactor FrostReactor extends FrostInterface{
             connect_to_bus (logical event): The event that triggers the connection to the FrostBus procedure.
         '''
         self.logger.info(f"Initializing FrostReactor: {self._get_reactor_name()}")
-
+        self.targets["frost_bus"] = 0
         # Trigger the connection to the bus.
         connect_to_bus.schedule(0)
     =}

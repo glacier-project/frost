@@ -28,24 +28,6 @@ reactor FrostDataModel(_data_model_path = "", update_interval=1 s) extends Frost
     =}
 
     // @override
-    method _register_targets(messages){=
-        '''
-        Register the targets for the given messages.
-
-        Args:
-            messages (list): List of tuples containing bank index and FrostMessage.
-        '''
-        keys = self.targets.keys()
-        for bank_index, message in messages:            
-            if message.sender not in keys:
-                self.logger.debug(f"Registering sender for message: {message}")
-                source = message.sender
-                self.targets[source] = bank_index
-            else:
-                continue
-    =}
-
-    // @override
     method _set_output_multiport(messages, output_port, exclude){=
         '''
         Set the output value for the specified reactor multiport output. If a value is already set, it will append the new value to the existing one.

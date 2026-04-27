@@ -14,6 +14,29 @@ reactor FrostMachine(_update_step = 1000 msec) extends FrostDataModel, FrostReac
     Attributes:
         update_step (int): The time step for periodic updates in the machine.
     '''
+    // @override
+    method _set_output_multiport(messages, output_port, exclude){=
+        '''
+        Set the output value for the specified reactor multiport output. If a value is already set, it will append the new value to the existing one.
 
+        Args:
+            messages (list): List of FrostMessage to set for the output ports.
+        Raises:
+            AssertionError: If the output_port is not a port_capsule.
+        '''
+        assert output_port.width > 0, f"Invalid output multiport {output_port} with width {output_port.width}."
+        
+        if not isinstance(messages, list):
+            messages = [messages]
+
+        for message in messages:
+            if message.target not in self.targets and "frost_bus" not in self.targets:
+                self.logger.warning(f"Destination {message.target} not registered in {self.targets}. Skipping message: {message}")
+                continue
+
+            bank_index = self.targets[message.target] if "frost_bus" not in self.targets else 0
+            self.logger.debug(f"Setting output multiport for bank index {bank_index} with message: {message}")
+            self._set_output_port(message, output_port[bank_index])
+    =}
     state update_step = _update_step
 }
