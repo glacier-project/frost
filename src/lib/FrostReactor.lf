@@ -20,7 +20,7 @@ reactor FrostReactor extends FrostInterface{
             bool: True if the bus connection is valid, False otherwise.
         '''
         
-        self.logger.debug(f"Connected to the FrostBus with name {self._get_reactor_name()}.")
+        self.logger.info(f"Connected to the FrostBus with name {self._get_reactor_name()}.")
         self.connected = True
 
         return True

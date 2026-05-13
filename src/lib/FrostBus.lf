@@ -39,6 +39,9 @@ reactor FrostBus extends FrostDataModel{
             value: The value to set for the channel_out port.
             channel_out (output): The channel_out port to set the value for.
         '''
+        if not isinstance(value, list):
+            value = [value]
+
         for message in value:
             if message.target not in self.routing_map:
                 self.logger.warning(f"Cannot route message {message} to unknown target {message.target}.")

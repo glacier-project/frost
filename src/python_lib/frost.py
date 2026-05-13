@@ -27,6 +27,7 @@ from machine_data_model.nodes.composite_method.composite_method_node import Comp
 from machine_data_model.nodes.variable_node import NumericalVariableNode, StringVariableNode, BooleanVariableNode, ObjectVariableNode
 from machine_data_model.nodes.folder_node import FolderNode
 from machine_data_model.utils.timestamp import set_timestamp_provider
+from machine_data_model.nodes.subscription.variable_subscription import VariableSubscription, DataChangeSubscription, RangeSubscription
 from simulation_message import SimulationMessageBuilder
 from simulation_message import SimulationMessage
 from simulation_message_handler import SimulationMessageHandler
