@@ -1,0 +1,62 @@
+target Python{
+    fast: true,
+    timeout: 1 h
+}
+
+import FrostReactor from "../../src/lib/FrostReactor.lf"
+import FrostBase from "../../src/lib/FrostBase.lf"
+
+preamble{=
+    import uuid
+    from frost import *
+=}
+
+# A passive sink: it receives whatever the lonely reactor sends but never
+# answers. There is no FrostLink and no responder, so the lonely reactor's
+# registration attempts go unanswered.
+reactor Sink(width = 1) extends FrostBase{
+    input[width] channel_in
+    output[width] channel_out
+
+    reaction (channel_in){=
+        # Drop everything; never reply.
+        pass
+    =}
+}
+
+# A FrostReactor with no reachable link. It should retry registration up to
+# the attempt cap, never become connected, and shut down cleanly (no hang,
+# no exception) once the stop_after timer stops the program.
+reactor Lonely extends FrostReactor{
+    timer stop_after(15 sec)
+
+    reaction (connected_to_link){=
+        # Must never fire in this topology.
+        raise Exception(f"{self._get_reactor_name()} unexpectedly connected with no link present.")
+    =}
+
+    reaction (stop_after){=
+        self.logger.info(f"{self._get_reactor_name()} attempts={self.number_of_attempts}, connected={self.connected}")
+        lf.request_stop()
+    =}
+
+    reaction (shutdown){=
+        if self.connected:
+            raise Exception(f"{self._get_reactor_name()} should not be connected without a link.")
+        # The reactor caps retries at >4 attempts (attempts reach 5 then stop).
+        if self.number_of_attempts < 5:
+            raise Exception(
+                f"{self._get_reactor_name()} expected to exhaust >4 attempts, "
+                f"made only {self.number_of_attempts}."
+            )
+        self.logger.info(f"{self._get_reactor_name()} correctly gave up after {self.number_of_attempts} attempts.")
+    =}
+}
+
+main reactor{
+    lonely = new Lonely(name="lonely")
+    sink = new Sink(width=1)
+
+    lonely.channel_out -> sink.channel_in
+    sink.channel_out -> lonely.channel_in
+}

@@ -1,8 +1,8 @@
 target Python;
 
-import FrostMachine from "../FrostMachine.lf"
+import FrostReactor from "../FrostReactor.lf"
 
-reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1) extends FrostMachine{
+reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1) extends FrostReactor{
     state scheduling_instance = _scheduling_instance
     state scheduling_interval = _scheduling_interval # in seconds
     state _executor
@@ -25,9 +25,9 @@ reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1)
         )
     =}
 
-    // @label connected_to_bus
-    reaction(connected_to_bus) -> update_schedule{=
-        self.logger.info("Connected to bus. Starting scheduling...")
+    // @label connected_to_link
+    reaction(connected_to_link) -> update_schedule{=
+        self.logger.info("Connected to link. Starting scheduling...")
         update_schedule.schedule(0)
     =}
 
@@ -49,11 +49,18 @@ reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1)
     =}
 
     // @label run_tasks
-    reaction(start_tasks) {= 
+    reaction(start_tasks) {=
         self.logger.debug(f"Starting tasks: {start_tasks.value}")
 
         for task, machine in start_tasks.value:
-            machine = machine.name
+            # next_ready_tasks() returns the machine identifier as a string
+            # (machine id); resolve it to the machine name used for routing.
+            # Older planner versions returned the Machine object directly.
+            if isinstance(machine, str):
+                resolved = self.scheduling_instance.get_machine(machine)
+                machine = resolved.name if resolved is not None else machine
+            else:
+                machine = machine.name
             task_name = task.task.name
             self.logger.info(f"Starting task {task_name} on machine {machine}")
             task.start_time = self._get_current_logical_time_sec()

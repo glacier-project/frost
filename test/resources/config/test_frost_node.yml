@@ -1,0 +1,10 @@
+time_precision: NSECS
+logging_level: INFO
+reactors:
+  test_node:
+    logging_level: INFO
+    parameters:
+      data_model_path: "resources/data_model/test_frost_node/node.yml"
+    reactors:
+      message_filter:
+        logging_level: WARNING

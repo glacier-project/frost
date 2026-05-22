@@ -1,0 +1,21 @@
+name: "worker"
+machine_category: "unknown"
+machine_type: "unknown"
+machine_model: "unknown"
+description: ""
+root:
+  !!FolderNode
+  name: "Machine"
+  description: ""
+  children:
+    - !!MethodNode
+      name: "Square"
+      description: ""
+      parameters:
+        - !!NumericalVariableNode
+          name: "n"
+          initial_value: 0
+      returns:
+        - !!NumericalVariableNode
+          name: "result"
+          initial_value: 0

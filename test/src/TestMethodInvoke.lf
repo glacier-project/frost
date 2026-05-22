@@ -1,0 +1,74 @@
+target Python{
+    fast: true,
+    timeout: 1 h
+}
+
+import FrostLink from "../../src/lib/FrostLink.lf"
+import FrostReactor from "../../src/lib/FrostReactor.lf"
+
+preamble{=
+    import uuid
+    from frost import *
+=}
+
+# Hosts a synchronous (plain) MethodNode "Machine/Square". Invoking it goes
+# through FrostReactor's _process_data_model_requests, which detects a plain
+# MethodNode, queues it on new_method_request, and produces a COMPLETED
+# response via the protocol manager.
+reactor Worker extends FrostReactor{
+    reaction (startup){=
+        node = self.data_model.get_node("Machine/Square")
+        node.callback = lambda n: n * n
+    =}
+}
+
+# Calls Worker's Square(n=6) once connected and asserts the COMPLETED response
+# carries result == 36.
+reactor Caller extends FrostReactor{
+    state target_node = ""   # from config
+    state correlation_id
+    state response_ok = False
+    state called = False
+
+    reaction (connected_to_link) -> channel_out{=
+        msg = self.message_builder.build_invoke_method_message(
+            target=self.target_node,
+            node="Machine/Square",
+            args=[],
+            kwargs={"n": 6},
+        )
+        self.correlation_id = msg.correlation_id
+        self.logger.info(f"{self._get_reactor_name()} invoking Square(n=6) on {self.target_node}.")
+        self._set_channel_out_port(msg, channel_out)
+        self.called = True
+    =}
+
+    reaction (response_messages){=
+        for bank_index, message in response_messages.value:
+            if message.correlation_id != self.correlation_id:
+                continue
+            if message.header.msg_name != MethodMsgName.COMPLETED:
+                continue
+            self.logger.info(f"{self._get_reactor_name()} got COMPLETED: {message.payload.ret}")
+            assert message.payload.ret["result"] == 36, f"Expected 36, got {message.payload.ret}"
+            self.response_ok = True
+            lf.request_stop()
+    =}
+
+    reaction (shutdown){=
+        if not self.called:
+            raise Exception(f"{self._get_reactor_name()} never invoked the method.")
+        if not self.response_ok:
+            raise Exception(f"{self._get_reactor_name()} never received a correct COMPLETED response.")
+        self.logger.info(f"{self._get_reactor_name()} method invocation round-trip OK.")
+    =}
+}
+
+main reactor{
+    worker = new Worker(name="worker")
+    caller = new Caller(name="caller")
+    link = new FrostLink(name="frost_link", width=2)
+
+    worker.channel_out, caller.channel_out -> link.channel_in
+    link.channel_out -> worker.channel_in, caller.channel_in after 0
+}

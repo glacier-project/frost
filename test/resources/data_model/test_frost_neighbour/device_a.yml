@@ -1,0 +1,18 @@
+name: "device_a"
+machine_category: "unknown"
+machine_type: "unknown"
+machine_model: "unknown"
+description: ""
+root:
+  !!FolderNode
+  name: "Machine"
+  description: ""
+  children:
+    - !!BooleanVariableNode
+      name: "is_running"
+      description: ""
+      initial_value: false
+    - !!NumericalVariableNode
+      name: "counter"
+      description: ""
+      initial_value: 0

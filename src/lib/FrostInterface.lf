@@ -10,8 +10,6 @@ reactor FrostInterface(width = 1) extends FrostBase{
 
     Args:
         width (int): The width of the input and output channels.
-    Attributes:
-        connected (bool): Indicates whether the reactor is connected to the FrostBus.
     '''
 
     input[width]  channel_in
@@ -100,13 +98,15 @@ reactor FrostInterface(width = 1) extends FrostBase{
     // @label _process_responses
     reaction (message_filter.responses) -> response_protocol_messages, response_messages {=
         '''
-        Validate the response messages from the message filter and trigger the connected_to_bus action if the registration is successful.
+        Split response messages into protocol responses and other responses
+        and forward them to the corresponding logical actions.
 
         Args:
             message_filter.responses (input): The input port for response messages.
         Returns:
-            connected_to_bus (output): The output port for the connected_to_bus action.
-        ''' 
+            response_protocol_messages (logical action): Protocol responses.
+            response_messages (logical action): Non-protocol responses.
+        '''
         protocol_list = []
         other_list = []
         for bank_index, message in message_filter.responses.value:

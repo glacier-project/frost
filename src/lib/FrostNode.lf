@@ -1,0 +1,66 @@
+target Python;
+
+import FrostBase from "FrostBase.lf"
+
+reactor FrostNode(_data_model_path = "", update_interval = 1 s) extends FrostBase{
+    '''
+    Data-model mixin for Frost components.
+
+    FrostNode owns the data model and the protocol manager and exposes the
+    machinery to react to data-model related messages (variable updates,
+    method invocations, protocol registrations). It is a pure mixin: it has
+    no communication ports of its own. Reactors that need to send/receive
+    messages combine FrostNode with FrostInterface (see FrostReactor and
+    FrostLink).
+
+    Args:
+        _data_model_path (str): Path to the data model file.
+        update_interval (time): Interval for checking data-model updates.
+
+    Attributes:
+        data_model_path (str): The path to the data model file.
+        data_model (DataModel): The data model used by the reactor.
+        protocol_mng (FrostProtocolMng): The protocol manager for handling protocol messages.
+    '''
+
+    timer check_update(0, update_interval)
+
+    state data_model_path = _data_model_path
+    state data_model
+    state protocol_mng
+
+    # If a MethodNode (not Composite or Async) invocation is received, the
+    # request is queued and processed in a separate reaction.
+    logical action new_method_request
+
+    method _get_reactor_name(){=
+        '''
+        Get the name of the reactor (the data model name).
+
+        Falls back to the reactor's configured name when the data model has
+        not been loaded yet, so callbacks that run during startup (e.g. the
+        message filter) do not fail on a not-yet-initialized data model.
+        '''
+        if self.data_model is None:
+            return self.name
+        return self.data_model.name
+    =}
+
+    // @label _initialize_data_model
+    reaction (startup) {=
+        '''
+        Load the data model and initialize the protocol manager.
+
+        Args:
+            startup (input): The event that triggers the data-model initialization.
+        '''
+        if not os.path.exists(self.data_model_path) and not os.path.isfile(self.data_model_path):
+            self.logger.error(f"Data model file not found: {self.data_model_path}")
+            lf.request_stop()
+
+        self.data_model = DataModelBuilder().get_data_model(self.data_model_path)
+        self.protocol_mng = FrostProtocolMng(self.data_model)
+        self.message_builder = self.protocol_mng.get_message_builder()
+        assert self.message_builder is not None, "Message builder is None"
+    =}
+}

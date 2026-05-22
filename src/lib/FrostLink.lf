@@ -1,0 +1,121 @@
+target Python
+
+import FrostInterface from "FrostInterface.lf"
+import FrostNode from "FrostNode.lf"
+
+reactor FrostLink extends FrostInterface, FrostNode{
+    '''Reactor implementing a routing link for Frost components.
+
+    FrostLink is the message router of the Frost network (the role formerly
+    played by FrostBus). It registers the components connected to it and
+    forwards messages between them based on their target.
+
+    Attributes:
+        routing_map (dict): A mapping of Frost component names to their
+            respective port index on the link.
+        link_node (DataModelNode): The node representing the FrostLink in the data model.
+        number_of_nodes (DataModelNode): The node tracking the number of registered nodes.
+        node_info_nodes (DataModelNode): The node containing information about each registered node.
+    '''
+
+    state routing_map
+    state link_node
+    state number_of_nodes
+    state node_info_nodes
+
+    // @label _initialize_frost_link
+    reaction(startup) {=
+        '''Initialize the FrostLink routing state.
+
+        Args:
+            startup (input): The event that triggers the initialization.
+        '''
+        self.routing_map = {}
+        self.link_node = self.data_model.get_node("FrostLink")
+        self.node_info_nodes = self.data_model.get_node("FrostLink/NodeInfo")
+        self.number_of_nodes = self.data_model.get_node("FrostLink/#Nodes")
+        self.number_of_nodes.value = 0
+    =}
+
+    // @override
+    method _set_channel_out_port(value, channel_out){=
+        '''Route a message (or list of messages) to the port of its target.
+
+        Args:
+            value: The message or list of messages to route.
+            channel_out (output): The channel_out multiport to route through.
+        '''
+        if not isinstance(value, list):
+            value = [value]
+        for message in value:
+            if message.target not in self.routing_map:
+                self.logger.warning(f"Cannot route message {message} to unknown target {message.target}.")
+                continue
+
+            index = self.routing_map[message.target]
+            self._set_output_port(message, channel_out[index])
+            self.logger.debug(f"FrostLink sent message {message} to target {message.target} at index {index}.")
+    =}
+
+    // @label _handle_registration_request
+    reaction(request_protocol_messages) -> channel_out{=
+        '''Register a node that requested to join the link and acknowledge it.
+
+        Args:
+            request_protocol_messages (input): The request protocol messages.
+        Returns:
+            channel_out (output): The output port for the acknowledgement.
+        '''
+
+        for bank_index, message in request_protocol_messages.value:
+            if message.header.namespace != MsgNamespace.PROTOCOL or message.header.msg_name != ProtocolMsgName.REGISTER:
+                continue
+            # Check if the sender is already registered.
+            if message.sender in self.routing_map:
+                continue
+
+            # Register sender to the map.
+            self.routing_map[message.sender] = bank_index
+
+            # Add the node to the data model.
+            node_info = FolderNode(name = message.sender)
+            self.node_info_nodes.add_child(node_info)
+            node_info.add_child(
+                NumericalVariableNode(
+                    name = "Index",
+                    description = "Index of the node on the link",
+                    value = bank_index,
+                )
+            )
+            self.logger.info(f"Frost component {message.sender} registered to the link with index {bank_index}.")
+
+            # Increment the number of nodes.
+            self.number_of_nodes.value += 1
+
+            # Acknowledge the registration.
+            response = self.message_builder.build_protocol_register_response_message(
+                target=message.sender,
+                correlation_id=message.correlation_id
+            )
+            self._set_channel_out_port([response], channel_out)
+    =}
+
+    // @label _forward_message
+    reaction(message_filter.discarded_messages) -> channel_out{=
+        '''Forward messages that are not addressed to the link itself.
+
+        Args:
+            message_filter.discarded_messages (input): Messages not matching the filter.
+        Returns:
+            channel_out (output): The output port for forwarded messages.
+        '''
+        if not message_filter.discarded_messages.value:
+            return 0
+
+        messages = [
+            message for bank_index, message in message_filter.discarded_messages.value
+        ]
+        self.logger.debug(f"Forwarding discarded messages: {messages}")
+        self._set_channel_out_port(messages, channel_out)
+    =}
+}
