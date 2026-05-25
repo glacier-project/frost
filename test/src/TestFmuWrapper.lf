@@ -48,10 +48,10 @@ main reactor{
 
     reaction(startup) -> fmu_test.request{=
         msg = SimulationMessageBuilder()\
-            .set_sender("tester")\
-            .set_target("bouncingBall")\
-            .set_operation(Operation.get_enum().SIMULATE)\
-            .set_args([])\
+            .with_sender("tester")\
+            .with_target("bouncingBall")\
+            .with_operation(Operation.get_enum().SIMULATE)\
+            .with_args([])\
             .build()
         fmu_test.request.set(msg)
     =}

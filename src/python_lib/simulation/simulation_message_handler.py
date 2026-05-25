@@ -47,22 +47,23 @@ class SimulationMessageHandler:
         assert message.target == self._name
 
         handler = self._handlers.get(message.operation)
-        if handler:
-            
-            if message.operation == Operation.get_enum().REGISTER:
-                handler(message.sender)
-                return f"{message.sender} registered"
+        if handler is None:
+            return None
+
+        if message.operation == Operation.get_enum().REGISTER:
+            handler(message.sender)
+            result = f"{message.sender} registered"
+        else:
             result = handler(message.args)
-            # Prepare the answer message with the result
-            response_builder = SimulationMessageBuilder()
-            response_message = (
-                response_builder.set_sender(self._name).set_target(message.sender)
-                .set_operation(Operation.get_enum().RESPONSE)
-                .set_args([result])
-                .build()
-            )
-            return response_message
-        return None
+
+        return (
+            SimulationMessageBuilder()
+            .with_sender(self._name)
+            .with_target(message.sender)
+            .with_operation(Operation.get_enum().RESPONSE)
+            .with_args([result])
+            .build()
+        )
 
     def __call__(self, message: SimulationMessage) -> Optional[SimulationMessage]:
         """
