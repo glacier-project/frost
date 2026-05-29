@@ -15,7 +15,7 @@ target Python{
     single-threaded: false,
 }
 
-import FMUWrapper from "../../src/lib/simulation/FMUWrapper.lf"
+import FrostFmu from "../../src/lib/simulation/FrostFmu.lf"
 
 preamble{=
 import uuid
@@ -27,7 +27,7 @@ from simulation_message_handler import SimulationMessageHandler
 from orchestrator import OrchestratorStepper
 =}
 
-reactor Test extends FMUWrapper{
+reactor Test extends FrostFmu{
 
     method getState(){=
         return self.fmu.getReal(self.vars)
