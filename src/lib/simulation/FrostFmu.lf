@@ -3,7 +3,7 @@ target Python
 import SimModel from "SimModel.lf"
 
 
-reactor FMUWrapper(file_path = "") extends SimModel{
+reactor FrostFmu(file_path = "") extends SimModel{
 
     preamble{=
         import fmpy

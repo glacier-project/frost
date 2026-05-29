@@ -54,8 +54,9 @@ reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1)
 
         for task, machine in start_tasks.value:
             # next_ready_tasks() returns the machine identifier as a string
-            # (machine id); resolve it to the machine name used for routing.
-            # Older planner versions returned the Machine object directly.
+            # (machine id) in frost-planner >= 0.2.4; resolve it to the
+            # machine name used for routing. Older versions returned the
+            # Machine object directly.
             if isinstance(machine, str):
                 resolved = self.scheduling_instance.get_machine(machine)
                 machine = resolved.name if resolved is not None else machine
