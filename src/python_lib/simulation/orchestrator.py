@@ -1,6 +1,5 @@
 from stepper import Stepper
-from typing import List
-from typing_extensions import override
+from typing import List, override
 
 
 class OrchestratorStepper(Stepper):
@@ -14,7 +13,7 @@ class OrchestratorStepper(Stepper):
         :param step: The time to simulate in this step.
         :param current_simulation_time: The current simulation time.
         """
-        super().__init__(step, current_simulation_time)
+        super().__init__(step=step, current_simulation_time=current_simulation_time)
         self._steps: List[int] = []
 
     def add_step(self, step: int) -> None:

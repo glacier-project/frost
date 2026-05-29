@@ -28,10 +28,10 @@ reactor SimpleOrchestrator extends Orchestrator{
     reaction(command) -> models_out{=
         for i, p in enumerate(models_out):
             msg = SimulationMessageBuilder()\
-                .set_sender(self.name)\
-                .set_target(self.models[i])\
-                .set_operation(Operation.get_enum().SIMULATE)\
-                .set_args([100])\
+                .with_sender(self.name)\
+                .with_target(self.models[i])\
+                .with_operation(Operation.get_enum().SIMULATE)\
+                .with_args([100])\
                 .build()
             self.logger.info(f"Sending message: {msg}")
             p.set(msg)

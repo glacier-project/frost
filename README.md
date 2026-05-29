@@ -32,7 +32,7 @@ To build and run this project, you will need the following prerequisites:
     After installation, you may need to add the Lingua Franca binary to your PATH. Follow the instructions provided by the installer.
 
 
-- **Python:** Python 3.11 or later is required. You can download it from the [Python website](https://www.python.org/).
+- **Python:** Python 3.12 or later is required. You can download it from the [Python website](https://www.python.org/).
 
 - **Python Packages:** The project requires several Python packages. You can install them by running the following command in the root of the project:
 
