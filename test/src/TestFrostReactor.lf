@@ -27,6 +27,12 @@ reactor Device extends FrostReactor{
         test_connection_time.schedule(0)
     =}
 
+    reaction (shutdown){=
+        if not self.connected:
+            raise Exception(f"{self.name} failed to connect to the bus before shutdown.")
+        self.logger.info(f"{self.name} shutting down.")
+    =}
+
 }
 
 main reactor{
@@ -35,6 +41,6 @@ main reactor{
     device_3 = new Device(name="device_3")
     bus = new FrostBus(name="bus", width=3)
 
-    device_1.channel_out, device_2.channel_out, device_3.channel_out -> bus.channel_in
+    device_1.channel_out, device_2.channel_out, device_3.channel_out -> bus.channel_in after 0
     bus.channel_out -> device_1.channel_in, device_2.channel_in, device_3.channel_in
 }

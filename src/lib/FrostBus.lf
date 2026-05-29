@@ -50,16 +50,16 @@ reactor FrostBus extends FrostDataModel{
     =}
 
     // @label _handle_registration_request
-    reaction(message_filter.requests) -> channel_out{=
+    reaction(request_protocol_messages) -> channel_out{=
         '''Handle the registration request from a FrostMachine.
 
         Args:
-            message_filter.requests (input): The input port for request messages.
+            request_protocol_messages (input): The input port for request messages.
         Returns:
             channel_out (output): The output port for processed messages.
         '''
 
-        for bank_index, message in message_filter.requests.value:
+        for bank_index, message in request_protocol_messages.value:
             if message.header.namespace != MsgNamespace.PROTOCOL or message.header.msg_name != ProtocolMsgName.REGISTER:
                 continue
             # Check if the sender is already registered.
@@ -85,17 +85,9 @@ reactor FrostBus extends FrostDataModel{
             self.number_of_machines.value += 1
 
             # Return a response message to acknowledge the registration.
-            response = FrostMessage(
-                sender=self.name,
+            response = self.message_builder.build_protocol_register_response_message(
                 target=message.sender,
-                identifier=str(uuid.uuid4()),
-                header=FrostHeader(
-                    type=MsgType.RESPONSE,
-                    version=(1, 0, 0),
-                    namespace=MsgNamespace.PROTOCOL,
-                    msg_name=ProtocolMsgName.REGISTER,
-                ),
-                payload=ProtocolPayload(),
+                correlation_id=message.correlation_id
             )
             self._set_channel_out_port([response], channel_out)
 
@@ -114,6 +106,7 @@ reactor FrostBus extends FrostDataModel{
         messages = [
             message for bank_index, message in message_filter.discarded_messages.value
         ]
+        self.logger.debug(f"Forwarding discarded messages: {messages}")
         self._set_channel_out_port(messages, channel_out)
     =}
 }

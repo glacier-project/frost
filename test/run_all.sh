@@ -42,7 +42,10 @@ show_progress() {
 
 # Get all the files in the src directory
 get_all_lf_files() {
-    find src -type f -name "*.lf" 2>/dev/null || true
+    # Always search in test/src, regardless of where the script is called from
+    local script_dir=$(dirname "$(readlink -f "$0")")
+    local project_root=$(dirname "$script_dir")
+    find "$project_root/test/src" -type f -name "*.lf" 2>/dev/null || true
 }
 
 # Display usage information
@@ -200,8 +203,11 @@ run_tests() {
         
         # Convert the name to snake_case
         local snake_case_name=$(echo "$basename" | sed -r 's/([a-z])([A-Z])/\1_\2/g' | tr '[:upper:]' '[:lower:]')
-        local binary_path="./bin/${basename}"
-        local config_path="resources/config/${snake_case_name}.yml"
+        
+        # Get script directory to build absolute paths
+        local script_dir=$(dirname "$(readlink -f "$0")")
+        local binary_path="${script_dir}/bin/${basename}"
+        local config_path="${script_dir}/resources/config/${snake_case_name}.yml"
         
         # Check if binary exists
         if [ ! -f "$binary_path" ]; then
@@ -214,7 +220,7 @@ run_tests() {
         
         # Check if config exists (optional warning)
         if [ ! -f "$config_path" ]; then
-            if run_output=$("$binary_path" 2>&1); then
+            if run_output=$(cd "$script_dir" && "$binary_path" 2>&1); then
                 RUN_PASSED+=("$basename")
             else
                 printf "\n"  # New line to preserve progress bar
@@ -225,7 +231,7 @@ run_tests() {
                 failed_runs=$((failed_runs + 1))
             fi
         else
-            if run_output=$(export FROST_CONFIG="$config_path" && "$binary_path" 2>&1); then
+            if run_output=$(cd "$script_dir" && export FROST_CONFIG="$config_path" && "$binary_path" 2>&1); then
                 RUN_PASSED+=("$basename")
             else
                 printf "\n"  # New line to preserve progress bar

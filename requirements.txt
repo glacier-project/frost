@@ -1,0 +1,3 @@
+git+https://github.com/glacier-project/frost-planner.git
+git+https://github.com/glacier-project/machine-data-model.git@dev
+fmpy>=0.3.26

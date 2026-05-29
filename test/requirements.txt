@@ -1,2 +1,0 @@
-git+https://github.com/glacier-project/frost-planner.git
-git+https://github.com/glacier-project/machine-data-model.git

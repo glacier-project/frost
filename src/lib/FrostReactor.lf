@@ -3,12 +3,88 @@ target Python
 import FrostInterface from "FrostInterface.lf"
 
 reactor FrostReactor extends FrostInterface{ 
-    '''Base reactor for Frost components that provides common functionality and utility methods such as connection management and message handling.
+    '''
+    Base reactor for Frost components that provides common functionality and utility methods such as connection management and message handling.
     ''' 
+    state connected = False 
+    logical action connected_to_bus
 
+    method _validate_bus_connection(bank_index, message){=
+        '''
+        Validate the bus connection response message.
+
+        Args:
+            bank_index (int): The index of the bank.
+            message (FrostMessage): The frost message to validate.
+        Returns:
+            bool: True if the bus connection is valid, False otherwise.
+        '''
+        
+        self.logger.debug(f"Connected to the FrostBus with name {self._get_reactor_name()}.")
+        self.connected = True
+
+        return True
+    =}
+
+    // @label _validate_protocol_responses
+    reaction(response_protocol_messages) -> connected_to_bus{=
+        '''
+        Validate the response messages from the message filter and trigger the connected_to_bus action if the registration is successful.
+
+        Args:
+            message_filter.responses (input): The input port for response messages.
+        Returns:
+            connect_to_bus (logical action): The output port for the connect_to_bus action.
+        ''' 
+        for bank_index, message in response_protocol_messages.value:
+            if message.header.namespace == MsgNamespace.PROTOCOL and message.header.msg_name == ProtocolMsgName.REGISTER:
+                self._validate_bus_connection(bank_index, message)
+                connected_to_bus.schedule(0)
+    =}
+
+    logical action connect_to_bus
+
+    method _create_registration_message(){=
+        '''
+        Creates the registration message for the FrostBus.
+
+        Returns:
+            FrostMessage: A message that requests registration in the FrostBus.
+        '''
+        return self.message_builder.build_protocol_register_message(
+            target="frost_bus"
+        )
+    =}    
+
+    state number_of_attempts = 0
+    // @label _connect_to_bus
+    reaction(connect_to_bus) -> channel_out, connect_to_bus{=
+        '''
+        Check if the machine is registered to the bus. If not registered, it will send a registration message and re-schedule the check. 
+
+        Args:
+            connect_to_bus (logical action): The event that triggers the connection to the bus procedure.
+        Returns:
+            channel_out (output): The output port for sending messages to the bus.
+            connect_to_bus (logical action): The event that will be re-scheduled if the connection is not established.
+        '''
+        if self.connected:
+            return 0
+        self.number_of_attempts += 1
+
+        
+        if self.number_of_attempts > 4:
+            raise Exception(f"Handshake failed:{self.name} unable to connect to the bus")
+        
+        # Generate and send the bus registration message.
+        self._set_channel_out_port(self._create_registration_message(), channel_out)
+        # Re-schedule the check in 3 seconds.
+        connect_to_bus.schedule(SEC(3))
+    =}
     // @label _initialize_frost_reactor
     reaction (startup) -> connect_to_bus{=
-        '''Initialize the reactor and trigger connection to the FrostBus.
+        '''
+        Initialize the reactor and trigger connection to the FrostBus.
 
         Args:
             startup (input): The event that triggers the initialization.

@@ -74,6 +74,7 @@ main reactor(width = 1) extends FrostBase{
         ))
     =}
     state counter = 0
+    // @label test_frost_bus
     reaction(test_bus) -> frost_bus.channel_in{=
         if self.counter == 4:
             return 0
@@ -83,12 +84,17 @@ main reactor(width = 1) extends FrostBase{
         self.counter += 1
     =}
 
+    // @label receive_from_frost_bus
     reaction(frost_bus.channel_out){=
-        for bank_index, message in self._get_input_values(frost_bus.channel_out):
-            if frost_bus.channel_out[bank_index].is_present:
+        for bank_index, message_list in self._get_input_values(frost_bus.channel_out):
+            for message in message_list:
                 self.logger.info(f"Received message from bus on port {bank_index}: {message}")
-                if self.verify_dict[message[0].target] != bank_index:
-                    raise Exception(f"Message received on wrong port: {message.target} on port {bank_index}")
+                if frost_bus.channel_out[bank_index].is_present:
+                    self.logger.info(f"Received message from bus on port {bank_index}: {message}")
+                    if isinstance(message.payload, ProtocolPayload) and message.header.msg_name == ProtocolMsgName.REGISTER:
+                        assert message.header.type == MsgType.RESPONSE
+                    if self.verify_dict[message.target] != bank_index:
+                        raise Exception(f"Message received on wrong port: {message.target} on port {bank_index}")
 
         if not self.messages:
             self.messages.append(FrostMessage(

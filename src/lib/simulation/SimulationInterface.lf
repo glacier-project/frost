@@ -1,0 +1,15 @@
+target Python{
+    files: [        
+        "../../python_lib/simulation/simulation_message.py",
+        "../../python_lib/simulation/simulation_message_handler.py",
+        "../../python_lib/simulation/operation.py",
+        "../../python_lib/simulation/orchestrator.py",
+        "../../python_lib/simulation/stepper.py",
+    ],
+}
+
+import FrostBase from "../FrostBase.lf"
+
+reactor SimulationInterface(_time_step = 100) extends FrostBase{
+    state simulation_handler = {=SimulationMessageHandler(self.name)=}
+}

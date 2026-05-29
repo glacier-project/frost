@@ -17,21 +17,11 @@ reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1)
     =}
 
     method create_method_request(t, method_path, args, kwargs){=
-        return FrostMessage(
-            sender=self.data_model.name,
+        return self.message_builder.build_invoke_method_message(
             target=t,
-            identifier=str(uuid.uuid4()),
-            header=FrostHeader(
-                type=MsgType.REQUEST,
-                version=(1, 0, 0),
-                namespace=MsgNamespace.METHOD,
-                msg_name=MethodMsgName.INVOKE,
-            ),
-            payload=MethodPayload(
-                node=method_path,
-                args=args,
-                kwargs=kwargs
-            )
+            node=method_path,
+            args=args,
+            kwargs=kwargs
         )
     =}
 
@@ -63,7 +53,15 @@ reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1)
         self.logger.debug(f"Starting tasks: {start_tasks.value}")
 
         for task, machine in start_tasks.value:
-            machine = machine.name
+            # next_ready_tasks() returns the machine identifier as a string
+            # (machine id) in frost-planner >= 0.2.4; resolve it to the
+            # machine name used for routing. Older versions returned the
+            # Machine object directly.
+            if isinstance(machine, str):
+                resolved = self.scheduling_instance.get_machine(machine)
+                machine = resolved.name if resolved is not None else machine
+            else:
+                machine = machine.name
             task_name = task.task.name
             self.logger.info(f"Starting task {task_name} on machine {machine}")
             task.start_time = self._get_current_logical_time_sec()
@@ -75,8 +73,8 @@ reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1)
 
     =}
 
-    reaction(message_filter.responses) {=
-        for bank_index, message in message_filter.responses.value:
+    reaction(response_messages) {=
+        for bank_index, message in response_messages.value:
 
             if message.correlation_id not in self._active_tasks:
                 continue

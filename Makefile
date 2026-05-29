@@ -5,10 +5,10 @@
 SHELL := /bin/bash
 
 # Test script
-RUN_SCRIPT := ./run_all.sh
+RUN_SCRIPT := test/run_all.sh
 
 # Source directory
-SRC_DIR := src
+SRC_DIR := test/src
 
 # Find all .lf files in src directory
 LF_FILES := $(shell find $(SRC_DIR) -name "*.lf" 2>/dev/null)
@@ -20,35 +20,31 @@ all: test
 # Build and run all tests
 .PHONY: test
 test:
-	@echo "🧪 Running all tests..."
-	$(RUN_SCRIPT)
+	@$(RUN_SCRIPT)
 
 # Build tests only
 .PHONY: build
 build:
-	@echo "🔨 Building all tests..."
-	$(RUN_SCRIPT) --build-only
+	@$(RUN_SCRIPT) --build-only
 
 # Run tests only (assumes binaries exist)
 .PHONY: run
 run:
-	@echo "🚀 Running all tests..."
-	$(RUN_SCRIPT) --run-only
+	@$(RUN_SCRIPT) --run-only
 
 # Clean generated files
 .PHONY: clean
 clean:
 	@echo "🧹 Cleaning generated files..."
-	rm -rf bin/
-	rm -rf include/
-	rm -rf src-gen/
+	rm -rf test/bin/
+	rm -rf test/include/
+	rm -rf test/src-gen/
 	@echo "✅ Clean complete"
 
 # Individual test targets (build and run specific test)
 .PHONY: test-%
 test-%:
 	@if [ -f "$(SRC_DIR)/$*.lf" ]; then \
-		echo "🧪 Running test: $*"; \
 		$(RUN_SCRIPT) "$(SRC_DIR)/$*.lf"; \
 	else \
 		echo "❌ Test file $(SRC_DIR)/$*.lf not found"; \
@@ -59,7 +55,6 @@ test-%:
 .PHONY: build-%
 build-%:
 	@if [ -f "$(SRC_DIR)/$*.lf" ]; then \
-		echo "🔨 Building test: $*"; \
 		$(RUN_SCRIPT) --build-only "$(SRC_DIR)/$*.lf"; \
 	else \
 		echo "❌ Test file $(SRC_DIR)/$*.lf not found"; \
@@ -70,7 +65,6 @@ build-%:
 .PHONY: run-%
 run-%:
 	@if [ -f "$(SRC_DIR)/$*.lf" ]; then \
-		echo "🚀 Running test: $*"; \
 		$(RUN_SCRIPT) --run-only "$(SRC_DIR)/$*.lf"; \
 	else \
 		echo "❌ Test file $(SRC_DIR)/$*.lf not found"; \

@@ -3,13 +3,19 @@ target Python{
         "../python_lib/frost.py",
         "../python_lib/l_formatter.py",
         "../python_lib/time_utils.py",
+        "../python_lib/simulation/simulation_message.py",
+        "../python_lib/simulation/simulation_message_handler.py",
+        "../python_lib/simulation/operation.py",
+        "../python_lib/simulation/orchestrator.py",
+        "../python_lib/simulation/stepper.py",
     ],
     logging: error,
     single-threaded: false,
 }
 
 reactor FrostBase(name = "unnamed_reactor"){
-    '''Base reactor providing utility methods and common functionality.
+    '''
+    Base reactor providing utility methods and common functionality.
     
     Args:
         name (str): The name of the reactor.
@@ -26,7 +32,8 @@ reactor FrostBase(name = "unnamed_reactor"){
     =}
 
     method __override_initial_parameters(configuration, reactor_name){=
-        '''Override the reactor's parameters based on the configuration file.
+        '''
+        Override the reactor's parameters based on the configuration file.
         
         Args:
             configuration (dict): The configuration dictionary containing reactor parameters.
@@ -52,11 +59,11 @@ reactor FrostBase(name = "unnamed_reactor"){
                 self.logger.warning(f"Parameter {key} not found in reactor {reactor_name}. Creating dynamic parameter {key} = {value}.")
 
             setattr(self, key, value)
-
     =}
 
     method _set_output_multiport(value, output_port, exclude){=
-        '''Set the output value for the specified reactor multiport output. If a value is already set, it will append the new value to the existing one.
+        '''
+        Set the output value for the specified reactor multiport output. If a value is already set, it will append the new value to the existing one.
 
         Args:
             value (Any): The value to set for the output ports.
@@ -79,7 +86,8 @@ reactor FrostBase(name = "unnamed_reactor"){
     =}
 
     method _set_output_port(value, output_port){=
-        '''Set the output value for the specified output port. If a value is already set, it will append the new value to the existing one. If the output port is a multiport, it will set the value for all ports.
+        '''
+        Set the output value for the specified output port. If a value is already set, it will append the new value to the existing one. If the output port is a multiport, it will set the value for all ports.
 
         Args:
             value (Any): The value to set for the output port.
@@ -102,7 +110,8 @@ reactor FrostBase(name = "unnamed_reactor"){
     =}
 
     method _set_channel_out_port(value, channel_out){=
-        '''Set the output value for the channel_out port. If a value is already set, it will append the new value to the existing one.
+        '''
+        Set the output value for the channel_out port. If a value is already set, it will append the new value to the existing one.
 
         Args:
             value (Any): The value to set for the channel_out port.
@@ -112,7 +121,8 @@ reactor FrostBase(name = "unnamed_reactor"){
     =}
     
     method _get_input_values(input_port){=
-        '''Get the values from the specified input port.
+        '''
+        Get the values from the specified input port.
 
         Args:
             input_port (input): The input port to get the values from.
@@ -167,7 +177,8 @@ reactor FrostBase(name = "unnamed_reactor"){
 
     // @label _init_base
     reaction (startup){=
-        '''Initialize the logger and override the reactor's parameters.
+        '''
+        Initialize the logger and override the reactor's parameters.
         
         Args:
             startup (input): The event that triggers the configuration of the message filter.
