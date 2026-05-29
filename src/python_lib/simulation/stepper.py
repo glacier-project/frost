@@ -67,7 +67,7 @@ class Stepper:
         """
         self._current_simulation_time = value
 
-    def __call__(self) -> None:
+    def __call__(self) -> Any:
         return None
     
 
