@@ -9,11 +9,10 @@ Frost is part of the [Glacier project](https://glacier-project.github.io/glacier
 
 ## Frost components
 
-*FrostMachine* and *FrostBus* are the main components of the Frost framework. 
-The former implements a ready-to-use reactor that can be extended to implement the machine behavior, while the latter implements a message broker that connects all the components of the system being represented.
-Both components extend the base class *FrostReactor*, which implements some basic functionalities such as logging and message handling.
-The *FrostReactor* relies on the [data model library](https://github.com/glacier-project/machine-data-model) to implement the component interfaces.
-Custom components can be developed by extending the *FrostReactor* class and implementing the desired behavior.
+*FrostReactor* is the main building block of the Frost framework: a ready-to-use reactor that can be extended to implement a component's behavior. It bundles logging, message handling, and a data-model–backed interface so that custom components only need to define their domain logic.
+*FrostLink* is the message router of the Frost network: it registers the components connected to it and forwards messages between them based on their target.
+Both reactors descend from *FrostBase* and rely on the [data model library](https://github.com/glacier-project/machine-data-model) to expose their interfaces.
+Custom components are developed by extending *FrostReactor* and implementing the desired behavior.
 
 ## How to develop new machine interfaces?
 
@@ -46,14 +45,14 @@ To build and run this project, you will need the following prerequisites:
 
 The development is summarized in the following step:
 
-1) Extend *Frost Machine* reactor.
-2) Definite the state variables of the machine and link them to the data model nodes.
-3) Define the logic implementing the machine behavior.
+1) Extend the *FrostReactor* reactor.
+2) Define the state variables of the component and link them to the data model nodes.
+3) Define the logic implementing the component behavior.
 4) Instantiate the reactor in the main file and run it.
 
 ```python
-# Extend the FrostMachine reactor
-reactor TrafficLight extends FrostMachine{
+# Extend the FrostReactor reactor
+reactor TrafficLight extends FrostReactor{
 
     # State variables of the machine 
     state mode

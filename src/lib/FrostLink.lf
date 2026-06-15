@@ -6,9 +6,9 @@ import FrostNode from "FrostNode.lf"
 reactor FrostLink extends FrostInterface, FrostNode{
     '''Reactor implementing a routing link for Frost components.
 
-    FrostLink is the message router of the Frost network (the role formerly
-    played by FrostBus). It registers the components connected to it and
-    forwards messages between them based on their target.
+    FrostLink is the message router of the Frost network. It registers the
+    components connected to it and forwards messages between them based on
+    their target.
 
     Attributes:
         routing_map (dict): A mapping of Frost component names to their

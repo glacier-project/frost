@@ -233,7 +233,7 @@ reactor FrostReactor(_update_step = 1000 msec) extends FrostInterface, FrostNode
     =}
 
     # ----------------------------------------------------------------------
-    # Data-model message handling (from the former FrostDataModel)
+    # Data-model message handling
     # ----------------------------------------------------------------------
 
     // @label _process_data_model_requests
