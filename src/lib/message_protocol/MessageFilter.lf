@@ -103,10 +103,20 @@ reactor MessageFilter extends FrostBase{
         for message in list_of_messages:
             self.logger.debug(f"Processing message: {message}")
 
-            if not isinstance(message, message_type):
-                if isinstance(message, tuple):
-                    if isinstance(message[1], list):
-                        list_of_messages.extend((message[0], item) for item in message[1]) 
+            if not isinstance(message, tuple) or len(message) != 2:
+                self.logger.warning(f"Received malformed message (not a (bank, payload) tuple): {message}")
+                self._set_output_port(message, discarded_messages)
+                continue
+
+            payload = message[1]
+            if isinstance(payload, list):
+                list_of_messages.extend((message[0], item) for item in payload)
+                continue
+
+            if not isinstance(payload, message_type):
+                self.logger.warning(f"Received message with invalid payload type {type(payload)}: {message}")
+                self._set_output_port(message, discarded_messages)
+                continue
 
             if not self._should_process_message(message):
                 self.logger.debug(f"Message {message} does not match the filter criteria, skipping.")

@@ -254,10 +254,10 @@ reactor FrostReactor(_update_step = 1000 msec) extends FrostInterface, FrostNode
 
             if message.header.namespace == MsgNamespace.METHOD and message.header.msg_name == MethodMsgName.INVOKE:
                 method_node = self.data_model.get_node(message.payload.node)
-                self.logger.debug(f"method: {method_node.name} is_async: {method_node.is_async()}")
 
                 if type(method_node) == MethodNode:
-                    method_queue.append(message)
+                    self.logger.debug(f"method: {method_node.name} is_async: {method_node.is_async()}")
+                    method_queue.append((bank_index, message))
                     method_action_scheduled = True
 
             # TODO: Handle other request types here!

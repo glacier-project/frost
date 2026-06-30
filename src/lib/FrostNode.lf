@@ -29,8 +29,7 @@ reactor FrostNode(_data_model_path = "", update_interval = 1 s) extends FrostBas
     state data_model
     state protocol_mng
 
-    # If a MethodNode (not Composite or Async) invocation is received, the
-    # request is queued and processed in a separate reaction.
+    #Final User shall implement the reaction to this event
     logical action new_method_request
 
     method _get_reactor_name(){=
