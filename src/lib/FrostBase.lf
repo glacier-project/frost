@@ -98,11 +98,10 @@ reactor FrostBase(name = "unnamed_reactor"){
             self._set_output_multiport(value, output_port, None)
             return
 
-        # Check if the output is present, if not, initialize it
         if not output_port.is_present:
             output_port.set([])
 
-        # Append the new value to the output port
+        
         if isinstance(value, list):
             output_port.value.extend(value)
         else:
@@ -182,8 +181,7 @@ reactor FrostBase(name = "unnamed_reactor"){
         
         Args:
             startup (input): The event that triggers the configuration of the message filter.
-        '''
-        
+        '''        
         configuration = FROST_CONFIG
         reactor_name = self.name
 

@@ -4,7 +4,7 @@ reactors:
   frost_link:
     logging_level: WARNING
     parameters:
-      data_model_path: "resources/data_model/test_frost_reactor/link.yml"
+      data_model_path: "resources/common/data_model/link.yml"
     reactors:
       message_filter:
         logging_level: WARNING
@@ -12,7 +12,6 @@ reactors:
     logging_level: INFO
     parameters:
       data_model_path: "resources/data_model/test_frost_reactor/device_1.yml"
-      peer: "device_2"
     reactors:
       message_filter:
         logging_level: WARNING

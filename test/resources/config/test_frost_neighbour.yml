@@ -1,0 +1,27 @@
+time_precision: NSECS
+logging_level: INFO
+reactors:
+  device_a:
+    logging_level: INFO
+    parameters:
+      data_model_path: "resources/data_model/test_frost_neighbour/device_a.yml"
+      expected_neighbours: 2
+    reactors:
+      message_filter:
+        logging_level: WARNING
+  device_b:
+    logging_level: INFO
+    parameters:
+      data_model_path: "resources/data_model/test_frost_neighbour/device_b.yml"
+      expected_neighbours: 1
+    reactors:
+      message_filter:
+        logging_level: WARNING
+  device_c:
+    logging_level: INFO
+    parameters:
+      data_model_path: "resources/data_model/test_frost_neighbour/device_c.yml"
+      expected_neighbours: 1
+    reactors:
+      message_filter:
+        logging_level: WARNING

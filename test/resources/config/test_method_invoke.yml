@@ -1,0 +1,25 @@
+time_precision: NSECS
+logging_level: INFO
+reactors:
+  frost_link:
+    logging_level: WARNING
+    parameters:
+      data_model_path: "resources/data_model/test_method_invoke/link.yml"
+    reactors:
+      message_filter:
+        logging_level: WARNING
+  worker:
+    logging_level: INFO
+    parameters:
+      data_model_path: "resources/data_model/test_method_invoke/worker.yml"
+    reactors:
+      message_filter:
+        logging_level: WARNING
+  caller:
+    logging_level: INFO
+    parameters:
+      data_model_path: "resources/data_model/test_method_invoke/caller.yml"
+      target_node: "worker"
+    reactors:
+      message_filter:
+        logging_level: WARNING

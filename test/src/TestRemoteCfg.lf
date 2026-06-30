@@ -3,8 +3,7 @@ target Python{
     timeout: 1 h 
 }
 
-import FrostMachine from "../../src/lib/FrostMachine.lf"
-import FrostBus from "../../src/lib/FrostBus.lf"
+import FrostLink from "../../src/lib/FrostLink.lf"
 import FrostReactor from "../../src/lib/FrostReactor.lf"
 
 preamble{=
@@ -33,7 +32,7 @@ reactor Tester extends FrostReactor{
         )
     =}
 
-    reaction(connected_to_bus) -> channel_out{=
+    reaction(connected_to_link) -> channel_out{=
         msg = self.create_method_request(
             t="machine",
             method_path="Machine/RemoteProduct",
@@ -61,11 +60,11 @@ reactor Tester extends FrostReactor{
     =}
 }
 
-reactor Machine extends FrostMachine{
-    
+reactor Machine extends FrostReactor{
+
 }
 
-reactor RemoteMachine extends FrostMachine{
+reactor RemoteMachine extends FrostReactor{
 
     state remote_variable
     state remote_product
@@ -98,11 +97,11 @@ reactor RemoteMachine extends FrostMachine{
 }
 
 main reactor{
-    m = new Machine(name="machine")   
+    m = new Machine(name="machine")
     t = new Tester(name="tester")
     remote_m = new RemoteMachine(name="remote_machine")
-    bus = new FrostBus(name="bus", width=3)
+    link = new FrostLink(name="frost_link", width=3)
 
-    m.channel_out, t.channel_out, remote_m.channel_out -> bus.channel_in
-    bus.channel_out -> m.channel_in, t.channel_in, remote_m.channel_in after 0
+    m.channel_out, t.channel_out, remote_m.channel_out -> link.channel_in
+    link.channel_out -> m.channel_in, t.channel_in, remote_m.channel_in after 0
 }

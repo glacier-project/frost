@@ -1,0 +1,18 @@
+time_precision: NSECS
+logging_level: INFO
+reactors:
+  sender:
+    logging_level: INFO
+    parameters:
+      data_model_path: "resources/data_model/test_no_link_communication/sender.yml"
+      peer: "receiver"
+    reactors:
+      message_filter:
+        logging_level: WARNING
+  receiver:
+    logging_level: INFO
+    parameters:
+      data_model_path: "resources/data_model/test_no_link_communication/receiver.yml"
+    reactors:
+      message_filter:
+        logging_level: WARNING

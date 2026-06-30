@@ -1,12 +1,8 @@
 target Python;
 
-import FrostMachine from "../FrostMachine.lf"
+import FrostReactor from "../FrostReactor.lf"
 
-preamble {=
-    from frost_planner.core.base import TaskStatus
-=}
-
-reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1) extends FrostMachine {
+reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1) extends FrostReactor{
     state scheduling_instance = _scheduling_instance
     state scheduling_interval = _scheduling_interval # in seconds
     state _executor
@@ -38,9 +34,9 @@ reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1)
         )
     =}
 
-    // @label connected_to_bus
-    reaction(connected_to_bus) -> update_schedule {=
-        self.logger.info("Connected to bus. Starting scheduling...")
+    // @label connected_to_link
+    reaction(connected_to_link) -> update_schedule{=
+        self.logger.info("Connected to link. Starting scheduling...")
         update_schedule.schedule(0)
     =}
 

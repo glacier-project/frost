@@ -27,10 +27,10 @@ reactors:
     reactors:
       message_filter:
         logging_level: WARNING
-  bus:
+  frost_link:
     logging_level: WARNING
     parameters:
-      data_model_path: "resources/common/data_model/bus.yml"
+      data_model_path: "resources/common/data_model/link.yml"
     reactors:
       message_filter:
         logging_level: WARNING

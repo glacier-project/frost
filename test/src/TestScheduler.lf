@@ -4,8 +4,8 @@ target Python{
 }
 
 import FrostScheduler from "../../src/lib/scheduler/FrostScheduler.lf"
-import FrostBus from "../../src/lib/FrostBus.lf"
-import FrostMachine from "../../src/lib/FrostMachine.lf"
+import FrostLink from "../../src/lib/FrostLink.lf"
+import FrostReactor from "../../src/lib/FrostReactor.lf"
 
 preamble{=
     import uuid
@@ -25,7 +25,7 @@ reactor Scheduler extends FrostScheduler{
     =}
 }
 
-reactor Machine extends FrostMachine{
+reactor Machine extends FrostReactor{
  
     state busy
     state operation_mode
@@ -73,10 +73,10 @@ reactor Machine extends FrostMachine{
 
 main reactor TestScheduler{
     s = new Scheduler(name="scheduler")
-    bus = new FrostBus(name="bus", width=3)
+    link = new FrostLink(name="frost_link", width=3)
     machine_1 = new Machine(name="machine_1")
     machine_2 = new Machine(name="machine_2")
 
-    s.channel_out, machine_1.channel_out, machine_2.channel_out -> bus.channel_in
-    bus.channel_out -> s.channel_in, machine_1.channel_in, machine_2.channel_in after 0
+    s.channel_out, machine_1.channel_out, machine_2.channel_out -> link.channel_in
+    link.channel_out -> s.channel_in, machine_1.channel_in, machine_2.channel_in after 0
 }
