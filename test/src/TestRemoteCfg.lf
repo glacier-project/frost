@@ -15,12 +15,14 @@ reactor Tester extends FrostReactor{
 
     state correlation_id
     state response_received = False
+    logical action wait_conn
 
-    reaction(startup){=
+    reaction(startup) -> wait_conn{=
         self.message_builder = FrostMessageBuilder(
             sender="tester",
             protocol_version=(1,0,0)
         )
+        wait_conn.schedule(0)
     =}
 
     method create_method_request(t, method_path, args, kwargs){=
@@ -32,7 +34,10 @@ reactor Tester extends FrostReactor{
         )
     =}
 
-    reaction(connected_to_link) -> channel_out{=
+    reaction(wait_conn) -> wait_conn, channel_out{=
+        if not self.connected:
+            wait_conn.schedule(MSEC(100))
+            return 0
         msg = self.create_method_request(
             t="machine",
             method_path="Machine/RemoteProduct",

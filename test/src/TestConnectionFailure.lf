@@ -28,28 +28,23 @@ reactor Sink(width = 1) extends FrostBase{
 # the attempt cap, never become connected, and shut down cleanly (no hang,
 # no exception) once the stop_after timer stops the program.
 reactor Lonely extends FrostReactor{
-    timer stop_after(15 sec)
-
-    reaction (connected_to_link){=
-        # Must never fire in this topology.
-        raise Exception(f"{self._get_reactor_name()} unexpectedly connected with no link present.")
-    =}
+    timer stop_after(20 sec)
 
     reaction (stop_after){=
-        self.logger.info(f"{self._get_reactor_name()} attempts={self.number_of_attempts}, connected={self.connected}")
+        self.logger.info(f"{self._get_reactor_name()} attempts={self.connection_attempts}, connected={self.connected}")
         lf.request_stop()
     =}
 
     reaction (shutdown){=
         if self.connected:
             raise Exception(f"{self._get_reactor_name()} should not be connected without a link.")
-        # The reactor caps retries at >4 attempts (attempts reach 5 then stop).
-        if self.number_of_attempts < 5:
+        # With an unanswered port, discovery retries up to the attempt cap.
+        if self.connection_attempts < 10:
             raise Exception(
-                f"{self._get_reactor_name()} expected to exhaust >4 attempts, "
-                f"made only {self.number_of_attempts}."
+                f"{self._get_reactor_name()} expected to exhaust the retry cap, "
+                f"made only {self.connection_attempts}."
             )
-        self.logger.info(f"{self._get_reactor_name()} correctly gave up after {self.number_of_attempts} attempts.")
+        self.logger.info(f"{self._get_reactor_name()} correctly gave up after {self.connection_attempts} attempts.")
     =}
 }
 

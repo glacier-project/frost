@@ -36,8 +36,16 @@ reactor Subscriber extends FrostReactor{
     state target_node = ""
     state subscribed = False
     state update_received = False
+    logical action wait_conn
 
-    reaction (connected_to_link) -> channel_out{=
+    reaction (startup) -> wait_conn{=
+        wait_conn.schedule(0)
+    =}
+
+    reaction (wait_conn) -> wait_conn, channel_out{=
+        if not self.connected:
+            wait_conn.schedule(MSEC(100))
+            return 0
         self.logger.info(f"{self._get_reactor_name()} subscribing to {self.target_node}/Machine/temperature.")
         msg = self.message_builder.build_subscribe_variable_message(
             target=self.target_node,

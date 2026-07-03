@@ -28,20 +28,20 @@ reactor Device extends FrostReactor{
     # would request stop before its peers have processed the discovery
     # replies. Stop is requested only once every expectation is satisfied.
     reaction (check_neighbours) -> check_neighbours{=
-        self.logger.info(f"{self._get_reactor_name()} discovered neighbours: {self.neighbours}")
-        if len(self.neighbours) >= self.expected_neighbours:
+        self.logger.info(f"{self._get_reactor_name()} discovered neighbours: {self.targets}")
+        if len(self.targets) >= self.expected_neighbours:
             lf.request_stop()
             return 0
         check_neighbours.schedule(SEC(1))
     =}
 
     reaction (shutdown){=
-        if len(self.neighbours) < self.expected_neighbours:
+        if len(self.targets) < self.expected_neighbours:
             raise Exception(
                 f"{self._get_reactor_name()} expected {self.expected_neighbours} "
-                f"neighbours but discovered {len(self.neighbours)}: {self.neighbours}"
+                f"neighbours but discovered {len(self.targets)}: {self.targets}"
             )
-        self.logger.info(f"{self._get_reactor_name()} shutting down with neighbours {self.neighbours}.")
+        self.logger.info(f"{self._get_reactor_name()} shutting down with neighbours {self.targets}.")
     =}
 }
 

@@ -20,6 +20,16 @@ reactor Worker extends FrostReactor{
         node = self.data_model.get_node("Machine/Square")
         node.callback = lambda n: n * n
     =}
+
+    # FrostReactor queues plain synchronous MethodNode invocations on
+    # new_method_request and leaves the actual invocation to the concrete
+    # reactor. Run each queued method and reply with its COMPLETED response.
+    reaction (new_method_request) -> channel_out{=
+        for bank_index, message in new_method_request.value:
+            response = self.protocol_mng.handle_message(message)
+            assert response is not None, f"Response is None for method message: {message}"
+            self._set_channel_out_port(response, channel_out)
+    =}
 }
 
 # Calls Worker's Square(n=6) once connected and asserts the COMPLETED response
@@ -29,8 +39,16 @@ reactor Caller extends FrostReactor{
     state correlation_id
     state response_ok = False
     state called = False
+    logical action wait_conn
 
-    reaction (connected_to_link) -> channel_out{=
+    reaction (startup) -> wait_conn{=
+        wait_conn.schedule(0)
+    =}
+
+    reaction (wait_conn) -> wait_conn, channel_out{=
+        if not self.connected:
+            wait_conn.schedule(MSEC(100))
+            return 0
         msg = self.message_builder.build_invoke_method_message(
             target=self.target_node,
             node="Machine/Square",
