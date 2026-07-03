@@ -15,14 +15,25 @@ reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1)
     logical action task_completed
     logical action start_tasks
     logical action update_schedule
+    logical action wait_for_connection_phase
 
-    reaction(startup) {=
+    reaction(startup) -> wait_for_connection_phase {=
         self.scheduling_instance = load_instance_from_json(self.scheduling_instance)
         self._executor = StaticExecutor(DummySolver(instance=self.scheduling_instance))
 
         # prepare the scope handling states
         for job in self.scheduling_instance.jobs:
             self.jobs_scopes[job.id] = {}
+        wait_for_connection_phase.schedule(0)
+    =}
+
+    reaction(wait_for_connection_phase) -> update_schedule, wait_for_connection_phase{=
+        if self.connected:
+            self.logger.info("Connected to link. Starting scheduling...")
+            update_schedule.schedule(0)
+        else:
+            self.logger.info("Waiting for connection to link...")
+            wait_for_connection_phase.schedule(self.update_step)
     =}
 
     method create_method_request(t, method_path, args, kwargs) {=
@@ -32,12 +43,6 @@ reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1)
             args=args,
             kwargs=kwargs
         )
-    =}
-
-    // @label connected_to_link
-    reaction(connected_to_link) -> update_schedule{=
-        self.logger.info("Connected to link. Starting scheduling...")
-        update_schedule.schedule(0)
     =}
 
     // @label update_schedule
@@ -141,12 +146,9 @@ reactor FrostScheduler(_scheduling_instance="undefined", _scheduling_interval=1)
             self._executor.task_completed(task)
             self.logger.warning(f"Task {task.task.name} completed on machine {task.machine.name}")
 
-            # check if there are other tasks to complete
             if self.are_all_tasks_completed():
                 lf.request_stop()
             else:
-                # scheduling_interval = SECS(self.scheduling_interval)
-                # self.logger.debug(f"Scheduling next task in {scheduling_interval}...")
                 update_schedule.schedule(0)
     =}
 }
