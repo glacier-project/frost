@@ -205,18 +205,12 @@ reactor FrostReactor(_update_step = 1000 msec) extends FrostInterface, FrostNode
             if message.header.namespace != MsgNamespace.PROTOCOL or message.header.msg_name != ProtocolMsgName.REGISTER:
                 continue
 
-            # Register the sender on the port its REGISTER arrived on. This
-            # populates self.targets even with width==1 (the base
-            # _register_targets only runs for width>1), so discovery does not
-            # depend on FrostInterface.
             if message.sender not in self.targets:
                 self.targets[message.sender] = bank_index
                 self.logger.info(f"Discovered target {message.sender} on port {bank_index}.")
             else:
                 assert bank_index == self.targets[message.sender], f"target {message.sender} is registered on bank {self.targets[message.sender]} but message arrived on bank {bank_index}."
 
-            # Acknowledge only REQUESTs, on the same port, to keep discovery
-            # bidirectional without looping (a RESPONSE is only recorded).
             if message.header.type == MsgType.REQUEST:
                 response = self.message_builder.build_protocol_register_response_message(
                     target=message.sender,

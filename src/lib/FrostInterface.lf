@@ -52,10 +52,10 @@ reactor FrostInterface(width = 1) extends FrostBase{
                 self.targets[messages[0][1].sender] = 0
 
         for bank_index, message in messages:            
-            if message.sender not in self.targets:
-                self.logger.debug(f"Registering sender for message: {message}")
+            if message.sender not in self.targets:                
                 source = message.sender
                 if source not in self.targets.keys():
+                    self.logger.debug(f"Registering sender for message: {message}")
                     self.targets[source] = bank_index
                 continue
             else:
