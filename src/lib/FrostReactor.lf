@@ -10,40 +10,32 @@ reactor FrostReactor(_update_step = 1000 msec) extends FrostInterface, FrostNode
     FrostReactor combines a data model (FrostNode) with the communication
     interface (FrostInterface). It connects to the FrostLink to exchange
     messages with the rest of the network, and, in parallel, explores its
-    direct neighbourhood: it broadcasts registration messages on every
-    output channel, records the neighbours that answer, and can deliver
-    messages to a neighbour directly without going through the link.
+    direct targets: it broadcasts registration messages on every
+    output channel, records the targets that answer, and can deliver
+    messages to a target directly without going through the link.
 
     Args:
         _update_step (time): The time step for periodic data-model updates.
     Attributes:
         connected (bool): Whether the reactor is connected to the FrostLink.
         number_of_attempts (int): Number of FrostLink connection attempts made.
-        neighbours (dict): Map of neighbour name -> output port index.
+        targets (dict): Map of target name -> output port index.
     '''
 
     state update_step = _update_step
 
     state connected = False
-    state number_of_attempts = 0
-    state neighbours
+    state connection_attempts = 0
 
-    logical action connect_to_link
-    logical action connected_to_link
-
-    method _neighbour_target(){=
+    method _target_target(){=
         '''
-        Return the target marker for neighbour-discovery registration
+        Return the target marker for target-discovery registration
         messages. A PROTOCOL.REGISTER addressed to this marker is a
-        neighbourhood exploration broadcast rather than a FrostLink
+        targets exploration broadcast rather than a FrostLink
         registration.
         '''
-        return "__neighbour__"
+        return "__target__"
     =}
-
-    # ----------------------------------------------------------------------
-    # Output routing: neighbours (direct) take precedence over the link.
-    # ----------------------------------------------------------------------
 
     // @override
     method _set_output_multiport(messages, output_port, exclude){=
@@ -51,7 +43,7 @@ reactor FrostReactor(_update_step = 1000 msec) extends FrostInterface, FrostNode
         Route messages to their target.
 
         A message is delivered directly to a target that is a known
-        neighbour; otherwise it is sent to the FrostLink (index 0) when the
+        target; otherwise it is sent to the FrostLink (index 0) when the
         reactor is connected to it, or to an explicitly registered target.
 
         Args:
@@ -64,14 +56,12 @@ reactor FrostReactor(_update_step = 1000 msec) extends FrostInterface, FrostNode
             messages = [messages]
 
         for message in messages:
-            if message.target in self.neighbours:
-                bank_index = self.neighbours[message.target]
-            elif message.target in self.targets:
+            if message.target in self.targets:
                 bank_index = self.targets[message.target]
             elif "frost_link" in self.targets:
                 bank_index = self.targets["frost_link"]
             else:
-                self.logger.warning(f"Destination {message.target} not registered in targets {self.targets} or neighbours {self.neighbours}. Skipping message: {message}")
+                self.logger.error(f"Destination {message.target} not registered in targets {self.targets}. Skipping message: {message}")
                 continue
 
             self.logger.debug(f"Setting output multiport for bank index {bank_index} with message: {message}")
@@ -94,7 +84,21 @@ reactor FrostReactor(_update_step = 1000 msec) extends FrostInterface, FrostNode
         return self.message_builder.build_protocol_register_message(target=target_name)
     =}
 
-    method _validate_link_connection(bank_index, message){=
+    method _get_unexplored_target(channel_out){=
+        '''
+        Return the name of a target that has not yet been explored.
+
+        Returns:
+            str: The name of an unexplored target, or [] if all have been explored.
+        '''
+        l = []
+        for index, port in enumerate(channel_out):
+            if index not in self.targets.values():
+                l.append(index)
+        return l
+    =}
+
+    method _validate_targets(channel_out){=
         '''
         Mark the reactor as connected to the link.
 
@@ -104,60 +108,22 @@ reactor FrostReactor(_update_step = 1000 msec) extends FrostInterface, FrostNode
         Returns:
             bool: True once connected.
         '''
-        self.logger.debug(f"Connected to the FrostLink with name {self._get_reactor_name()}.")
+        if self._get_unexplored_target(channel_out) != []:
+            return False
         self.connected = True
         return True
     =}
 
-    // @label _connect_to_link
-    reaction(connect_to_link) -> channel_out, connect_to_link{=
-        '''
-        Send a registration message to the FrostLink and re-schedule the
-        check until connected or the attempt limit is reached.
-
-        Args:
-            connect_to_link (logical action): Triggers the connection procedure.
-        Returns:
-            channel_out (output): Port for the registration message.
-            connect_to_link (logical action): Re-scheduled while not connected.
-        '''
-        if self.connected:
-            return 0
-
-        self.number_of_attempts += 1
-        if self.number_of_attempts > 4:
-            self.logger.warning(f"Failed to connect to the FrostLink after {self.number_of_attempts} attempts.")
-            return 0
-
-        self._set_channel_out_port(self._create_registration_message("frost_link"), channel_out)
-        connect_to_link.schedule(SEC(3))
-    =}
-
-    // @label _validate_protocol_responses
-    reaction(response_protocol_messages) -> connected_to_link{=
-        '''
-        Detect the registration response from the FrostLink and signal the
-        connection.
-
-        Args:
-            response_protocol_messages (logical action): Protocol responses.
-        Returns:
-            connected_to_link (logical action): Signalled once connected.
-        '''
-        for bank_index, message in response_protocol_messages.value:
-            if message.header.namespace == MsgNamespace.PROTOCOL and message.header.msg_name == ProtocolMsgName.REGISTER and message.target != self._neighbour_target():
-                self._validate_link_connection(bank_index, message)
-                connected_to_link.schedule(0)
-    =}
-
     # ----------------------------------------------------------------------
-    # Neighbourhood discovery (parallel to the FrostLink)
+    # targets discovery (parallel to the FrostLink)
     # ----------------------------------------------------------------------
+    logical action check_targets
+    logical action explore_targets
 
-    // @label _explore_neighbourhood
-    reaction(startup) -> channel_out, connect_to_link{=
+    // @label _explore_targets
+    reaction(startup) -> channel_out, check_targets, explore_targets{=
         '''
-        Broadcast a neighbour-registration message on every output channel
+        Broadcast a target-registration message on every output channel
         and start the FrostLink connection procedure.
 
         Args:
@@ -167,49 +133,70 @@ reactor FrostReactor(_update_step = 1000 msec) extends FrostInterface, FrostNode
             connect_to_link (logical action): Triggers link connection.
         '''
         self.logger.info(f"Initializing FrostReactor: {self._get_reactor_name()}")
-        self.neighbours = {}
-        self.targets["frost_link"] = 0
 
-        # Broadcast a neighbour registration on every output channel.
-        for port in channel_out:
-            self._set_output_port(self._create_registration_message(self._neighbour_target()), port)
-
-        connect_to_link.schedule(0)
+        check_targets.schedule(0)
+        explore_targets.schedule(0)
     =}
 
-    method _record_neighbour(bank_index, sender){=
+    reaction(explore_targets) -> channel_out, check_targets{=
         '''
-        Record a neighbour discovered on the given port.
+        Broadcast a target-registration message on every output channel
+        and schedule the next exploration.
 
         Args:
-            bank_index (int): The port the neighbour was heard on.
-            sender (str): The neighbour's name.
+            check_targets (logical action): Triggers target exploration.
         Returns:
-            bool: True if this is a newly recorded neighbour.
+            channel_out (output): Broadcast registration target.
+            check_targets (logical action): Triggers next exploration.
         '''
-        if sender in self.neighbours:
-            return False
-        self.neighbours[sender] = bank_index
-        self.logger.info(f"Discovered neighbour {sender} on port {bank_index}.")
-        return True
+        send = False
+        for index in self._get_unexplored_target(channel_out):
+            self._set_output_port( self._create_registration_message( self._target_target()), channel_out[index])   
+            send = True
+        if send:
+            check_targets.schedule(self.update_step)
     =}
 
-    // @label _handle_neighbour_messages
+    reaction(check_targets) -> channel_out, explore_targets{=
+        '''
+        Broadcast a target-registration message on every output channel
+        and schedule the next exploration.
+
+        Args:
+            check_targets (logical action): Triggers target exploration.
+        Returns:
+            channel_out (output): Broadcast registration target.
+            check_targets (logical action): Triggers next exploration.
+        '''
+        if self._validate_targets(channel_out):
+            self.logger.info(f"targets discovery completed. targets: {self.targets}")
+            return 0
+        else:
+            self.logger.info(f"targets discovery in progress. targets: {self.targets}")
+            self.connection_attempts += 1
+            if self.connection_attempts > 10:
+                self.logger.warning(f"targets discovery has failed after {self.connection_attempts} attempts. targets: {self.targets}")
+                return 0
+            else:
+                explore_targets.schedule(self.update_step)
+    =}
+
+    // @label _handle_target_messages
     reaction(message_filter.discarded_messages) -> channel_out{=
         '''
-        Handle neighbour-discovery messages, which the message filter
-        discards because they are addressed to the neighbour marker rather
+        Handle target-discovery messages, which the message filter
+        discards because they are addressed to the target marker rather
         than to this reactor.
 
-        A REQUEST records the sender as a neighbour and is acknowledged on
+        A REQUEST records the sender as a target and is acknowledged on
         the same port so discovery is bidirectional; a RESPONSE records the
-        neighbour that answered our own broadcast. Discarded messages that
-        are not neighbour registrations are ignored.
+        target that answered our own broadcast. Discarded messages that
+        are not target registrations are ignored.
 
         Args:
             message_filter.discarded_messages (input): Filtered-out messages.
         Returns:
-            channel_out (output): Port for neighbour acknowledgements.
+            channel_out (output): Port for target acknowledgements.
         '''
         if not message_filter.discarded_messages.value:
             return 0
@@ -217,16 +204,16 @@ reactor FrostReactor(_update_step = 1000 msec) extends FrostInterface, FrostNode
         for bank_index, message in message_filter.discarded_messages.value:
             if message.header.namespace != MsgNamespace.PROTOCOL or message.header.msg_name != ProtocolMsgName.REGISTER:
                 continue
-            if message.target != self._neighbour_target():
-                continue
 
-            if not self._record_neighbour(bank_index, message.sender):
-                continue
+            if message.sender not in self.targets:
+                self.targets[message.sender] = bank_index
+                self.logger.info(f"Discovered target {message.sender} on port {bank_index}.")
+            else:
+                assert bank_index == self.targets[message.sender], f"target {message.sender} is registered on bank {self.targets[message.sender]} but message arrived on bank {bank_index}."
 
-            # Only requests are acknowledged, to keep discovery from looping.
             if message.header.type == MsgType.REQUEST:
                 response = self.message_builder.build_protocol_register_response_message(
-                    target=self._neighbour_target(),
+                    target=message.sender,
                     correlation_id=message.correlation_id
                 )
                 self._set_output_port(response, channel_out[bank_index])
@@ -255,10 +242,10 @@ reactor FrostReactor(_update_step = 1000 msec) extends FrostInterface, FrostNode
             if message.header.namespace == MsgNamespace.METHOD and message.header.msg_name == MethodMsgName.INVOKE:
                 method_node = self.data_model.get_node(message.payload.node)
 
-                if type(method_node) == MethodNode:
-                    self.logger.debug(f"method: {method_node.name} is_async: {method_node.is_async()}")
+                if type(method_node) == MethodNode and not (isinstance(method_node, AsyncMethodNode) or isinstance(method_node, CompositeMethodNode)):
                     method_queue.append((bank_index, message))
                     method_action_scheduled = True
+                    continue
 
             # TODO: Handle other request types here!
             response = self.protocol_mng.handle_message(message)

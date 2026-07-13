@@ -19,8 +19,16 @@ reactor Device extends FrostReactor{
     state peer = ""
     state delivered_to_me = False
     logical action tick
+    logical action wait_conn
 
-    reaction (connected_to_link) -> tick{=
+    reaction (startup) -> wait_conn{=
+        wait_conn.schedule(0)
+    =}
+
+    reaction (wait_conn) -> wait_conn, tick{=
+        if not self.connected:
+            wait_conn.schedule(MSEC(100))
+            return 0
         self.logger.info(f"{self._get_reactor_name()} connected to the link.")
         tick.schedule(SEC(1))
     =}

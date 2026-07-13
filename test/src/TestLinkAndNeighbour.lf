@@ -22,19 +22,27 @@ reactor Device(_peer = "") extends FrostReactor{
     state sent = False
     state got_write = False
     logical action go
+    logical action wait_conn
 
-    reaction (connected_to_link) -> go{=
+    reaction (startup) -> wait_conn{=
+        wait_conn.schedule(0)
+    =}
+
+    reaction (wait_conn) -> wait_conn, go{=
+        if not self.connected:
+            wait_conn.schedule(MSEC(100))
+            return 0
         go.schedule(SEC(2))   # let neighbour discovery settle
     =}
 
     reaction (go) -> go, channel_out{=
         if not self.peer:
             return 0
-        if self.peer not in self.neighbours:
+        if self.peer not in self.targets:
             self.logger.info(f"{self._get_reactor_name()} waiting to discover neighbour {self.peer}...")
             go.schedule(SEC(1))
             return 0
-        self.logger.info(f"{self._get_reactor_name()} neighbours={self.neighbours}; sending direct write to {self.peer}.")
+        self.logger.info(f"{self._get_reactor_name()} targets={self.targets}; sending direct write to {self.peer}.")
         self._set_channel_out_port(
             self.message_builder.build_write_variable_message(
                 target=self.peer, node="Machine/counter", value=42),
@@ -71,10 +79,10 @@ reactor ObservingLink extends FrostLink{
 
 # device_a (width 2): port 0 faces the link, port 1 is a direct wire to
 # device_b. device_b (width 1) is wired ONLY to device_a and never joins the
-# link. device_a still reaches connected_to_link (the link ACKs its
-# registration). device_a therefore knows device_b solely as a neighbour, so
-# its write to device_b must take the direct wire; the link (which asserts it
-# never routes a VARIABLE message) confirms the neighbour path was used.
+# link. device_a still becomes connected (the link acks its registration).
+# device_a therefore knows device_b as a directly wired target, so its write
+# to device_b must take the direct wire; the link (which asserts it never
+# routes a VARIABLE message) confirms the direct path was used.
 main reactor{
     device_a = new Device(name="device_a", width=2)
     device_b = new Device(name="device_b", width=1)

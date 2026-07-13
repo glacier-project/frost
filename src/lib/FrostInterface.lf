@@ -47,11 +47,17 @@ reactor FrostInterface(width = 1) extends FrostBase{
         Args:
             messages (list): List of tuples containing bank index and FrostMessage.
         '''
+        if self.width == 1:
+            if self.targets == {}:
+                self.targets[messages[0][1].sender] = 0
+
         for bank_index, message in messages:            
-            if message.sender not in self.targets:
-                self.logger.debug(f"Registering sender for message: {message}")
+            if message.sender not in self.targets:                
                 source = message.sender
-                self.targets[source] = bank_index
+                if source not in self.targets.keys():
+                    self.logger.debug(f"Registering sender for message: {message}")
+                    self.targets[source] = bank_index
+                continue
             else:
                 continue
         return 0
@@ -71,8 +77,7 @@ reactor FrostInterface(width = 1) extends FrostBase{
         values = self._get_input_values(channel_in)
         messages = [(bank_index, m) for bank_index, bank_msgs in values for m in bank_msgs]
 
-        if self.width > 1:
-            self._register_targets(messages)
+        self._register_targets(messages)
 
         self._set_output_port(messages, message_filter.messages)
     =}

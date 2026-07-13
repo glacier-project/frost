@@ -25,7 +25,7 @@ reactor Sender extends FrostReactor{
     =}
 
     reaction (try_send) -> try_send, channel_out{=
-        if self.peer in self.neighbours:
+        if self.peer in self.targets:
             self.logger.info(f"{self._get_reactor_name()} sending a write to neighbour {self.peer}.")
             message = self.message_builder.build_write_variable_message(
                 target=self.peer,
