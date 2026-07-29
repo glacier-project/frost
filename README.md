@@ -146,5 +146,22 @@ This command will:
 This process is managed by the `test/run_all.sh` script, which is invoked by the `Makefile`.
 
 This project uses [act](https://github.com/nektos/act) to enable local execution of GitHub Actions workflows. This allows you to test CI/CD pipelines locally before pushing changes to the repository.
-
  
+## Citation ##
+
+If you use **Frost**, please consider citing the papers listed below:
+
+```
+@inproceedings{frost:indin:2026,
+  author    = {Turco, Pietro and Gaiardelli, Sebastiano and Fraccaroli, Enrico and Cheng, Dong Seon and Lora, Michele and Fummi, Franco},
+  booktitle = {2026 IEEE 24rd International Conference on Industrial Informatics (INDIN)},
+  title     = {{Distributed Control Logic Validation through Lingua Franca}},
+  year      = {2026}
+}
+@inproceedings{frost:indin:2025,
+  author    = {Turco, Pietro and Gaiardelli, Sebastiano and Fraccaroli, Enrico and Lora, Michele and Chakraborty, Samarjit and Fummi, Franco},
+  booktitle = {2025 IEEE 23rd International Conference on Industrial Informatics (INDIN)},
+  title     = {{Frost: A Simulation Platform for Early Validation and Testing of Manufacturing Software}},
+  year      = {2025}
+}
+```
