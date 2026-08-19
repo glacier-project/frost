@@ -1,0 +1,58 @@
+target Python{
+    timeout: 10s,
+    files: [
+        "../../src/python_lib/frost.py",
+        "../../src/python_lib/l_formatter.py",
+        "../../src/python_lib/time_utils.py",
+        "../../src/python_lib/simulation/simulation_message.py",
+        "../../src/python_lib/simulation/simulation_message_handler.py",
+        "../../src/python_lib/simulation/operation.py",
+        "../../src/python_lib/simulation/orchestrator.py",
+        "../../src/python_lib/simulation/stepper.py",
+    ],
+    fast: true,
+    logging: info,
+    single-threaded: false,
+}
+
+import FrostFmu from "../../src/lib/simulation/FrostFmu.lf"
+
+preamble{=
+import uuid
+from frost import *
+from simulation_message import SimulationMessageBuilder
+from simulation_message import SimulationMessage
+from operation import Operation
+from simulation_message_handler import SimulationMessageHandler
+from orchestrator import OrchestratorStepper
+=}
+
+reactor Test extends FrostFmu{
+
+    method getState(){=
+        return self.fmu.getReal(self.vars)
+    =}
+
+    // @label _simulate_fmu
+    reaction(request){=
+        if self.fmu == None:
+            return
+
+        self.logger.warning(f"Step at time {self.fmu_time}, LF time: {lf.time.logical_elapsed(), lf.tag().microstep}")
+        self.logger.info(f"Variables: {self.getState()}")
+    =}
+}
+
+main reactor{
+    fmu_test = new Test(name = "bouncingBall", _time_step = 100)
+
+    reaction(startup) -> fmu_test.request{=
+        msg = SimulationMessageBuilder()\
+            .with_sender("tester")\
+            .with_target("bouncingBall")\
+            .with_operation(Operation.get_enum().SIMULATE)\
+            .with_args([])\
+            .build()
+        fmu_test.request.set(msg)
+    =}
+}

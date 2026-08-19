@@ -1,25 +1,32 @@
 time_precision: NSECS
 logging_level: INFO
 reactors:
-  bus:
+  frost_link:
     logging_level: WARNING
     parameters:
-      data_model_path: "resources/common/data_model/bus.yml"
+      data_model_path: "resources/data_model/test_frost_reactor/link.yml"
     reactors:
       message_filter:
         logging_level: WARNING
   device_1:
     logging_level: INFO
+    parameters:
+      data_model_path: "resources/data_model/test_frost_reactor/device_1.yml"
+      peer: "device_2"
     reactors:
       message_filter:
         logging_level: WARNING
   device_2:
     logging_level: INFO
+    parameters:
+      data_model_path: "resources/data_model/test_frost_reactor/device_2.yml"
     reactors:
       message_filter:
         logging_level: WARNING
   device_3:
     logging_level: INFO
+    parameters:
+      data_model_path: "resources/data_model/test_frost_reactor/device_3.yml"
     reactors:
       message_filter:
         logging_level: WARNING

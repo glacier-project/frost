@@ -5,6 +5,7 @@ import yaml
 import os 
 import sys
 import importlib
+import time
 
 for file in os.listdir(os.path.dirname(__file__)):
     if file.startswith("LinguaFranca") and file.endswith(".so"):
@@ -15,6 +16,7 @@ for file in os.listdir(os.path.dirname(__file__)):
 from time_utils import TimePrecision, convert_time_float, convert_time
 from l_formatter import LFormatter    
 from machine_data_model.protocols.frost_v1.frost_message import FrostMessage
+from machine_data_model.protocols.frost_v1.frost_message_builder import FrostMessageBuilder
 from machine_data_model.protocols.frost_v1.frost_header import MsgType, MsgNamespace, ProtocolMsgName, FrostHeader, MethodMsgName, VariableMsgName
 from machine_data_model.protocols.frost_v1.frost_payload import VariablePayload, ProtocolPayload, MethodPayload, ErrorPayload, SubscriptionPayload, ErrorMessages, ErrorCode
 from machine_data_model.protocols.frost_v1.frost_protocol_mng import FrostProtocolMng
@@ -24,7 +26,15 @@ from machine_data_model.nodes.method_node import MethodNode, AsyncMethodNode
 from machine_data_model.nodes.composite_method.composite_method_node import CompositeMethodNode
 from machine_data_model.nodes.variable_node import NumericalVariableNode, StringVariableNode, BooleanVariableNode, ObjectVariableNode
 from machine_data_model.nodes.folder_node import FolderNode
-
+from machine_data_model.utils.timestamp import set_timestamp_provider
+from machine_data_model.nodes.subscription.variable_subscription import VariableSubscription, DataChangeSubscription, RangeSubscription
+from simulation_message import SimulationMessageBuilder
+from simulation_message import SimulationMessage
+from simulation_message_handler import SimulationMessageHandler
+from operation import Operation
+from orchestrator import OrchestratorStepper
+from fmpy import read_model_description, extract
+from fmpy.fmi3 import FMU3Slave
 
 # load configuration file
 FROST_CONFIG = os.environ.get("FROST_CONFIG", "resources/frost_config.yml")
@@ -44,12 +54,16 @@ LOGGING_LEVEL = FROST_CONFIG["logging_level"].upper()
 
 # setup logging
 handler = logging.StreamHandler()
-handler.setFormatter(LFormatter(base_module.time.logical_elapsed, TIME_PRECISION))
+handler.setFormatter(LFormatter(base_module.time.physical_elapsed, TIME_PRECISION))
 logger = logging.getLogger()
 logger.setLevel(LOGGING_LEVEL)
 # Add the handler only if it hasn't been added yet
 if not any(isinstance(h, logging.StreamHandler) for h in logger.handlers):
     logger.addHandler(handler)
+
+# Setup timestamp callback 
+timestamp_ns = time.time_ns()
+set_timestamp_provider(lambda: timestamp_ns + base_module.time.physical_elapsed())
 
 def is_target_valid(message: tuple[int, FrostMessage], target: str) -> bool:
     """Check if the target of the message matches the given target.

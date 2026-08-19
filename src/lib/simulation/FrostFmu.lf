@@ -1,0 +1,58 @@
+target Python
+
+import SimModel from "SimModel.lf"
+
+
+reactor FrostFmu(file_path = "") extends SimModel{
+
+    preamble{=
+        import fmpy
+        import fmpy.fmi3 as fmi
+    =}
+
+    state path = file_path
+    state time_step = {=self._time_step=}
+    state fmu
+    state fmu_time = 0.0
+    state unzipdir
+    state model_description
+    state vars = []
+
+    method simulate(args){=
+        assert self.fmu != None, "FMU is not present"
+        self.fmu.doStep(currentCommunicationPoint = self.fmu_time, communicationStepSize = self.time_step)
+        self.fmu_time += self.time_step
+        self.logger.info(f"FMU simulated to time {self.fmu_time}")
+        return True
+    =}
+
+    // @label _initialize_fmu
+    reaction(startup){=
+        '''
+        Initialize the FMU by extracting it, reading the model description and schedule the first step.
+        '''
+        self.simulation_handler.register_handler(Operation.get_enum().SIMULATE, self.simulate)
+        self.unzipdir = self.fmpy.extract(self.path)
+        self.model_description = self.fmpy.read_model_description(self.unzipdir)
+        self.fmu = self.fmpy.instantiate_fmu(self.unzipdir, self.model_description)
+        self.fmu.enterInitializationMode()
+        self.fmu.exitInitializationMode()
+        for variable in self.model_description.modelVariables:
+            self.vars.append(variable.valueReference)
+        self.logger.info(f"Initialized FMU from {self.path} at time {self.fmu_time}")
+    =}
+
+    // @label _shutdown_fmu
+    reaction(shutdown){=
+        '''
+        Free the FMU instance and clean up resources.
+        '''
+        if self.fmu is None:
+            return 0
+
+        self.logger.info(f"Shutting down FMU at time {self.fmu_time}")
+        self.fmu.terminate()
+        self.fmu.freeInstance()
+        self.fmu = None          
+    =}
+}

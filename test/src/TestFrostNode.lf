@@ -1,0 +1,71 @@
+target Python{
+    fast: true,
+    timeout: 1 h
+}
+
+import FrostInterface from "../../src/lib/FrostInterface.lf"
+import FrostNode from "../../src/lib/FrostNode.lf"
+import FrostBase from "../../src/lib/FrostBase.lf"
+
+preamble{=
+    import uuid
+    from frost import *
+=}
+
+# A minimal node: it combines the data-model mixin (FrostNode) with the
+# communication interface (FrostInterface) and answers data-model requests.
+# This is the smallest reactor that exercises FrostNode directly, without the
+# FrostLink connection logic of FrostReactor.
+reactor Node extends FrostInterface, FrostNode{
+    // @label _answer_requests
+    reaction (request_messages) -> channel_out{=
+        for bank_index, message in request_messages.value:
+            self.logger.info(f"{self._get_reactor_name()} handling request: {message.header.msg_name}")
+            response = self.protocol_mng.handle_message(message)
+            if response is not None:
+                self._set_output_port(response, channel_out[bank_index])
+    =}
+}
+
+main reactor extends FrostBase{
+    node = new Node(name="test_node", width=1)
+    state got_response = False
+    logical action send
+
+    reaction (startup) -> send{=
+        send.schedule(SEC(1))
+    =}
+
+    reaction (send) -> node.channel_in{=
+        # Read the node's counter variable.
+        message = FrostMessage(
+            sender="main",
+            target="test_node",
+            identifier=str(uuid.uuid4()),
+            header=FrostHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.VARIABLE,
+                msg_name=VariableMsgName.READ,
+            ),
+            payload=VariablePayload(node="Machine/counter"),
+        )
+        self._set_output_port(message, node.channel_in)
+    =}
+
+    reaction (node.channel_out){=
+        for bank_index, messages in self._get_input_values(node.channel_out):
+            for message in messages:
+                self.logger.info(f"main received response: {message.header.msg_name} {message.payload}")
+                if message.header.namespace == MsgNamespace.VARIABLE and message.header.msg_name == VariableMsgName.READ:
+                    assert message.header.type == MsgType.RESPONSE, "Expected a READ response"
+                    assert message.payload.value == 0, f"Expected counter 0, got {message.payload.value}"
+                    self.got_response = True
+                    lf.request_stop()
+    =}
+
+    reaction (shutdown){=
+        if not self.got_response:
+            raise Exception("main never received a data-model response from the node.")
+    =}
+}

@@ -1,0 +1,14 @@
+name: "sink"
+machine_category: "unknown"
+machine_type: "unknown"
+machine_model: "unknown"
+description: ""
+root:
+  !!FolderNode
+  name: "Machine"
+  description: ""
+  children:
+    - !!BooleanVariableNode
+      name: "ready"
+      description: ""
+      initial_value: false

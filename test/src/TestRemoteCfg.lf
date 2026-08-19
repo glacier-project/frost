@@ -3,8 +3,7 @@ target Python{
     timeout: 1 h 
 }
 
-import FrostMachine from "../../src/lib/FrostMachine.lf"
-import FrostBus from "../../src/lib/FrostBus.lf"
+import FrostLink from "../../src/lib/FrostLink.lf"
 import FrostReactor from "../../src/lib/FrostReactor.lf"
 
 preamble{=
@@ -16,31 +15,30 @@ reactor Tester extends FrostReactor{
 
     state correlation_id
     state response_received = False
+    logical action wait_conn
 
-    method create_method_request(s, t, method_path, args, kwargs){=
+    reaction(startup) -> wait_conn{=
+        self.message_builder = FrostMessageBuilder(
+            sender="tester",
+            protocol_version=(1,0,0)
+        )
+        wait_conn.schedule(0)
+    =}
 
-        return FrostMessage(
-            sender=s,
+    method create_method_request(t, method_path, args, kwargs){=
+        return self.message_builder.build_invoke_method_message(
             target=t,
-            identifier=str(uuid.uuid4()),
-            header=FrostHeader(
-                type=MsgType.REQUEST,
-                version=(1, 0, 0),
-                namespace=MsgNamespace.METHOD,
-                msg_name=MethodMsgName.INVOKE,
-            ),
-            payload=MethodPayload(
-                node=method_path,
-                args=args,
-                kwargs=kwargs
-            )
+            node=method_path,
+            args=args,
+            kwargs=kwargs
         )
     =}
 
-    reaction(connected_to_bus) -> channel_out{=
-
+    reaction(wait_conn) -> wait_conn, channel_out{=
+        if not self.connected:
+            wait_conn.schedule(MSEC(100))
+            return 0
         msg = self.create_method_request(
-            s="tester",
             t="machine",
             method_path="Machine/RemoteProduct",
             args=[5],
@@ -50,8 +48,8 @@ reactor Tester extends FrostReactor{
         self._set_channel_out_port(msg, channel_out)
     =}
 
-    reaction(message_filter.responses) {=
-        for bank_index, message in message_filter.responses.value:
+    reaction(response_messages) {=
+        for bank_index, message in response_messages.value:
 
             if message.correlation_id != self.correlation_id or message.header.msg_name == MethodMsgName.STARTED:
                 continue
@@ -67,11 +65,11 @@ reactor Tester extends FrostReactor{
     =}
 }
 
-reactor Machine extends FrostMachine{
-    
+reactor Machine extends FrostReactor{
+
 }
 
-reactor RemoteMachine extends FrostMachine{
+reactor RemoteMachine extends FrostReactor{
 
     state remote_variable
     state remote_product
@@ -104,11 +102,11 @@ reactor RemoteMachine extends FrostMachine{
 }
 
 main reactor{
-    m = new Machine(name="machine")   
+    m = new Machine(name="machine")
     t = new Tester(name="tester")
     remote_m = new RemoteMachine(name="remote_machine")
-    bus = new FrostBus(name="bus", width=3)
+    link = new FrostLink(name="frost_link", width=3)
 
-    m.channel_out, t.channel_out, remote_m.channel_out -> bus.channel_in
-    bus.channel_out -> m.channel_in, t.channel_in, remote_m.channel_in after 0
+    m.channel_out, t.channel_out, remote_m.channel_out -> link.channel_in
+    link.channel_out -> m.channel_in, t.channel_in, remote_m.channel_in after 0
 }

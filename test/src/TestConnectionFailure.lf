@@ -1,0 +1,57 @@
+target Python{
+    fast: true,
+    timeout: 1 h
+}
+
+import FrostReactor from "../../src/lib/FrostReactor.lf"
+import FrostBase from "../../src/lib/FrostBase.lf"
+
+preamble{=
+    import uuid
+    from frost import *
+=}
+
+# A passive sink: it receives whatever the lonely reactor sends but never
+# answers. There is no FrostLink and no responder, so the lonely reactor's
+# registration attempts go unanswered.
+reactor Sink(width = 1) extends FrostBase{
+    input[width] channel_in
+    output[width] channel_out
+
+    reaction (channel_in){=
+        # Drop everything; never reply.
+        pass
+    =}
+}
+
+# A FrostReactor with no reachable link. It should retry registration up to
+# the attempt cap, never become connected, and shut down cleanly (no hang,
+# no exception) once the stop_after timer stops the program.
+reactor Lonely extends FrostReactor{
+    timer stop_after(20 sec)
+
+    reaction (stop_after){=
+        self.logger.info(f"{self._get_reactor_name()} attempts={self.connection_attempts}, connected={self.connected}")
+        lf.request_stop()
+    =}
+
+    reaction (shutdown){=
+        if self.connected:
+            raise Exception(f"{self._get_reactor_name()} should not be connected without a link.")
+        # With an unanswered port, discovery retries up to the attempt cap.
+        if self.connection_attempts < 10:
+            raise Exception(
+                f"{self._get_reactor_name()} expected to exhaust the retry cap, "
+                f"made only {self.connection_attempts}."
+            )
+        self.logger.info(f"{self._get_reactor_name()} correctly gave up after {self.connection_attempts} attempts.")
+    =}
+}
+
+main reactor{
+    lonely = new Lonely(name="lonely")
+    sink = new Sink(width=1)
+
+    lonely.channel_out -> sink.channel_in
+    sink.channel_out -> lonely.channel_in
+}

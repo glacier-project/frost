@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-message: "If you use Frost, please cite it as below."
+message: "If you use Frost, please consider citing the papers listed below."
 type: software
 title: "Frost: A Simulation Platform for Early Validation and Testing of Manufacturing Software"
 authors:
@@ -18,6 +18,8 @@ authors:
 repository-code: "https://github.com/glacier-project/frost"
 url: "https://glacier-project.github.io/glacier-website/"
 license: BSD-2-Clause
+version: 1.1.0
+date-released: "2026-08-19"
 preferred-citation:
   type: conference-paper
   title: "Frost: A Simulation Platform for Early Validation and Testing of Manufacturing Software"
@@ -43,3 +45,26 @@ preferred-citation:
   year: 2025
   publisher:
     name: "IEEE"
+references:
+  - type: conference-paper
+    title: "Distributed Control Logic Validation through Lingua Franca"
+    authors:
+      - family-names: "Turco"
+        given-names: "Pietro"
+      - family-names: "Gaiardelli"
+        given-names: "Sebastiano"
+      - family-names: "Fraccaroli"
+        given-names: "Enrico"
+      - family-names: "Cheng"
+        given-names: "Dong Seon"
+      - family-names: "Lora"
+        given-names: "Michele"
+      - family-names: "Fummi"
+        given-names: "Franco"
+    collection-title: "2026 IEEE 24th International Conference on Industrial Informatics (INDIN)"
+    conference:
+      name: "IEEE International Conference on Industrial Informatics"
+      acronym: "INDIN"
+    year: 2026
+    publisher:
+      name: "IEEE"

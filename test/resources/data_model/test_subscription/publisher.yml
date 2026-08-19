@@ -1,0 +1,14 @@
+name: "publisher"
+machine_category: "unknown"
+machine_type: "unknown"
+machine_model: "unknown"
+description: ""
+root:
+  !!FolderNode
+  name: "Machine"
+  description: ""
+  children:
+    - !!NumericalVariableNode
+      name: "temperature"
+      description: ""
+      initial_value: 20

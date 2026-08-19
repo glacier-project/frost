@@ -1,0 +1,59 @@
+target Python{
+    fast: true,
+    timeout: 1 h
+}
+
+import FrostReactor from "../../src/lib/FrostReactor.lf"
+
+preamble{=
+    import uuid
+    from frost import *
+=}
+
+reactor Device extends FrostReactor{
+    '''
+    A device that explores its neighbourhood and asserts it discovered the
+    expected number of neighbours. `expected_neighbours` is provided through
+    the configuration file (parameters.expected_neighbours).
+    '''
+    state expected_neighbours = 0
+    logical action check_neighbours
+
+    reaction (startup) -> check_neighbours{=
+        check_neighbours.schedule(SEC(2))
+    =}
+
+    # Poll until this device has discovered all of its expected neighbours.
+    # Polling (rather than a single check) avoids a race where one device
+    # would request stop before its peers have processed the discovery
+    # replies. Stop is requested only once every expectation is satisfied.
+    reaction (check_neighbours) -> check_neighbours{=
+        self.logger.info(f"{self._get_reactor_name()} discovered neighbours: {self.targets}")
+        if len(self.targets) >= self.expected_neighbours:
+            lf.request_stop()
+            return 0
+        check_neighbours.schedule(SEC(1))
+    =}
+
+    reaction (shutdown){=
+        if len(self.targets) < self.expected_neighbours:
+            raise Exception(
+                f"{self._get_reactor_name()} expected {self.expected_neighbours} "
+                f"neighbours but discovered {len(self.targets)}: {self.targets}"
+            )
+        self.logger.info(f"{self._get_reactor_name()} shutting down with neighbours {self.targets}.")
+    =}
+}
+
+# Topology: a star around device_a. device_a (width 2) is wired directly to
+# device_b and device_c. There is no FrostLink, so the only communication
+# path is neighbour discovery. device_a should discover both peers; each
+# leaf should discover device_a.
+main reactor{
+    device_a = new Device(name="device_a", width=2)
+    device_b = new Device(name="device_b", width=1)
+    device_c = new Device(name="device_c", width=1)
+
+    device_a.channel_out -> device_b.channel_in, device_c.channel_in after 0
+    device_b.channel_out, device_c.channel_out -> device_a.channel_in
+}
