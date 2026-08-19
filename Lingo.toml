@@ -13,3 +13,5 @@ target = "Python"
 platform = "Native"
 
 [lib.properties]
+
+[dependencies]
