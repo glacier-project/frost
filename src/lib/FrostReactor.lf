@@ -1,25 +1,296 @@
 target Python
 
+import FrostInterface from "FrostInterface.lf"
+import FrostNode from "FrostNode.lf"
 
-reactor FrostReactor(model_path = "", width = 1){
-    input[width]  channel_in
-    output[width] channel_out
+reactor FrostReactor(_update_step = 1000 msec) extends FrostInterface, FrostNode{
+    '''
+    Base reactor for active Frost components.
 
-    state logger
-    state path = model_path
-    state data_model = {= DataModelBuilder().get_data_model(self.path) =}
-    state name = {= self.data_model.name =}
-    state protocol_mng = {= FrostProtocolMng(self.data_model) =}
-    state message_queue = {= [FrostMessage] =}
+    FrostReactor combines a data model (FrostNode) with the communication
+    interface (FrostInterface). It connects to the FrostLink to exchange
+    messages with the rest of the network, and, in parallel, explores its
+    direct targets: it broadcasts registration messages on every
+    output channel, records the targets that answer, and can deliver
+    messages to a target directly without going through the link.
 
+    Args:
+        _update_step (time): The time step for periodic data-model updates.
+    Attributes:
+        connected (bool): Whether the reactor is connected to the FrostLink.
+        number_of_attempts (int): Number of FrostLink connection attempts made.
+        targets (dict): Map of target name -> output port index.
+    '''
 
-    reaction(startup)-> channel_out{=
+    state update_step = _update_step
+
+    state connected = False
+    state connection_attempts = 0
+
+    method _target_target(){=
         '''
-        Initialize the model and internal variables
-        Send an initial registered_to_bus message to the bus
+        Return the target marker for target-discovery registration
+        messages. A PROTOCOL.REGISTER addressed to this marker is a
+        targets exploration broadcast rather than a FrostLink
+        registration.
         '''
-        self.message_queue = []
-        self.logger = logging.getLogger(self.name)
+        return "__target__"
     =}
 
+    // @override
+    method _set_output_multiport(messages, output_port, exclude){=
+        '''
+        Route messages to their target.
+
+        A message is delivered directly to a target that is a known
+        target; otherwise it is sent to the FrostLink (index 0) when the
+        reactor is connected to it, or to an explicitly registered target.
+
+        Args:
+            messages (list): FrostMessage(s) to route.
+            output_port (output): The output multiport to route through.
+        '''
+        assert output_port.width > 0, f"Invalid output multiport {output_port} with width {output_port.width}."
+
+        if not isinstance(messages, list):
+            messages = [messages]
+
+        for message in messages:
+            if message.target in self.targets:
+                bank_index = self.targets[message.target]
+            elif "frost_link" in self.targets:
+                bank_index = self.targets["frost_link"]
+            else:
+                self.logger.error(f"Destination {message.target} not registered in targets {self.targets}. Skipping message: {message}")
+                continue
+
+            self.logger.debug(f"Setting output multiport for bank index {bank_index} with message: {message}")
+            self._set_output_port(message, output_port[bank_index])
+    =}
+
+    # ----------------------------------------------------------------------
+    # FrostLink connection
+    # ----------------------------------------------------------------------
+
+    method _create_registration_message(target_name){=
+        '''
+        Create a protocol registration message for the given target.
+
+        Args:
+            target_name (str): The target of the registration message.
+        Returns:
+            FrostMessage: The registration request message.
+        '''
+        return self.message_builder.build_protocol_register_message(target=target_name)
+    =}
+
+    method _get_unexplored_target(channel_out){=
+        '''
+        Return the name of a target that has not yet been explored.
+
+        Returns:
+            str: The name of an unexplored target, or [] if all have been explored.
+        '''
+        l = []
+        for index, port in enumerate(channel_out):
+            if index not in self.targets.values():
+                l.append(index)
+        return l
+    =}
+
+    method _validate_targets(channel_out){=
+        '''
+        Mark the reactor as connected to the link.
+
+        Args:
+            bank_index (int): The index the response arrived on.
+            message (FrostMessage): The registration response message.
+        Returns:
+            bool: True once connected.
+        '''
+        if self._get_unexplored_target(channel_out) != []:
+            return False
+        self.connected = True
+        return True
+    =}
+
+    # ----------------------------------------------------------------------
+    # targets discovery (parallel to the FrostLink)
+    # ----------------------------------------------------------------------
+    logical action check_targets
+    logical action explore_targets
+
+    // @label _explore_targets
+    reaction(startup) -> channel_out, check_targets, explore_targets{=
+        '''
+        Broadcast a target-registration message on every output channel
+        and start the FrostLink connection procedure.
+
+        Args:
+            startup (input): The initialization event.
+        Returns:
+            channel_out (output): Broadcast registration target.
+            connect_to_link (logical action): Triggers link connection.
+        '''
+        self.logger.info(f"Initializing FrostReactor: {self._get_reactor_name()}")
+
+        check_targets.schedule(0)
+        explore_targets.schedule(0)
+    =}
+
+    reaction(explore_targets) -> channel_out, check_targets{=
+        '''
+        Broadcast a target-registration message on every output channel
+        and schedule the next exploration.
+
+        Args:
+            check_targets (logical action): Triggers target exploration.
+        Returns:
+            channel_out (output): Broadcast registration target.
+            check_targets (logical action): Triggers next exploration.
+        '''
+        send = False
+        for index in self._get_unexplored_target(channel_out):
+            self._set_output_port( self._create_registration_message( self._target_target()), channel_out[index])   
+            send = True
+        if send:
+            check_targets.schedule(self.update_step)
+    =}
+
+    reaction(check_targets) -> channel_out, explore_targets{=
+        '''
+        Broadcast a target-registration message on every output channel
+        and schedule the next exploration.
+
+        Args:
+            check_targets (logical action): Triggers target exploration.
+        Returns:
+            channel_out (output): Broadcast registration target.
+            check_targets (logical action): Triggers next exploration.
+        '''
+        if self._validate_targets(channel_out):
+            self.logger.info(f"targets discovery completed. targets: {self.targets}")
+            return 0
+        else:
+            self.logger.info(f"targets discovery in progress. targets: {self.targets}")
+            self.connection_attempts += 1
+            if self.connection_attempts > 10:
+                self.logger.warning(f"targets discovery has failed after {self.connection_attempts} attempts. targets: {self.targets}")
+                return 0
+            else:
+                explore_targets.schedule(self.update_step)
+    =}
+
+    // @label _handle_target_messages
+    reaction(message_filter.discarded_messages) -> channel_out{=
+        '''
+        Handle target-discovery messages, which the message filter
+        discards because they are addressed to the target marker rather
+        than to this reactor.
+
+        A REQUEST records the sender as a target and is acknowledged on
+        the same port so discovery is bidirectional; a RESPONSE records the
+        target that answered our own broadcast. Discarded messages that
+        are not target registrations are ignored.
+
+        Args:
+            message_filter.discarded_messages (input): Filtered-out messages.
+        Returns:
+            channel_out (output): Port for target acknowledgements.
+        '''
+        if not message_filter.discarded_messages.value:
+            return 0
+
+        for bank_index, message in message_filter.discarded_messages.value:
+            if message.header.namespace != MsgNamespace.PROTOCOL or message.header.msg_name != ProtocolMsgName.REGISTER:
+                continue
+
+            if message.sender not in self.targets:
+                self.targets[message.sender] = bank_index
+                self.logger.info(f"Discovered target {message.sender} on port {bank_index}.")
+            else:
+                assert bank_index == self.targets[message.sender], f"target {message.sender} is registered on bank {self.targets[message.sender]} but message arrived on bank {bank_index}."
+
+            if message.header.type == MsgType.REQUEST:
+                response = self.message_builder.build_protocol_register_response_message(
+                    target=message.sender,
+                    correlation_id=message.correlation_id
+                )
+                self._set_output_port(response, channel_out[bank_index])
+    =}
+
+    # ----------------------------------------------------------------------
+    # Data-model message handling
+    # ----------------------------------------------------------------------
+
+    // @label _process_data_model_requests
+    reaction (request_messages) -> channel_out, new_method_request {=
+        '''
+        Handle data-model request messages and reply to the requester.
+
+        Args:
+            request_messages (logical action): Data-model requests.
+        Returns:
+            channel_out (output): Port for responses.
+            new_method_request (logical action): Queued blocking method calls.
+        '''
+        method_queue = []
+        method_action_scheduled = False
+        for bank_index, message in request_messages.value:
+            self.logger.debug(f"Handling data model request: {message}")
+
+            if message.header.namespace == MsgNamespace.METHOD and message.header.msg_name == MethodMsgName.INVOKE:
+                method_node = self.data_model.get_node(message.payload.node)
+
+                if type(method_node) == MethodNode and not (isinstance(method_node, AsyncMethodNode) or isinstance(method_node, CompositeMethodNode)):
+                    method_queue.append((bank_index, message))
+                    method_action_scheduled = True
+                    continue
+
+            # TODO: Handle other request types here!
+            response = self.protocol_mng.handle_message(message)
+            assert response is not None, f"Response is None for message: {message}"
+            self._set_channel_out_port(response, channel_out)
+
+        if method_action_scheduled:
+            new_method_request.schedule(NSEC(0), method_queue)
+    =}
+
+    // @label _process_data_model_responses
+    reaction(response_messages) -> channel_out{=
+        '''
+        Handle data-model response messages.
+
+        Args:
+            response_messages (logical action): Data-model responses.
+        Returns:
+            channel_out (output): Port for any follow-up messages.
+        '''
+        for bank_index, message in response_messages.value:
+            self.logger.debug(f"Handling data model response: {message}")
+            response = self.protocol_mng.handle_message(message)
+
+            if response is None:
+                continue
+
+            self._set_channel_out_port(response, channel_out)
+    =}
+
+    // @label _send_data_model_updates
+    reaction (check_update) -> channel_out{=
+        '''
+        Send pending data-model updates to subscribers.
+
+        Args:
+            check_update (timer): Triggers the periodic update check.
+        Returns:
+            channel_out (output): Port for update messages.
+        '''
+        update_messages = list(self.protocol_mng.get_update_messages())
+        if not update_messages:
+            return 0
+
+        self._set_channel_out_port(update_messages, channel_out)
+        self.protocol_mng.clear_update_messages()
+    =}
 }

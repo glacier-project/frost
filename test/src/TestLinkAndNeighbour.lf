@@ -1,0 +1,95 @@
+target Python{
+    fast: true,
+    timeout: 1 h
+}
+
+import FrostLink from "../../src/lib/FrostLink.lf"
+import FrostReactor from "../../src/lib/FrostReactor.lf"
+
+preamble{=
+    import uuid
+    from frost import *
+=}
+
+# Both reactors are wired to a FrostLink (port 0) AND directly to each other
+# (port 1). The link runs in parallel with the direct neighbour wire. Because
+# FrostReactor routes to a known neighbour directly (taking precedence over the
+# link), a message addressed to the peer must travel the direct wire, not be
+# routed by the link. The test verifies the peer receives the write and that
+# the link never routed an application message between the two.
+reactor Device(_peer = "") extends FrostReactor{
+    state peer = ""              # set from config
+    state sent = False
+    state got_write = False
+    logical action go
+    logical action wait_conn
+
+    reaction (startup) -> wait_conn{=
+        wait_conn.schedule(0)
+    =}
+
+    reaction (wait_conn) -> wait_conn, go{=
+        if not self.connected:
+            wait_conn.schedule(MSEC(100))
+            return 0
+        go.schedule(SEC(2))   # let neighbour discovery settle
+    =}
+
+    reaction (go) -> go, channel_out{=
+        if not self.peer:
+            return 0
+        if self.peer not in self.targets:
+            self.logger.info(f"{self._get_reactor_name()} waiting to discover neighbour {self.peer}...")
+            go.schedule(SEC(1))
+            return 0
+        self.logger.info(f"{self._get_reactor_name()} targets={self.targets}; sending direct write to {self.peer}.")
+        self._set_channel_out_port(
+            self.message_builder.build_write_variable_message(
+                target=self.peer, node="Machine/counter", value=42),
+            channel_out)
+        self.sent = True
+    =}
+
+    reaction (request_messages){=
+        for bank_index, message in request_messages.value:
+            if message.header.namespace == MsgNamespace.VARIABLE and message.header.msg_name == VariableMsgName.WRITE:
+                self.logger.info(f"{self._get_reactor_name()} received WRITE from {message.sender} on port {bank_index}.")
+                self.got_write = True
+                lf.request_stop()
+    =}
+
+    reaction (shutdown){=
+        if self.peer and not self.sent:
+            raise Exception(f"{self._get_reactor_name()} never sent (peer {self.peer} not discovered).")
+    =}
+}
+
+# The link asserts that it is never asked to route an application (VARIABLE)
+# message between the two devices: those must take the direct neighbour path.
+reactor ObservingLink extends FrostLink{
+    reaction (request_messages){=
+        for bank_index, message in request_messages.value:
+            if message.header.namespace == MsgNamespace.VARIABLE:
+                raise Exception(
+                    f"FrostLink received an application message it should not route "
+                    f"(neighbour path expected): {message.sender}->{message.target}"
+                )
+    =}
+}
+
+# device_a (width 2): port 0 faces the link, port 1 is a direct wire to
+# device_b. device_b (width 1) is wired ONLY to device_a and never joins the
+# link. device_a still becomes connected (the link acks its registration).
+# device_a therefore knows device_b as a directly wired target, so its write
+# to device_b must take the direct wire; the link (which asserts it never
+# routes a VARIABLE message) confirms the direct path was used.
+main reactor{
+    device_a = new Device(name="device_a", width=2)
+    device_b = new Device(name="device_b", width=1)
+    link = new ObservingLink(name="frost_link", width=1)
+
+    # a.out[0] -> link, a.out[1] -> device_b (flattened left-to-right).
+    device_a.channel_out -> link.channel_in, device_b.channel_in after 0
+    # link -> a.in[0], device_b -> a.in[1].
+    link.channel_out, device_b.channel_out -> device_a.channel_in after 0
+}

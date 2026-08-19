@@ -1,0 +1,76 @@
+target Python{
+    fast: true,
+    timeout: 1 h
+}
+
+import FrostReactor from "../../src/lib/FrostReactor.lf"
+
+preamble{=
+    import uuid
+    from frost import *
+=}
+
+# A sender that, once it has discovered the receiver as a neighbour, sends an
+# application message (a variable write) directly to it - without any
+# FrostLink in between. This exercises the neighbour communication path that
+# runs in parallel to the FrostLink.
+reactor Sender extends FrostReactor{
+    # `peer` is provided through the configuration file (parameters.peer).
+    state peer = ""
+    state message_sent = False
+    logical action try_send
+
+    reaction (startup) -> try_send{=
+        try_send.schedule(SEC(2))
+    =}
+
+    reaction (try_send) -> try_send, channel_out{=
+        if self.peer in self.targets:
+            self.logger.info(f"{self._get_reactor_name()} sending a write to neighbour {self.peer}.")
+            message = self.message_builder.build_write_variable_message(
+                target=self.peer,
+                node="Machine/counter",
+                value=42,
+            )
+            self._set_channel_out_port(message, channel_out)
+            self.message_sent = True
+            return 0
+        self.logger.info(f"{self._get_reactor_name()} waiting to discover neighbour {self.peer}...")
+        try_send.schedule(SEC(1))
+    =}
+
+    reaction (shutdown){=
+        if not self.message_sent:
+            raise Exception(f"{self._get_reactor_name()} never discovered neighbour {self.peer} to send to.")
+    =}
+}
+
+# A receiver that records when it processes an application request that came
+# directly from a neighbour (not via a link).
+reactor Receiver extends FrostReactor{
+    state received_write = False
+
+    // @label observe_writes
+    reaction (request_messages){=
+        for bank_index, message in request_messages.value:
+            if message.header.namespace == MsgNamespace.VARIABLE and message.header.msg_name == VariableMsgName.WRITE:
+                self.logger.info(f"{self._get_reactor_name()} received a direct write from {message.sender}: {message.payload}")
+                self.received_write = True
+                lf.request_stop()
+    =}
+
+    reaction (shutdown){=
+        if not self.received_write:
+            raise Exception(f"{self._get_reactor_name()} never received a direct neighbour write.")
+        self.logger.info(f"{self._get_reactor_name()} shutting down after receiving a direct neighbour write.")
+    =}
+}
+
+# No FrostLink: the sender and receiver are wired directly to each other.
+main reactor{
+    sender = new Sender(name="sender")
+    receiver = new Receiver(name="receiver")
+
+    sender.channel_out -> receiver.channel_in after 0
+    receiver.channel_out -> sender.channel_in
+}

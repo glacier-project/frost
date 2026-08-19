@@ -1,0 +1,66 @@
+{
+    "jobs": [
+        {
+            "id": "0fcbfb28-bdf0-4650-9eec-5e9c7dd20d64",
+            "name": "J_0",
+            "tasks": [
+                {
+                    "id": "7c50eca4-bbf2-4328-807b-9fb74759f5db",
+                    "name": "StartTask1",
+                    "processing_time": 7,
+                    "requires": [
+                        "capability_2"
+                    ],
+                    "priority": 5
+                },
+                {
+                    "id": "efd468fd-67c9-4e7a-a683-cd3c951547ce",
+                    "name": "StartTask2",
+                    "processing_time": 5,
+                    "requires": [
+                        "capability_1"
+                    ]
+                },
+                {
+                    "id": "7cc1b280-214a-42cc-a660-151b19dc714f",
+                    "name": "StartTask3",
+                    "processing_time": 10,
+                    "dependencies": [
+                        "efd468fd-67c9-4e7a-a683-cd3c951547ce",
+                        "7c50eca4-bbf2-4328-807b-9fb74759f5db"
+                    ],
+                    "requires": [
+                        "capability_3"
+                    ],
+                    "priority": 4
+                }
+            ],
+            "priority": 3,
+            "due_date": 1405
+        }
+    ],
+    "machines": [
+        {
+            "id": "46652334-df31-4524-a6cc-0fbbd523002a",
+            "name": "machine_1",
+            "capabilities": [
+                "capability_1", "capability_2", "capability_3"
+            ]
+        },
+        {
+            "id": "dbb43f4b-d9ea-413c-9a7e-87a85632ed36",
+            "name": "machine_2",
+            "capabilities": [
+                "capability_1", "capability_2", "capability_3"
+            ]
+        }
+    ],
+    "travel_times": {
+        "46652334-df31-4524-a6cc-0fbbd523002a": {
+            "dbb43f4b-d9ea-413c-9a7e-87a85632ed36": 0
+        },
+        "dbb43f4b-d9ea-413c-9a7e-87a85632ed36": {
+            "46652334-df31-4524-a6cc-0fbbd523002a": 0
+        }
+    }
+}

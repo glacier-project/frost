@@ -1,0 +1,70 @@
+target Python{
+    fast: true,
+    timeout: 1 h
+}
+import FrostLink from "../../src/lib/FrostLink.lf"
+import FrostReactor from "../../src/lib/FrostReactor.lf"
+
+preamble{=
+    import uuid
+    from frost import *
+=}
+
+# A device that connects to the FrostLink and, once connected, sends a
+# variable write to a peer through the link. The test checks both that the
+# reactor reaches the connected state and that link-routed application
+# messages are delivered to the right peer.
+reactor Device extends FrostReactor{
+    # `peer` is provided through the configuration file (parameters.peer).
+    state peer = ""
+    state delivered_to_me = False
+    logical action tick
+    logical action wait_conn
+
+    reaction (startup) -> wait_conn{=
+        wait_conn.schedule(0)
+    =}
+
+    reaction (wait_conn) -> wait_conn, tick{=
+        if not self.connected:
+            wait_conn.schedule(MSEC(100))
+            return 0
+        self.logger.info(f"{self._get_reactor_name()} connected to the link.")
+        tick.schedule(SEC(1))
+    =}
+
+    reaction (tick) -> channel_out{=
+        if not self.peer:
+            return 0
+        message = self.message_builder.build_write_variable_message(
+            target=self.peer,
+            node="Machine/counter",
+            value=7,
+        )
+        self.logger.info(f"{self._get_reactor_name()} sending write to {self.peer} via link.")
+        self._set_channel_out_port(message, channel_out)
+    =}
+
+    reaction (request_messages){=
+        for bank_index, message in request_messages.value:
+            if message.header.namespace == MsgNamespace.VARIABLE and message.header.msg_name == VariableMsgName.WRITE:
+                self.logger.info(f"{self._get_reactor_name()} received link-routed write from {message.sender}.")
+                self.delivered_to_me = True
+                lf.request_stop()
+    =}
+
+    reaction (shutdown){=
+        if not self.connected:
+            raise Exception(f"{self._get_reactor_name()} failed to connect to the link.")
+    =}
+}
+
+main reactor{
+    device_1 = new Device(name="device_1")
+    device_2 = new Device(name="device_2")
+    device_3 = new Device(name="device_3")
+    link = new FrostLink(name="frost_link", width=3)
+
+    device_1.channel_out, device_2.channel_out, device_3.channel_out -> link.channel_in after 0
+    link.channel_out -> device_1.channel_in, device_2.channel_in, device_3.channel_in
+}

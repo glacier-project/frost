@@ -1,0 +1,25 @@
+time_precision: NSECS
+logging_level: INFO
+reactors:
+  frost_link:
+    logging_level: WARNING
+    parameters:
+      data_model_path: "resources/data_model/test_subscription/link.yml"
+    reactors:
+      message_filter:
+        logging_level: WARNING
+  publisher:
+    logging_level: INFO
+    parameters:
+      data_model_path: "resources/data_model/test_subscription/publisher.yml"
+    reactors:
+      message_filter:
+        logging_level: WARNING
+  subscriber:
+    logging_level: INFO
+    parameters:
+      data_model_path: "resources/data_model/test_subscription/subscriber.yml"
+      target_node: "publisher"
+    reactors:
+      message_filter:
+        logging_level: WARNING

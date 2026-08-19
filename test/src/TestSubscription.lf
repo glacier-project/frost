@@ -1,0 +1,84 @@
+target Python{
+    fast: true,
+    timeout: 1 h
+}
+
+import FrostLink from "../../src/lib/FrostLink.lf"
+import FrostReactor from "../../src/lib/FrostReactor.lf"
+
+preamble{=
+    import uuid
+    from frost import *
+=}
+
+# Publishes updates of its own "Machine/temperature" variable. Once connected
+# to the link it bumps the variable on a timer; FrostReactor's check_update
+# reaction turns the change into UPDATE messages for the subscribers.
+reactor Publisher extends FrostReactor{
+    timer bump(2 sec, 1 sec)
+    state temperature
+
+    reaction (startup){=
+        self.temperature = self.data_model.get_node("Machine/temperature")
+    =}
+
+    reaction (bump){=
+        if self.connected:
+            self.temperature.value += 1
+            self.logger.info(f"{self._get_reactor_name()} temperature -> {self.temperature.value}")
+    =}
+}
+
+# Subscribes to the publisher's temperature once connected and asserts it
+# receives at least one UPDATE carrying a value.
+reactor Subscriber extends FrostReactor{
+    # `target_node` is provided through the configuration file (parameters.target_node).
+    state target_node = ""
+    state subscribed = False
+    state update_received = False
+    logical action wait_conn
+
+    reaction (startup) -> wait_conn{=
+        wait_conn.schedule(0)
+    =}
+
+    reaction (wait_conn) -> wait_conn, channel_out{=
+        if not self.connected:
+            wait_conn.schedule(MSEC(100))
+            return 0
+        self.logger.info(f"{self._get_reactor_name()} subscribing to {self.target_node}/Machine/temperature.")
+        msg = self.message_builder.build_subscribe_variable_message(
+            target=self.target_node,
+            node="Machine/temperature",
+        )
+        self._set_channel_out_port(msg, channel_out)
+        self.subscribed = True
+    =}
+
+    // @label observe_updates
+    reaction (response_messages){=
+        for bank_index, message in response_messages.value:
+            if message.header.namespace == MsgNamespace.VARIABLE and message.header.msg_name == VariableMsgName.UPDATE:
+                self.logger.info(f"{self._get_reactor_name()} received UPDATE: {message.payload}")
+                assert message.payload.value is not None, "UPDATE carried no value"
+                self.update_received = True
+                lf.request_stop()
+    =}
+
+    reaction (shutdown){=
+        if not self.subscribed:
+            raise Exception(f"{self._get_reactor_name()} never subscribed.")
+        if not self.update_received:
+            raise Exception(f"{self._get_reactor_name()} never received a variable UPDATE.")
+        self.logger.info(f"{self._get_reactor_name()} shutting down after receiving an UPDATE.")
+    =}
+}
+
+main reactor{
+    publisher = new Publisher(name="publisher")
+    subscriber = new Subscriber(name="subscriber")  # target_node from config
+    link = new FrostLink(name="frost_link", width=2)
+
+    publisher.channel_out, subscriber.channel_out -> link.channel_in
+    link.channel_out -> publisher.channel_in, subscriber.channel_in after 0
+}

@@ -1,0 +1,127 @@
+target Python
+
+import FrostInterface from "FrostInterface.lf"
+import FrostNode from "FrostNode.lf"
+
+reactor FrostLink extends FrostInterface, FrostNode{
+    '''Reactor implementing a routing link for Frost components.
+
+    FrostLink is the message router of the Frost network. It registers the
+    components connected to it and forwards messages between them based on
+    their target.
+
+    Attributes:
+        routing_map (dict): A mapping of Frost component names to their
+            respective port index on the link.
+        link_node (DataModelNode): The node representing the FrostLink in the data model.
+        number_of_nodes (DataModelNode): The node tracking the number of registered nodes.
+        node_info_nodes (DataModelNode): The node containing information about each registered node.
+    '''
+
+    state routing_map
+    state link_node
+    state number_of_nodes
+    state node_info_nodes
+
+    // @label _initialize_frost_link
+    reaction(startup) {=
+        '''Initialize the FrostLink routing state.
+
+        Args:
+            startup (input): The event that triggers the initialization.
+        '''
+        self.routing_map = {}
+        self.link_node = self.data_model.get_node("FrostLink")
+        self.node_info_nodes = self.data_model.get_node("FrostLink/NodeInfo")
+        self.number_of_nodes = self.data_model.get_node("FrostLink/#Nodes")
+        self.number_of_nodes.value = 0
+    =}
+
+    // @override
+    method _set_channel_out_port(value, channel_out){=
+        '''Route a message (or list of messages) to the port of its target.
+
+        Args:
+            value: The message or list of messages to route.
+            channel_out (output): The channel_out multiport to route through.
+        '''
+        if not isinstance(value, list):
+            value = [value]
+        for message in value:
+            if message.target not in self.routing_map:
+                self.logger.warning(f"Cannot route message {message} to unknown target {message.target}.")
+                continue
+
+            index = self.routing_map[message.target]
+            self._set_output_port(message, channel_out[index])
+            self.logger.debug(f"FrostLink sent message {message} to target {message.target} at index {index}.")
+    =}
+
+    // @label _handle_discarded_messages
+    reaction(message_filter.discarded_messages) -> channel_out{=
+        '''Register broadcasting nodes and forward everything else.
+
+        With unified registration a node's REGISTER is addressed to the marker
+        "__target__", so the filter discards it and it surfaces here rather
+        than as a request to the link. Register the sender (like a neighbour
+        would) and acknowledge it; forward every other discarded message to
+        its target.
+
+        Args:
+            message_filter.discarded_messages (input): Messages not matching the filter.
+        Returns:
+            channel_out (output): The output port for acks and forwarded messages.
+        '''
+        if not message_filter.discarded_messages.value:
+            return 0
+
+        to_forward = []
+        for bank_index, message in message_filter.discarded_messages.value:
+            is_register = (
+                message.header.namespace == MsgNamespace.PROTOCOL
+                and message.header.msg_name == ProtocolMsgName.REGISTER
+                and message.header.type == MsgType.REQUEST
+            )
+            if is_register:
+                self._register_sender(bank_index, message, channel_out)
+                continue
+            to_forward.append(message)
+
+        if to_forward:
+            self.logger.debug(f"Forwarding discarded messages: {to_forward}")
+            self._set_channel_out_port(to_forward, channel_out)
+    =}
+
+    method _register_sender(bank_index, message, channel_out){=
+        '''Register a broadcasting node (once) and acknowledge on its port.
+
+        Args:
+            bank_index (int): The port the registration arrived on.
+            message (FrostMessage): The registration request.
+            channel_out (output): The output port for the acknowledgement.
+        '''
+        if message.sender in self.routing_map:
+            return
+
+        self.routing_map[message.sender] = bank_index
+
+        node_info = FolderNode(name = message.sender)
+        self.node_info_nodes.add_child(node_info)
+        node_info.add_child(
+            NumericalVariableNode(
+                name = "Index",
+                description = "Index of the node on the link",
+                value = bank_index,
+            )
+        )
+        self.logger.info(f"Frost component {message.sender} registered to the link with index {bank_index}.")
+        self.number_of_nodes.value += 1
+
+        # Acknowledge on the same port (bypasses routing via routing_map).
+        response = self.message_builder.build_protocol_register_response_message(
+            target=message.sender,
+            correlation_id=message.correlation_id
+        )
+        self._set_output_port(response, channel_out[bank_index])
+    =}
+}

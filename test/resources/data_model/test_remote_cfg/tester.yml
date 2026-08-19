@@ -1,0 +1,14 @@
+name: "tester"
+machine_category: "unknown"
+machine_type: "unknown"
+machine_model: "unknown"
+description: ""
+root:
+  !!FolderNode
+  name: "Tester"
+  description: ""
+  children:
+    - !!BooleanVariableNode
+      name: "done"
+      description: ""
+      initial_value: false

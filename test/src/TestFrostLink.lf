@@ -1,0 +1,47 @@
+target Python{
+    fast: true,
+    timeout: 1 h
+}
+
+import FrostLink from "../../src/lib/FrostLink.lf"
+import FrostReactor from "../../src/lib/FrostReactor.lf"
+
+preamble{=
+    import uuid
+    from frost import *
+=}
+
+reactor Device extends FrostReactor{
+    '''A device that registers to the FrostLink and reports when connected.'''
+    logical action check_connection
+
+    reaction (startup) -> check_connection{=
+        self.logger.info(f"{self._get_reactor_name()} starting up and will attempt to connect to the link.")
+        check_connection.schedule(0)
+    =}
+
+    reaction (check_connection) -> check_connection{=
+        if self.connected:
+            self.logger.info(f"{self._get_reactor_name()} is connected to the link.")
+            lf.request_stop()
+            return 0
+        self.logger.info(f"{self._get_reactor_name()} attempting to connect to the link...")
+        check_connection.schedule(SEC(1))
+    =}
+
+    reaction (shutdown){=
+        if not self.connected:
+            raise Exception(f"{self._get_reactor_name()} failed to connect to the link before shutdown.")
+        self.logger.info(f"{self._get_reactor_name()} shutting down (connected).")
+    =}
+}
+
+main reactor{
+    device_1 = new Device(name="device_1")
+    device_2 = new Device(name="device_2")
+    device_3 = new Device(name="device_3")
+    link = new FrostLink(name="frost_link", width=3)
+
+    device_1.channel_out, device_2.channel_out, device_3.channel_out -> link.channel_in after 0
+    link.channel_out -> device_1.channel_in, device_2.channel_in, device_3.channel_in
+}
