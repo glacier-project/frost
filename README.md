@@ -14,6 +14,46 @@ Frost is part of the [Glacier project](https://glacier-project.github.io/glacier
 Both reactors descend from *FrostBase* and rely on the [data model library](https://github.com/glacier-project/machine-data-model) to expose their interfaces.
 Custom components are developed by extending *FrostReactor* and implementing the desired behavior.
 
+## Using Frost as a Lingua Franca package
+
+Frost follows the [Lingua Franca package convention](https://github.com/lf-lang/pkgs):
+reusable reactors live in `src/lib/` and are imported with angle brackets.
+
+Clone Frost into the `lf-packages` directory at the root of your project:
+
+```bash
+git clone https://github.com/glacier-project/frost.git lf-packages/frost
+```
+
+Or, if your project is a git repository, add it as a submodule:
+
+```bash
+git submodule add https://github.com/glacier-project/frost.git lf-packages/frost
+```
+
+Alternatively, point the `LF_PACKAGES` environment variable at a directory
+containing the clone.
+
+Then import the reactors in your `.lf` files:
+
+```
+import FrostReactor from <frost/FrostReactor.lf>
+import FrostLink from <frost/FrostLink.lf>
+import FrostScheduler from <frost/scheduler/FrostScheduler.lf>
+```
+
+The Python helper modules are referenced through the `files` target property:
+
+```
+target Python{
+    files: [
+        "../lf-packages/frost/src/python_lib/frost.py",
+        "../lf-packages/frost/src/python_lib/l_formatter.py",
+        "../lf-packages/frost/src/python_lib/time_utils.py",
+    ],
+}
+```
+
 ## How to develop new machine interfaces?
 
 ### Prerequisites
