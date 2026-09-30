@@ -59,12 +59,12 @@ timestamp_ns = time.time_ns()
 set_timestamp_provider(lambda: timestamp_ns + base_module.time.physical_elapsed())
 
 def is_target_valid(message: tuple[int, FrostMessage], target: str) -> bool:
-    """Check if the target of the message matches the given target.
+    """
+    Check whether a message is addressed to the given target; used as a reactor message filter.
+
     Args:
-        message (tuple[int, FrostMessage]): The message to check.
-        target (str): The target to compare against.
-    Returns:
-        bool: True if the target matches, False otherwise.
+        message (tuple[int, FrostMessage]): Received message; element 1 is the FrostMessage.
+        target (str): Reactor name to compare against.
     """
     message_target = message[1].target
     return message_target == target

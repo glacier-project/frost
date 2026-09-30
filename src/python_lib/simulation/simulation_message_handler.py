@@ -1,80 +1,75 @@
-from typing import Callable, Any, Optional
-from simulation_message import SimulationMessage, SimulationMessageBuilder
+from typing import Callable, Any
+from simulation_message import SimulationMessage, ParticipantFailure
 from operation import Operation
 
 class SimulationMessageHandler:
-    """
-    Handles SimulationMessage objects by dispatching them to registered callables
-    based on the message's operation.
-    """
+    """Dispatch simulation messages to registered handlers."""
 
     def __init__(self, name: str):
         """
-        Initializes the SimulationMessageHandler.
-        """
-        self._name: str = name
-        self._handlers: dict[Operation, Callable[[list[Any]], Any]] = {}
-
-    def register_handler(self, operation: Operation, handler: Callable[[SimulationMessage], Any]) -> bool:
-        """
-        Registers a callable function to handle a specific operation.
+        Initialize a dispatcher with no handlers for the named participant.
 
         Args:
-            operation (Operation): The operation to associate with the handler.
-            handler (Callable[[SimulationMessage], Any]): The function to be called
-                when a message with the specified operation is received. It must
-                accept a SimulationMessage object as its sole argument.
+            name (str): Participant name that incoming messages must target.
+        """
+        self._name: str = name
+        self._handlers: dict[Operation, Callable[[Any], Any]] = {}
+
+    def register_handler(self, operation: Operation, handler: Callable[[Any], Any]) -> bool:
+        """
+        Register an operation handler.
+
+        Args:
+            operation (Operation): Operation to handle.
+            handler (Callable): Receives the sender for REGISTER, otherwise the argument list.
         """
         self._handlers[operation] = handler
         return True
 
-    def handle_message(self, message: SimulationMessage) -> Optional[SimulationMessage]:
+    def handle_message(self, message: SimulationMessage) -> SimulationMessage:
         """
-        Processes an incoming SimulationMessage, calls the appropriate handler,
-        and prepares a response message with the result.
+        Dispatch a request to its handler and build the response; unsupported operations return ERROR.
 
-        If a handler is registered for the message's operation, it is called with
-        the message as an argument. The return value from the handler is then
-        used as the payload for a new response SimulationMessage.
+        Handler exceptions propagate to the reactor for logging and error reporting.
 
         Args:
-            message (SimulationMessage): The message to be processed.
-
-        Returns:
-            Optional[SimulationMessage]: A new SimulationMessage containing the result
-            from the handler, or None if no handler is found.
+            message (SimulationMessage): Request addressed to this participant.
         """
         assert message.target == self._name
 
         handler = self._handlers.get(message.operation)
         if handler is None:
-            return None
+            return self.error_response(
+                message,
+                f"{self._name} has no handler for operation {message.operation.value!r}",
+            )
 
-        if message.operation == Operation.get_enum().REGISTER:
+        if message.operation == Operation.REGISTER:
             handler(message.sender)
             result = f"{message.sender} registered"
         else:
-            result = handler(message.args)
+            result = handler(message.payload if message.payload is not None else message.args)
 
-        return (
-            SimulationMessageBuilder()
-            .with_sender(self._name)
-            .with_target(message.sender)
-            .with_operation(Operation.get_enum().RESPONSE)
-            .with_args([result])
-            .build()
-        )
+        if message.payload is not None:
+            return message.reply(result)
+        return message.reply(args=[result])
 
-    def __call__(self, message: SimulationMessage) -> Optional[SimulationMessage]:
+    def error_response(self, message: SimulationMessage, reason: str) -> SimulationMessage:
         """
-        Allows the handler instance to be called directly, which in turn calls
-        the handle_message method.
+        Build an ERROR response addressed to the request sender, so every request gets an answer.
 
         Args:
-            message (SimulationMessage): The message to be processed.
+            message (SimulationMessage): Request that failed.
+            reason (str): Failure description sent as ParticipantFailure and legacy arg.
+        """
+        return message.reply(ParticipantFailure("operation_failed", reason),
+                             operation=Operation.ERROR, args=[reason])
 
-        Returns:
-            Optional[SimulationMessage]: The response message or None.
+    def __call__(self, message: SimulationMessage) -> SimulationMessage:
+        """
+        Dispatch a simulation message, making the handler usable as a callable.
+
+        Args:
+            message (SimulationMessage): Request addressed to this participant.
         """
         return self.handle_message(message)
-    

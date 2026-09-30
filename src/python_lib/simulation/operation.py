@@ -1,66 +1,32 @@
-from enum import Enum
-from typing import List
+from enum import StrEnum
 
 
-class Operation:
-    """
-    Defines the base operations for a simulation message.
-    This class dynamically creates an Enum based on a list of strings.
-    """
-    _operations: List[str] = ["register", "simulate", "response"]
-    _OpEnum: Enum = Enum("OpEnum", {op.upper(): op for op in _operations})
+class Operation(StrEnum):
+    """Operations shared by all simulation participants."""
 
-    def __init_subclass__(cls, **kwargs):
-        """Dynamically creates the Enum for subclasses."""
-        super().__init_subclass__(**kwargs)
-        # Combine operations from parent classes with the subclass's own
-        all_ops = []
-        for base in reversed(cls.__mro__):
-            if hasattr(base, '_operations'):
-                all_ops.extend(op for op in base._operations if op not in all_ops)
-        
-        cls._OpEnum = Enum(f"{cls.__name__}OpEnum", {op.upper(): op for op in all_ops})
-        for member in cls._OpEnum:
-            setattr(cls, member.name, member.value)
-
-    @classmethod
-    def __contains__(cls, item):
-        """Check if an item is a valid operation value."""
-        return item in {member.value for member in cls._OpEnum}
-    
-    @classmethod
-    def get_enum(cls):
-        """Return the Enum class."""
-        return cls._OpEnum
-    
-class DryRunOperation(Operation):
-    """
-    Extends Operation with simulation-specific commands.
-    """
-    _operations = ["dry_run"]
-
-if __name__ == '__main__':
-    # Get the value of the REGISTER operation
-    register_value = Operation.get_enum().REGISTER.value
-
-    # Check if the value is a valid operation
-    if register_value in Operation.get_enum():
-        print(f"'{register_value}' is a valid operation.")
-        # Print the value
-        print(f"The value of REGISTER is: {register_value}")
-
-    # Example with the subclass
-    print("\n--- Example with DryRunOperation ---")
-    
-    # DryRunOperation inherits operations from Operation
-    if Operation.get_enum().REGISTER in DryRunOperation.get_enum():
-        print(f"'{Operation.get_enum().REGISTER}' is also a valid operation in DryRunOperation.")
-
-    # And it also has its own specific operations
-    dry_run_value = DryRunOperation.get_enum().DRY_RUN
-    if dry_run_value in DryRunOperation.get_enum():
-        print(f"'{dry_run_value.value}' is a new operation in DryRunOperation.")
-
-    # The subclass operation is not in the base class
-    if dry_run_value not in Operation.get_enum():
-        print(f"'{dry_run_value.value}' is not a valid operation in the base Operation class.")
+    REGISTER = "register"
+    RESPONSE = "response"
+    ERROR = "error"
+    INITIALIZED = "initialized"
+    READY = "ready"
+    CAPABILITIES = "capabilities"
+    INITIALIZE = "initialize"
+    SET_INPUTS = "set_inputs"
+    GET_OUTPUTS = "get_outputs"
+    DRY_RUN = "dry_run"
+    SIMULATE = "simulate"
+    COMMIT = "commit"
+    DISCARD_CANDIDATE = "discard_candidate"
+    RESYNC = "resync"
+    ENTER_EVENT_MODE = "enter_event_mode"
+    EVENT_ITERATION = "event_iteration"
+    ENTER_STEP_MODE = "enter_step_mode"
+    SAVE_STATE = "save_state"
+    RESTORE_STATE = "restore_state"
+    FREE_STATE = "free_state"
+    CLOCK_STATE = "clock_state"
+    SET_CLOCK = "set_clock"
+    SET_CLOCK_INTERVAL = "set_clock_interval"
+    SET_CLOCK_SHIFT = "set_clock_shift"
+    TERMINATE = "terminate"
+    RESET = "reset"

@@ -49,6 +49,14 @@ class LFormatter(logging.Formatter):
             time_precision: TimePrecision = TimePrecision.NSECS,
             fmt: str = "%(logical_time)s | %(levelname)s | %(name)s | %(message)s"
             ) -> None:
+        """
+        Initialize a log formatter that prefixes records with Lingua Franca elapsed time and colors.
+
+        Args:
+            lf_logical_elapsed (Callable[[], int]): Returns the elapsed LF time in nanoseconds.
+            time_precision (TimePrecision): Unit in which the time is displayed.
+            fmt (str): Log format string, including the logical_time field.
+        """
         super().__init__(fmt)
         self._lf_logical_elapsed = lf_logical_elapsed
         self._time_precision = time_precision
@@ -69,6 +77,12 @@ class LFormatter(logging.Formatter):
         self._color_list = color_list
 
     def get_col_name(self, name):
+        """
+        Return the (foreground, background) color pair for a logger name, assigning the next one round-robin on first use.
+
+        Args:
+            name (str): Logger name.
+        """
         if name not in self._name_color_dict:
             colors = self._color_list[self._name_col_idx]
             self._name_col_idx += 1
@@ -77,6 +91,12 @@ class LFormatter(logging.Formatter):
         return self._name_color_dict[name]
 
     def format(self, record):
+        """
+        Format a record with elapsed time, padded level name and colored logger name.
+
+        Args:
+            record (logging.LogRecord): Record to format.
+        """
         logical_time = self._lf_logical_elapsed()
         record.logical_time = f"{convert_time_float(logical_time, TimePrecision.NSECS, self._time_precision):<20} ({self._unit})"
         record.levelname = '{:<10}'.format(record.levelname)
