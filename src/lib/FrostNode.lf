@@ -53,7 +53,7 @@ reactor FrostNode(_data_model_path = "", update_interval = 1 s) extends FrostBas
         Args:
             startup (input): The event that triggers the data-model initialization.
         '''
-        if not os.path.exists(self.data_model_path) and not os.path.isfile(self.data_model_path):
+        if not os.path.exists(self.data_model_path):
             self.logger.error(f"Data model file not found: {self.data_model_path}")
             lf.request_stop()
 

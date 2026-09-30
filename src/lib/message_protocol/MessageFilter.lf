@@ -56,11 +56,7 @@ reactor MessageFilter extends FrostBase{
         Returns:
             bool: True if the message should be processed, False otherwise.
         '''
-        filter_callbacks = self._filter_callbacks
-        for callback in filter_callbacks:
-            if not callback(message):
-                return False
-        return True
+        return all(callback(message) for callback in self._filter_callbacks)
     =}
 
     method _handle_message(message, requests, responses, errors){=

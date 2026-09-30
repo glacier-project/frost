@@ -57,9 +57,6 @@ reactor FrostInterface(width = 1) extends FrostBase{
                 if source not in self.targets.keys():
                     self.logger.debug(f"Registering sender for message: {message}")
                     self.targets[source] = bank_index
-                continue
-            else:
-                continue
         return 0
     =}
 
