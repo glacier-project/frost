@@ -151,7 +151,7 @@ The development environment is managed with `pip`. To set up the development env
 
 1. **Clone the repository:**
    ```bash
-   git clone <repository-url>
+   git clone git@github.com:glacier-project/frost.git
    cd frost
    ```
 
@@ -192,12 +192,6 @@ This project uses [act](https://github.com/nektos/act) to enable local execution
 If you use **Frost**, please consider citing the papers listed below:
 
 ```
-@inproceedings{frost:indin:2026,
-  author    = {Turco, Pietro and Gaiardelli, Sebastiano and Fraccaroli, Enrico and Cheng, Dong Seon and Lora, Michele and Fummi, Franco},
-  booktitle = {2026 IEEE 24rd International Conference on Industrial Informatics (INDIN)},
-  title     = {{Distributed Control Logic Validation through Lingua Franca}},
-  year      = {2026}
-}
 @inproceedings{frost:indin:2025,
   author    = {Turco, Pietro and Gaiardelli, Sebastiano and Fraccaroli, Enrico and Lora, Michele and Chakraborty, Samarjit and Fummi, Franco},
   booktitle = {2025 IEEE 23rd International Conference on Industrial Informatics (INDIN)},
