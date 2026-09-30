@@ -28,19 +28,12 @@ from machine_data_model.nodes.variable_node import NumericalVariableNode, String
 from machine_data_model.nodes.folder_node import FolderNode
 from machine_data_model.utils.timestamp import set_timestamp_provider
 from machine_data_model.nodes.subscription.variable_subscription import VariableSubscription, DataChangeSubscription, RangeSubscription
-from simulation_message import SimulationMessageBuilder
-from simulation_message import SimulationMessage
-from simulation_message_handler import SimulationMessageHandler
-from operation import Operation
-from orchestrator import OrchestratorStepper
-from fmpy import read_model_description, extract
-from fmpy.fmi3 import FMU3Slave
 
 # load configuration file
 FROST_CONFIG = os.environ.get("FROST_CONFIG", "resources/frost_config.yml")
 
 # if the file does not exist, use a default configuration
-if not os.path.exists(FROST_CONFIG) or not os.path.isfile(FROST_CONFIG):
+if not os.path.isfile(FROST_CONFIG):
     FROST_CONFIG = {
         "time_precision": "NSECS",
         "logging_level": "WARNING"
