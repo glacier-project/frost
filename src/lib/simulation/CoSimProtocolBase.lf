@@ -6,8 +6,6 @@ target Python{
         "../../python_lib/simulation/simulation_message.py",
         "../../python_lib/simulation/simulation_message_handler.py",
         "../../python_lib/simulation/operation.py",
-        "../../python_lib/simulation/strategy",
-        "../../python_lib/simulation/transfer.py",
     ],
 }
 
@@ -17,6 +15,14 @@ preamble{=
 from simulation_message_handler import SimulationMessageHandler
 =}
 
-reactor FrostSimBase extends FrostBase{
+reactor CoSimProtocolBase extends FrostBase{
+    '''
+    Base of the reactors that speak the co-simulation protocol; owns the message dispatcher.
+
+    Extension:
+        Children register the operations they answer with
+        self.simulation_handler.register_handler(operation, handler).
+    '''
+
     state simulation_handler = {=SimulationMessageHandler(self.name)=}
 }
