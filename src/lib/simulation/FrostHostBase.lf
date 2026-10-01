@@ -23,24 +23,20 @@ reactor FrostHostBase extends FrostBase{
     method _build_model(){=
         '''
         Build the model this reactor drives.
-
-        Returns:
-            Participant: Model implementing the Participant protocol, named after this reactor.
         '''
         raise NotImplementedError(f"{self.name}: extend a model reactor such as FrostFmuBase, or override _build_model()")
     =}
 
     method _shutdown(){=
-        '''Close the model and release every resource it holds.'''
+        '''
+        Close the model and release every resource it holds.
+        '''
         raise NotImplementedError(f"{self.name}: extend a model reactor such as FrostFmuBase, or override _shutdown()")
     =}
 
     method _set_inputs(values){=
         '''
         Write input values; they take effect from the next step.
-
-        Args:
-            values (Mapping[str, Any]): Values keyed by input name.
         '''
         raise NotImplementedError(f"{self.name}: extend a model reactor such as FrostFmuBase, or override _set_inputs()")
     =}
@@ -48,9 +44,6 @@ reactor FrostHostBase extends FrostBase{
     method _get_outputs(){=
         '''
         Read every output of the model.
-
-        Returns:
-            dict: Output values keyed by output name.
         '''
         raise NotImplementedError(f"{self.name}: extend a model reactor such as FrostFmuBase, or override _get_outputs()")
     =}
@@ -58,12 +51,6 @@ reactor FrostHostBase extends FrostBase{
     method _do_step(){=
         '''
         Advance the model to the target tag.
-
-        Args:
-            target (SimTime): Tag the model must reach.
-
-        Returns:
-            Outcome: Reached tag, plus rejection and termination flags.
         '''
         raise NotImplementedError(f"{self.name}: extend a model reactor such as FrostFmuBase, or override _do_step()")
     =}
@@ -71,14 +58,19 @@ reactor FrostHostBase extends FrostBase{
     method _rollback(){=
         '''
         Roll back the model to the target tag.
-
-        Args:
-            target (SimTime): Tag the model must roll back to.
-
-        Returns:
-            Outcome: Reached tag, plus rejection and termination flags.
         '''
         raise NotImplementedError(f"{self.name}: extend a model reactor such as FrostFmuBase, or override _roll_back()")
+    =}
+
+    method _commit(){=
+        '''
+        Commit the output outside or to the machine data model, if any. This is called after the model has advanced to the current tag and published its outputs. 
+
+        Mandatory: LF has to reach the logical tag at which the model has advanced. 
+
+        Notice: if you your reactor extends also FrostReactor you can commit the outputs to the machine data model, if any. 
+        '''
+        raise NotImplementedError(f"{self.name}: extend a model reactor such as FrostFmuBase, or override _commit()")
     =}
 
     // @label _build_model
