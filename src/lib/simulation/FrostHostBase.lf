@@ -1,0 +1,93 @@
+target Python{
+    files: [
+        "../../python_lib/time_utils.py",
+        "../../python_lib/simulation/sim_time.py",
+        "../../python_lib/simulation/participant.py",
+    ],
+}
+
+import FrostBase from "../FrostBase.lf"
+
+reactor FrostHostBase extends FrostBase{
+    '''
+    Owns the model of a reactor: builds it at startup and shuts it down.
+
+    Extension:
+        _build_model(): required; return the Participant this reactor drives.
+        _shutdown(): required; close the model. Call it from the leaf's last shutdown reaction.
+        _set_inputs(values), _get_outputs(), _do_step(target): required; the model's I/O and stepping.
+    '''
+
+    state model
+
+    method _build_model(){=
+        '''
+        Build the model this reactor drives.
+
+        Returns:
+            Participant: Model implementing the Participant protocol, named after this reactor.
+        '''
+        raise NotImplementedError(f"{self.name}: extend a model reactor such as FrostFmuBase, or override _build_model()")
+    =}
+
+    method _shutdown(){=
+        '''Close the model and release every resource it holds.'''
+        raise NotImplementedError(f"{self.name}: extend a model reactor such as FrostFmuBase, or override _shutdown()")
+    =}
+
+    method _set_inputs(values){=
+        '''
+        Write input values; they take effect from the next step.
+
+        Args:
+            values (Mapping[str, Any]): Values keyed by input name.
+        '''
+        raise NotImplementedError(f"{self.name}: extend a model reactor such as FrostFmuBase, or override _set_inputs()")
+    =}
+
+    method _get_outputs(){=
+        '''
+        Read every output of the model.
+
+        Returns:
+            dict: Output values keyed by output name.
+        '''
+        raise NotImplementedError(f"{self.name}: extend a model reactor such as FrostFmuBase, or override _get_outputs()")
+    =}
+
+    method _do_step(){=
+        '''
+        Advance the model to the target tag.
+
+        Args:
+            target (SimTime): Tag the model must reach.
+
+        Returns:
+            Outcome: Reached tag, plus rejection and termination flags.
+        '''
+        raise NotImplementedError(f"{self.name}: extend a model reactor such as FrostFmuBase, or override _do_step()")
+    =}
+
+    method _rollback(){=
+        '''
+        Roll back the model to the target tag.
+
+        Args:
+            target (SimTime): Tag the model must roll back to.
+
+        Returns:
+            Outcome: Reached tag, plus rejection and termination flags.
+        '''
+        raise NotImplementedError(f"{self.name}: extend a model reactor such as FrostFmuBase, or override _roll_back()")
+    =}
+
+    // @label _build_model
+    reaction(startup){=
+        '''Build the model.'''
+        try:
+            self.model = self._build_model()
+        except Exception as error:
+            self.logger.error(f"{self.name} cannot build its model: {error}")
+            raise
+    =}
+}
