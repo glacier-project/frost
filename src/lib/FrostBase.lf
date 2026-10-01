@@ -26,22 +26,7 @@ reactor FrostBase(name = "unnamed_reactor"){
         return self.name
     =}
 
-    method _strict_parameter_overrides(){=
-        '''Whether an unknown YAML parameter is a startup error for this reactor.'''
-        return False
-    =}
-
-    method _assign_parameter_value(key, value){=
-        '''Assign a YAML value to an LF parameter backing field or ordinary state.'''
-        descriptor = getattr(type(self), key, None)
-        backing = f"_{key}"
-        if isinstance(descriptor, property) and descriptor.fset is None and hasattr(self, backing):
-            setattr(self, backing, value)
-        else:
-            setattr(self, key, value)
-    =}
-
-    method _apply_parameter_overrides(configuration, reactor_name){=
+    method __override_initial_parameters(configuration, reactor_name){=
         '''
         Override the reactor's parameters based on the configuration file.
         
@@ -65,21 +50,10 @@ reactor FrostBase(name = "unnamed_reactor"){
             return
 
         for key, value in configuration["parameters"].items():
-            descriptor = getattr(type(self), key, None)
-            backing = f"_{key}"
-            declared_parameter = (
-                isinstance(descriptor, property)
-                and descriptor.fset is None
-                and hasattr(self, backing)
-            )
-            if self._strict_parameter_overrides() and not declared_parameter:
-                message = f"Parameter {key!r} not found in reactor {reactor_name!r}"
-                raise ValueError(message)
             if not hasattr(self, key):
-                message = f"Parameter {key!r} not found in reactor {reactor_name!r}"
-                self.logger.warning(f"{message}. Creating dynamic parameter {key} = {value}.")
+                self.logger.warning(f"Parameter {key} not found in reactor {reactor_name}. Creating dynamic parameter {key} = {value}.")
 
-            self._assign_parameter_value(key, value)
+            setattr(self, key, value)
     =}
 
     method _set_output_multiport(value, output_port, exclude){=
@@ -210,7 +184,7 @@ reactor FrostBase(name = "unnamed_reactor"){
         logging_level = configuration.get("logging_level", "WARNING")
         self.logger.setLevel(logging_level)
         
-        self._apply_parameter_overrides(configuration, reactor_name)
+        self.__override_initial_parameters(configuration, reactor_name)
         
         self.logger.debug(f"Reactor {reactor_name} started with parameters: {self.__dict__}")
     =}
