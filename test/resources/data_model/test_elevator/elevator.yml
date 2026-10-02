@@ -1,0 +1,86 @@
+name: "elevator"
+machine_category: "unknown"
+machine_type: "unknown"
+machine_model: "unknown"
+description: "Elevator5 FMU mirrored on the data model"
+root:
+  !!FolderNode
+  name: "Machine"
+  description: ""
+  children:
+    - !!FolderNode
+      name: "inputs"
+      description: ""
+      children:
+        - !!BooleanVariableNode
+          name: "call_0"
+          description: "Boolean input discrete"
+          initial_value: false
+        - !!BooleanVariableNode
+          name: "call_1"
+          description: "Boolean input discrete"
+          initial_value: false
+        - !!BooleanVariableNode
+          name: "call_2"
+          description: "Boolean input discrete"
+          initial_value: false
+        - !!BooleanVariableNode
+          name: "call_3"
+          description: "Boolean input discrete"
+          initial_value: false
+        - !!BooleanVariableNode
+          name: "call_4"
+          description: "Boolean input discrete"
+          initial_value: false
+        - !!BooleanVariableNode
+          name: "emergency_stop"
+          description: "Boolean input discrete"
+          initial_value: false
+        - !!BooleanVariableNode
+          name: "door_obstructed"
+          description: "Boolean input discrete"
+          initial_value: false
+    - !!FolderNode
+      name: "outputs"
+      description: ""
+      children:
+        - !!NumericalVariableNode
+          name: "position"
+          description: "Float64 output continuous"
+          initial_value: -1
+        - !!NumericalVariableNode
+          name: "current_floor"
+          description: "Int32 output discrete"
+          initial_value: -1
+        - !!NumericalVariableNode
+          name: "target_floor"
+          description: "Int32 output discrete"
+          initial_value: -1
+        - !!NumericalVariableNode
+          name: "direction"
+          description: "Int32 output discrete"
+          initial_value: -1
+        - !!BooleanVariableNode
+          name: "door_open"
+          description: "Boolean output discrete"
+          initial_value: false
+        - !!BooleanVariableNode
+          name: "moving"
+          description: "Boolean output discrete"
+          initial_value: false
+    - !!FolderNode
+      name: "parameters"
+      description: ""
+      children:
+        - !!NumericalVariableNode
+          name: "floor_height"
+          description: "Float64 parameter fixed"
+          initial_value: -1
+        - !!NumericalVariableNode
+          name: "speed"
+          description: "Float64 parameter fixed"
+          initial_value: -1
+        - !!NumericalVariableNode
+          name: "door_time"
+          description: "Float64 parameter fixed"
+          initial_value: -1

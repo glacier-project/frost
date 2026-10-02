@@ -1,0 +1,188 @@
+target Python{
+    fast: true,
+    timeout: 42 s,
+    files: ["../resources/lib/fmu_test_tools.py"]
+}
+import FrostLink from "../../src/lib/FrostLink.lf"
+import FrostReactor from "../../src/lib/FrostReactor.lf"
+import FrostFmuReactor from "../../src/lib/simulation/FrostFmuReactor.lf"
+
+preamble{=
+    from frost import *
+    from fmu_test_tools import ns, compare, story, tell, tell_header, how_the_input_was_applied
+
+    STEP_MS = 400
+
+    # What the passenger does through the link: (LF time in ms, action, variable, value, why).
+    # Every write falls inside a 400 ms step, never on a tag of the grid. A READ carries the expected value.
+    PASSENGER_PLAN = [
+        (3100,  "WRITE", "call_4", True, "call the elevator to floor 4"),
+        (3700,  "WRITE", "call_4", False, "release the button: calls react to the rising edge"),
+        (10000, "READ",  "position", 6.9, "travelling up since 3.1 s at 1 m/s"),
+        (15150, "READ",  "door_open", False, "arrival due at 15.1 s, but the FMU only steps 14.8 -> 15.2 s at the 15.2 s tag"),
+        (15250, "READ",  "door_open", True, "the 15.2 s step computed the arrival and committed it"),
+        (22100, "WRITE", "call_0", True, "call the elevator back to floor 0"),
+        (23100, "WRITE", "call_0", False, "release the button"),
+        (26100, "WRITE", "emergency_stop", True, "stop the cabin at 8 m"),
+        (28100, "WRITE", "emergency_stop", False, "resume the trip down"),
+    ]
+    WRITES = [(ms, name, value) for ms, action, name, value, _ in PASSENGER_PLAN if action == "WRITE"]
+
+    # Events inside the FMU: (what, time in the FMU, first tag that shows it). Without rollback the FMU
+    # never runs ahead of LF, so an internal event is only published at the next tag of the grid.
+    INTERNAL_EVENTS = [
+        ("arrives at floor 4",     15100, 15200),
+        ("closes doors at floor 4", 18100, 18400),
+        ("arrives at floor 0",     36100, 36400),
+        ("closes doors at floor 0", 39100, 39200),
+    ]
+
+    INPUTS = ("call_0", "call_1", "call_2", "call_3", "call_4", "emergency_stop", "door_obstructed")
+    OUTPUTS = ("position", "current_floor", "target_floor", "direction", "moving", "door_open")
+
+    def situation(values):
+        '''Describe the cabin in words, from the FMU outputs.'''
+        if values["moving"]:
+            return f"moving {'up' if values['direction'] == 1 else 'down'} towards floor {values['target_floor']}"
+        if values["current_floor"] < 0:
+            return f"stopped between floors, at {values['position']:g} m"
+        return f"at floor {values['current_floor']}, doors {'open' if values['door_open'] else 'closed'}"
+
+    def expected_state(ms):
+        '''Elevator5 state committed at ms: 3 m floors, 1 m/s, 3 s doors, buttons sampled at the start of each doStep.'''
+        t = ms / 1000
+        if ms <= 3100:              # waiting at floor 0
+            position, moving, direction, target = 0.0, False, 0, -1
+        elif ms < 15100:            # going up, from 3.1 s
+            position, moving, direction, target = t - 3.1, True, 1, 4
+        elif ms <= 22100:           # at floor 4, doors open from 15.1 s to 18.1 s
+            position, moving, direction, target = 12.0, False, 0, -1
+        elif ms <= 26100:           # going down, from 22.1 s
+            position, moving, direction, target = 12.0 - (t - 22.1), True, -1, 0
+        elif ms <= 28100:           # emergency stop at 8 m
+            position, moving, direction, target = 8.0, False, 0, 0
+        elif ms < 36100:            # going down again, from 28.1 s
+            position, moving, direction, target = 8.0 - (t - 28.1), True, -1, 0
+        else:                       # at floor 0, doors open from 36.1 s to 39.1 s
+            position, moving, direction, target = 0.0, False, 0, -1
+        door_open = 15200 <= ms <= 18000 or 36400 <= ms <= 39000
+        floor = round(position / 3)
+        current_floor = floor if abs(position - floor * 3) < 1e-9 else -1
+        return {"position": position, "current_floor": current_floor, "target_floor": target,
+                "direction": direction, "moving": moving, "door_open": door_open}
+
+    tell_header("Elevator: one FMU without rollback, buttons pressed by a passenger through the data model")
+=}
+
+# Elevator5 FMU (pythonfmu3, cannot roll back) on a FrostReactor: never ahead of LF. A button written mid-step
+# steps the FMU up to the write with the old buttons, then applies it; an internal event (arrival, doors)
+# shows at the next 400 ms tag.
+reactor Elevator extends FrostFmuReactor{
+    state situation = ""
+    state commits = {=[]=}
+    state writes = {=[]=}
+
+    method _ms(){=
+        return lf.time.logical_elapsed() // 1000000
+    =}
+
+    method _bind_inputs(){=
+        for name in INPUTS:
+            self._bind_input(f"Machine/inputs/{name}", name)
+    =}
+
+    method _on_input_write(fmu_input, previous, value){=
+        how = how_the_input_was_applied(lf.time.logical_elapsed(), self.fmu_ns)
+        self.fmu_inputs[fmu_input] = value
+        applied = self._set_trigger()
+        if applied:
+            self._set_inputs()
+            self._commit()
+        assert applied, f"{fmu_input} = {value} must be applied on the tag of the write"
+        tell(lf.time.logical_elapsed(), "elevator", f"button {fmu_input} = {value} received ({how})")
+        self.writes.append((self._ms(), fmu_input, value))
+        return True
+    =}
+
+    method _commit(){=
+        ms = self._ms()
+        values = self._get_outputs()
+        for name in OUTPUTS:
+            self.data_model.get_node(f"Machine/outputs/{name}").write(values[name])
+
+        # Check every output against the closed-form trajectory of the cabin.
+        want = expected_state(ms)
+        assert abs(values["position"] - want["position"]) < 1e-9, f"position at {ms} ms: {values['position']} m, expected {want['position']} m"
+        for name in OUTPUTS:
+            if name != "position":
+                assert values[name] == want[name], f"{name} at {ms} ms: {values[name]}, expected {want[name]}"
+
+        now = situation(values)
+        if now != self.situation:
+            late = [f" (it happened inside the FMU at {inside / 1000:g} s: without rollback it shows at the next 0.4 s tag)"
+                    for _, inside, shown in INTERNAL_EVENTS if shown == ms]
+            tell(lf.time.logical_elapsed(), "elevator", now + "".join(late))
+        self.situation = now
+        self.commits.append(ms)
+        return True
+    =}
+
+    reaction(shutdown){=
+        expected_commits = sorted(list(range(0, 42001, STEP_MS)) + [ms for ms, _, _ in WRITES])
+        assert self.commits == expected_commits, f"commits must be the {STEP_MS} ms grid plus one per write"
+        mismatches = compare(story(), "elevator: buttons applied (ms, button, value)", self.writes, WRITES)
+        assert not mismatches, f"button rows {mismatches} differ (see the table above)"
+    =}
+}
+
+# Carries out PASSENGER_PLAN through the FrostLink: presses the buttons and reads the elevator data model.
+reactor Passenger extends FrostReactor{
+    state step = 0
+    state reads = {=[]=}
+
+    logical action next_action
+
+    reaction(startup) -> next_action{=
+        next_action.schedule(ns(PASSENGER_PLAN[0][0]))
+    =}
+
+    reaction(next_action) -> channel_out, next_action{=
+        ms, action, name, value, why = PASSENGER_PLAN[self.step]
+        assert self.connected, f"the passenger is not connected to the link at {ms} ms"
+        if action == "WRITE":
+            message = self.message_builder.build_write_variable_message(target="elevator", node=f"Machine/inputs/{name}", value=value)
+            tell(lf.time.logical_elapsed(), "passenger", f"{'presses' if value else 'releases'} {name} ({why})")
+        else:
+            message = self.message_builder.build_read_variable_message(target="elevator", node=f"Machine/outputs/{name}")
+            tell(lf.time.logical_elapsed(), "passenger", f"reads {name}, expects {value} ({why})")
+        self._set_channel_out_port(message, channel_out)
+
+        self.step += 1
+        if self.step < len(PASSENGER_PLAN):
+            next_action.schedule(ns(PASSENGER_PLAN[self.step][0] - ms))
+    =}
+
+    reaction(response_messages){=
+        for bank_index, message in response_messages.value:
+            if message.header.namespace == MsgNamespace.VARIABLE and message.header.msg_name == VariableMsgName.READ:
+                name = message.payload.node.split("/")[-1]
+                tell(lf.time.logical_elapsed(), "passenger", f"  -> {name} = {message.payload.value:g}" if isinstance(message.payload.value, float) else f"  -> {name} = {message.payload.value}")
+                self.reads.append((lf.time.logical_elapsed() // 1000000, name, message.payload.value))
+    =}
+
+    reaction(shutdown){=
+        expected_reads = [(ms, name, value) for ms, action, name, value, _ in PASSENGER_PLAN if action == "READ"]
+        rounded = [(ms, name, round(value, 9) if isinstance(value, float) else value) for ms, name, value in self.reads]
+        mismatches = compare(story(), "passenger: reads (ms, variable, value)", rounded, expected_reads)
+        assert not mismatches, f"read rows {mismatches} differ (see the table above)"
+    =}
+}
+
+main reactor{
+    elevator = new Elevator(name="elevator", path="resources/fmu/Elevator5.fmu")
+    passenger = new Passenger(name="passenger")
+    link = new FrostLink(name="frost_link", width=2)
+
+    elevator.channel_out, passenger.channel_out -> link.channel_in after 0
+    link.channel_out -> elevator.channel_in, passenger.channel_in
+}

@@ -1,0 +1,20 @@
+time_precision: NSECS
+logging_level: DEBUG
+reactors:
+  rollback:
+    logging_level: INFO
+    parameters:
+      step_size: 0.1
+  late:
+    logging_level: INFO
+    parameters:
+      step_size: 0.1
+  no_state:
+    logging_level: INFO
+    parameters:
+      step_size: 0.07
+  stop:
+    logging_level: INFO
+    parameters:
+      step_size: 1e-1
+      stop_time: 0.35

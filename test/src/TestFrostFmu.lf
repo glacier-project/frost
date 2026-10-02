@@ -1,0 +1,190 @@
+target Python{
+    fast: true,
+    timeout: 1 s,
+    files: ["../resources/lib/fmu_test_tools.py"]
+}
+import FrostFmu from "../../src/lib/simulation/FrostFmu.lf"
+
+preamble{=
+    from frost import *
+    from fmu_test_tools import ns, log_line, compare, describe_trigger
+
+    INPUT = "Float64_continuous_input"
+
+    # Expected commits, as (LF time in ms, value of the watched output). Step: 100 ms unless noted.
+
+    # Feedthrough with triggers: output == input from the very tag of each change.
+    ROLLBACK_EXPECTED = [
+        (0, 0.0), (100, 0.0), (200, 0.0),
+        (250, 5.0),             # input -> 5 at 250 ms: rollback to 200, replay to 250, commit
+        (250, 5.0),             # second trigger at 250 ms: inputs written again, committed again
+        (300, 5.0), (400, 5.0),
+        (500, 5.0),             # regular commit at 500 ms, before the change
+        (500, 7.0),             # input -> 7 at 500 ms: rollback of the step ahead, commit
+        (600, 7.0), (700, 7.0), (800, 7.0), (900, 7.0), (1000, 7.0),
+    ]
+
+    # Same changes without triggers: each one only enters the step simulated at the next tick.
+    LATE_EXPECTED = [
+        (0, 0.0), (100, 0.0), (200, 0.0),
+        (300, 0.0),             # the 250 ms change is not in the 200 -> 300 step, already simulated
+        (400, 5.0),
+        (500, 5.0), (600, 5.0), # the 500 ms change is not in the 500 -> 600 step, already simulated
+        (700, 7.0), (800, 7.0), (900, 7.0), (1000, 7.0),
+    ]
+
+    # BouncingBall FMI 2.0, 70 ms step, no outputs: every 70 ms plus the trigger at 250 ms.
+    NO_STATE_EXPECTED = sorted([(ms, None) for ms in range(0, 1001, 70)] + [(250, None)])
+
+    # Feedthrough with start value 1.5 and YAML stop_time 0.35 s: nothing after the last step before 350 ms.
+    STOP_EXPECTED = [(0, 1.5), (100, 1.5), (200, 1.5), (300, 1.5)]
+=}
+
+# Common part of every scenario: logs each event on one line and records each commit.
+# At every commit the FMU must sit exactly on the LF tag; at shutdown the commits must equal `expected`.
+reactor Probe(expected = {=[]=}, watched_output = "Float64_continuous_output") extends FrostFmu{
+    state commits = {=[]=}
+
+    method _ms(){=
+        return lf.time.logical_elapsed() // 1000000
+    =}
+
+    method _log(kind, text){=
+        self.logger.info(log_line(lf.time.logical_elapsed(), kind, text))
+    =}
+
+    method _commit(){=
+        lf_seconds = self.start_time + lf.time.logical_elapsed() / 1e9 * self.time_scale
+        assert abs(self.fmu_time - lf_seconds) < 1e-9, f"commit with the FMU at {self.fmu_time} s but LF at {lf_seconds} s"
+
+        value = self._get_outputs().get(self.watched_output)
+        if self.watched_output in self.fmu_outputs:
+            self._log("COMMIT", f"{self.watched_output} = {value}")
+        else:
+            self._log("COMMIT", "FMU on this tag (it has no outputs)")
+        self.commits.append((self._ms(), value))
+        return True
+    =}
+
+    method _write_input(name, value){=
+        old = self.fmu_inputs.get(name)
+        self.fmu_inputs[name] = value
+        self._log("INPUT", f"{name}: {old} -> {value}")
+    =}
+
+    method _trigger(){=
+        restart = self.saved_ns
+        self._log("TRIGGER", describe_trigger(lf.time.logical_elapsed(), self.fmu_ns, restart))
+        handled = self._set_trigger()
+        if handled:
+            self._set_inputs()
+            self._commit()
+        if not handled:
+            self._log("TRIGGER", "REFUSED: the change only enters the next simulated step")
+        return handled
+    =}
+
+    reaction(shutdown){=
+        mismatches = compare(self.logger, f"{self.name}: commits (ms, {self.watched_output})", self.commits, self.expected)
+        assert not mismatches, f"{self.name}: commit rows {mismatches} differ from the expected ones (see the table above)"
+    =}
+}
+
+# Feedthrough (FMI 3.0, can roll back): one change inside a simulated step, one on a step tag, both triggered.
+reactor RollbackFmu extends Probe{
+    timer inside_a_step(250 ms)
+    timer on_a_step_tag(500 ms)
+    timer unknown_input(750 ms)
+
+    reaction(startup){=
+        assert self.can_rollback, f"{self.path} should declare canGetAndSetFMUstate"
+    =}
+
+    reaction(inside_a_step){=
+        # 250 ms lies inside the step 200 -> 300 ms, which the model has already simulated.
+        assert self.fmu_ns == ns(300), f"before the change the model must be ahead at 300 ms, got {self.fmu_ns}"
+
+        self._write_input(INPUT, 5.0)
+        assert self._trigger() is True, "a trigger inside a simulated step must be applied"
+        assert self.fmu_ns == ns(250), "after the trigger the model must sit on 250 ms"
+
+        # Nothing left to roll back: a second trigger writes the inputs again and commits again.
+        assert self._trigger() is True, "a second trigger at the same tag must be applied too"
+        assert self.fmu_ns == ns(250), "the model must still sit on 250 ms"
+    =}
+
+    reaction(on_a_step_tag){=
+        # The inherited tick already committed 500 ms and simulated ahead to 600 ms with the old input.
+        assert self.fmu_ns == ns(600), f"before the change the model must be ahead at 600 ms, got {self.fmu_ns}"
+
+        self._write_input(INPUT, 7.0)
+        assert self._trigger() is True, "a trigger on a step tag must be applied"
+        assert self.fmu_ns == ns(500), "after the trigger the model must sit on 500 ms"
+    =}
+
+    reaction(unknown_input){=
+        self.fmu_inputs["not_an_input"] = 1.0
+        try:
+            self._set_inputs()
+            raise AssertionError("an unknown input name must be rejected")
+        except KeyError as error:
+            self._log("INPUT", f"unknown input rejected as expected: {str(error).split(';')[0]}")
+        finally:
+            del self.fmu_inputs["not_an_input"]
+    =}
+}
+
+# Same FMU and same changes, without triggers.
+reactor LateFmu extends Probe{
+    timer inside_a_step(250 ms)
+    timer on_a_step_tag(500 ms)
+
+    reaction(inside_a_step){=
+        self._write_input(INPUT, 5.0)
+        self._log("INPUT", "no trigger: the change enters the next step that gets simulated")
+    =}
+
+    reaction(on_a_step_tag){=
+        self._write_input(INPUT, 7.0)
+        self._log("INPUT", "no trigger: the change enters the next step that gets simulated")
+    =}
+}
+
+# BouncingBall (FMI 2.0, cannot roll back, no outputs): never ahead of LF, so a trigger steps up to now.
+reactor NoStateFmu extends Probe{
+    timer inside_a_step(250 ms)
+
+    reaction(startup){=
+        assert not self.can_rollback, f"{self.path} should not declare canGetAndSetFMUstate"
+        assert self.fmu_inputs == {} and self.fmu_outputs == [], f"unexpected interface {self.fmu_inputs} {self.fmu_outputs}"
+    =}
+
+    reaction(inside_a_step){=
+        # With a 70 ms step the last tag is 210 ms; without rollback the model is never past LF.
+        assert self.fmu_ns == ns(210), f"at 250 ms the model must sit on its last tag, 210 ms, got {self.fmu_ns}"
+        assert self._rollback() is False, "an FMU without saved state cannot roll back"
+
+        assert self._trigger() is True, "the trigger must step the model from 210 ms to 250 ms"
+        assert self.fmu_ns == ns(250), "after the trigger the model must sit on 250 ms"
+    =}
+}
+
+# Feedthrough with a start value, a YAML step written as 1e-1 (a string for PyYAML) and a YAML stop_time.
+reactor StopFmu extends Probe{
+    reaction(startup){=
+        assert self.step_size == 0.1, f"step_size 1e-1 from YAML must become 0.1, got {self.step_size!r}"
+        assert self.stop_time == 0.35, f"stop_time from YAML must be 0.35, got {self.stop_time!r}"
+    =}
+
+    reaction(shutdown){=
+        assert self.fmu_ns == ns(300), f"no step may go past stop_time 350 ms, the model is at {self.fmu_ns}"
+    =}
+}
+
+main reactor{
+    rollback = new RollbackFmu(name="rollback", path="resources/fmu/Feedthrough.fmu", expected = {= ROLLBACK_EXPECTED =})
+    late = new LateFmu(name="late", path="resources/fmu/Feedthrough.fmu", expected = {= LATE_EXPECTED =})
+    no_state = new NoStateFmu(name="no_state", path="resources/fmu/BouncingBall2.fmu", expected = {= NO_STATE_EXPECTED =})
+    stop = new StopFmu(name="stop", path="resources/fmu/Feedthrough.fmu",
+        start_values = {= {"Float64_continuous_input": 1.5} =}, expected = {= STOP_EXPECTED =})
+}
