@@ -1,0 +1,18 @@
+name: "machine"
+machine_category: "unknown"
+machine_type: "unknown"
+machine_model: "unknown"
+description: "A machine whose behaviour is the Feedthrough FMU; node names differ from the FMU ones"
+root:
+  !!FolderNode
+  name: "Machine"
+  description: ""
+  children:
+    - !!NumericalVariableNode
+      name: "setpoint"
+      description: "Written by an operator; drives Float64_continuous_input"
+      initial_value: 0
+    - !!NumericalVariableNode
+      name: "measure"
+      description: "Written at every commit from Float64_continuous_output"
+      initial_value: 0

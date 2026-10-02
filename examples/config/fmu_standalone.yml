@@ -1,0 +1,6 @@
+time_precision: NSECS
+logging_level: WARNING
+reactors:
+  fmu:
+    parameters:
+      step_size: 0.1

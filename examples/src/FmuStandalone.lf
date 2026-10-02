@@ -1,0 +1,40 @@
+target Python{
+    timeout: 1 s,
+    fast: true,
+}
+
+import FrostFmu from "../../src/lib/simulation/FrostFmu.lf"
+
+preamble{=
+from frost import *    # FROST_CONFIG and the logging setup that every Frost reactor expects
+=}
+
+// FrostFmu on its own: LF time drives the FMU, no data model, no ports.
+//
+// - The FMU commits at every step tag (here every 100 ms, from step_size in the YAML): _commit() is
+//   where the leaf publishes the outputs; here it prints them.
+// - To change an input, set fmu_inputs, then _set_trigger(), _set_inputs() and _commit(): the change takes effect at the
+//   current tag, even between two steps (the FMU rolls back and re-simulates up to now if it ran ahead).
+//
+// Feedthrough.fmu copies its input to its output, so the printed output shows when the input took effect.
+reactor Feedthrough extends FrostFmu{
+    timer change(250 ms)
+
+    // @override
+    method _commit(){=
+        output = self._get_outputs()["Float64_continuous_output"]
+        print(f"{lf.time.logical_elapsed() // 1000000:>5} ms  output = {output}")
+        return True
+    =}
+
+    reaction(change){=
+        self.fmu_inputs["Float64_continuous_input"] = 5.0
+        if self._set_trigger():
+            self._set_inputs()
+            self._commit()
+    =}
+}
+
+main reactor{
+    fmu = new Feedthrough(name = "fmu", path = "../test/resources/fmu/Feedthrough.fmu")
+}
