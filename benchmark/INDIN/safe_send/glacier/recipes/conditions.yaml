@@ -1,6 +1,0 @@
-recipe: "Test"
-conditions:
-  - machine: "SafeSend"
-    header: METHOD
-    node: "out"
-    value: 1
