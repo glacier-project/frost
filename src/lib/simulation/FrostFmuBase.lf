@@ -47,6 +47,11 @@ reactor FrostFmuBase(
             Read from the archive at build unless set in YAML.
         stop_time (float | None):
             YAML only; LF decides when to stop.
+        fmu_time (float):
+            Model time the FMU sits on.
+        fmu_ns (int):
+            Logical tag, in ns, the FMU sits on. Exact after a full step;
+            rounded to the ns from fmu_time only after an early return.
         fmu_dictionary (dict[str, ModelVariable]):
             Variable name -> fmpy ModelVariable (type, valueReference, shape,
             causality); no Clocks.
@@ -63,12 +68,14 @@ reactor FrostFmuBase(
     state tolerance
 
     state fmu_time
+    state fmu_ns
     state fmu_dictionary
     state fmu_inputs
     state fmu_outputs
     state can_rollback
     state saved_state
     state saved_time
+    state saved_ns
     state saved_inputs
 
     // @override
@@ -145,6 +152,7 @@ reactor FrostFmuBase(
                     description.coSimulation.canGetAndSetFMUstate
                 )
                 self.fmu_time = self.start_time
+                self.fmu_ns = 0
                 return fmu
             except Exception:
                 if fmu is not None:
@@ -201,7 +209,7 @@ reactor FrostFmuBase(
         '''Advance the FMU to the logical time target.
 
         On an early return the FMU stops before next_target, at an internal
-        event; fmu_time tells where. With Event Mode the FMU stays in Event
+        event; fmu_ns tells where. With Event Mode the FMU stays in Event
         Mode at that event until the next _do_step, so _set_inputs and
         _get_outputs act at the event instant.
 
@@ -223,16 +231,13 @@ reactor FrostFmuBase(
                 self.model.freeFMUState(self.saved_state)
             self.saved_state = self.model.getFMUState()
             self.saved_time = self.fmu_time
+            self.saved_ns = self.fmu_ns
             self.saved_inputs = dict(self.fmu_inputs)
         try:
-            terminate, reached = self.model.step(
+            terminate, early_time = self.model.step(
                 self.fmu_time,
                 to - self.fmu_time,
                 self.can_rollback,
-            )
-            self.logger.debug(
-                f"{self.name} stepped from {self.fmu_time} to {reached} "
-                f"(target {to}) at {lf.time.logical_elapsed()} ns"
             )
         except FMICallException as error:
             if error.status != fmi2Discard:
@@ -241,9 +246,22 @@ reactor FrostFmuBase(
                 f"{self.name} discarded the step from {self.fmu_time} to {to}"
             )
             return False
-        self.fmu_time = reached
+        self.logger.debug(
+            f"{self.name} stepped from {self.fmu_time} to "
+            f"{to if early_time is None else early_time} (target {to}) at "
+            f"{lf.time.logical_elapsed()} ns"
+        )
+        if early_time is None:
+            self.fmu_time, self.fmu_ns = to, next_target
+        else:
+            self.fmu_time = early_time
+            self.fmu_ns = round(
+                (early_time - self.start_time) / self.time_scale * 1e9
+            )
         if terminate:
-            self.logger.debug(f"{self.name} requested termination at {reached}")
+            self.logger.debug(
+                f"{self.name} requested termination at {self.fmu_time}"
+            )
             return False
         return True
     =}
@@ -261,6 +279,7 @@ reactor FrostFmuBase(
             return False
         self.model.setFMUState(self.saved_state)
         self.fmu_time = self.saved_time
+        self.fmu_ns = self.saved_ns
         self.fmu_inputs = dict(self.saved_inputs)
         return True
     =}
