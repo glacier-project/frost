@@ -69,7 +69,15 @@ reactor FrostHostBase extends FrostBase{
 
         Notice: if you your reactor extends also FrostReactor you can commit the outputs to the machine data model, if any. 
         '''
-        raise NotImplementedError(f"{self.name}: extend a model reactor such as FrostFmuBase, or override _commit()")
+        return False
+    =}
+
+    method _set_trigger(){=
+        '''
+        A trigger has arrived on the model, so the reactor shall rollback to the previous step and advance to the current tag. Once it has done it it shall return True, otherwise False.
+        Notice: In cosimulation you must commit the event to the orchestrator, if any, so that it can propagate the event to the other models. 
+        '''
+        return False
     =}
 
     // @label _build_model

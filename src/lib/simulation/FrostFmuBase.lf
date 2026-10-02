@@ -67,6 +67,10 @@ reactor FrostFmuBase(
     state variables
     state fmu_inputs
     state fmu_outputs
+    state fmu_variables
+    state can_rollback
+    state saved_state
+    state saved_time
 
     // ===== FrostHostBase hooks =====
 
@@ -98,6 +102,7 @@ reactor FrostFmuBase(
 
             self.variables = VariableTable.from_model_description(description)
             self._read_interface()
+            self.can_rollback = description.coSimulation.canGetAndSetFMUstate
             self.variables.check_initialization_writable(self.start_values)
             fmu = fmu_class(unzipdir, description, self.name, self.variables, events, self.structural)
             self._initialize(fmu)
@@ -132,7 +137,9 @@ reactor FrostFmuBase(
         '''
         unknown = self.fmu_inputs.keys() - self.variables.inputs
         if unknown: raise KeyError(f"{self.name} has no inputs {sorted(unknown)}; it exposes {sorted(self.variables.inputs)}")
-        self.variables.write(self.model, {name: value for name, value in self.fmu_inputs.items() if value is not None})
+        assigned = {name: value for name, value in self.fmu_inputs.items() if value is not None}
+        self.logger.debug(f"set_inputs at fmu_time={self.fmu_time}: {assigned}")
+        self.variables.write(self.model, assigned)
     =}
 
     // @override
@@ -143,12 +150,25 @@ reactor FrostFmuBase(
         Returns:
             dict: Output values keyed by FMU output name.
         '''
-        outputs = {}
-        for name, type_name in self.fmu_outputs.items():
+        return self._get_values(self.fmu_outputs)
+    =}
+
+    method _get_values(names){=
+        '''
+        Read any FMU variables by name: outputs, parameters or locals; arrays come back in their declared shape.
+
+        Args:
+            names (Iterable[str]): Variable names.
+
+        Returns:
+            dict: Values keyed by variable name.
+        '''
+        values = {}
+        for name in names:
             shape = self.variables.shape(name)
-            values = self.model.read(type_name, list(self.variables.value_references([name])), self.variables.size(name))
-            outputs[name] = np.array(values).reshape(shape) if shape else values[0]
-        return outputs
+            read = self.model.read(self.variables.access_type(name), list(self.variables.value_references([name])), self.variables.size(name))
+            values[name] = np.array(read).reshape(shape) if shape else read[0]
+        return values
     =}
 
     // @override
@@ -163,6 +183,10 @@ reactor FrostFmuBase(
             bool: True while the FMU can continue; False once it terminated or discarded the step.
         '''
         to = self.start_time + next_target / 1e9 * self.time_scale
+        if self.can_rollback:
+            if self.saved_state is not None: self.model.freeFMUState(self.saved_state)
+            self.saved_state, self.saved_time = self.model.getFMUState(), self.fmu_time
+        self.logger.debug(f"do_step to {next_target} ns: fmu_time {self.fmu_time} -> {to}")
         try:
             terminate = self.model.step(self.fmu_time, to - self.fmu_time)
         except FMICallException as error:
@@ -176,17 +200,37 @@ reactor FrostFmuBase(
         return not terminate
     =}
 
+    // @override
+    method _rollback(){=
+        '''
+        Restore the FMU to the state saved before the last _do_step.
+
+        Returns:
+            bool: True once restored; False when the FMU cannot save its state or has not stepped yet.
+        '''
+        if self.saved_state is None:
+            self.logger.debug(f"rollback refused: no saved state (can_rollback={self.can_rollback})")
+            return False
+        self.logger.debug(f"rollback: fmu_time {self.fmu_time} -> {self.saved_time}")
+        self.model.setFMUState(self.saved_state)
+        self.fmu_time = self.saved_time
+        return True
+    =}
+
     // ===== Initialization =====
 
     method _read_interface(){=
         '''
-        Read the interface of the FMU and store its inputs and outputs.
+        Read the interface of the FMU: inputs (name -> value, None until assigned), outputs and the other model
+        variables, parameters and locals (name -> FMI type).
 
         Returns:
             None
         '''
         self.fmu_inputs = dict.fromkeys(self.variables.inputs)
         self.fmu_outputs = {name: self.variables.access_type(name) for name in self.variables.outputs}
+        self.fmu_variables = {name: self.variables.access_type(name) for name in self.variables.names()
+                              if self.variables.variable(name).causality not in ("input", "output", "independent")}
     =}
 
     method _initialize(fmu){=
