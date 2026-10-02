@@ -14,7 +14,7 @@ reactor FrostHostBase extends FrostBase{
     Extension:
         _build_model(): required; return the model object this reactor drives.
         _shutdown(): required; close the model. Call it from the leaf's last shutdown reaction.
-        _set_inputs(values), _get_outputs(), _do_step(next_target): required; the model's I/O and stepping.
+        _set_inputs(), _get_outputs(), _do_step(next_target): required; the model's I/O and stepping.
     '''
 
     state model
@@ -33,9 +33,9 @@ reactor FrostHostBase extends FrostBase{
         raise NotImplementedError(f"{self.name}: extend a model reactor such as FrostFmuBase, or override _shutdown()")
     =}
 
-    method _set_inputs(values){=
+    method _set_inputs(){=
         '''
-        Write input values; they take effect from the next step.
+        Write the model's current input state; call it before _do_step.
         '''
         raise NotImplementedError(f"{self.name}: extend a model reactor such as FrostFmuBase, or override _set_inputs()")
     =}

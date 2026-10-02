@@ -1,0 +1,205 @@
+target Python{
+    files: [
+        "../../python_lib/simulation/fmi/variables.py",
+        "../../python_lib/simulation/fmi/fmi2.py",
+        "../../python_lib/simulation/fmi/fmi3.py",
+    ],
+}
+
+import FrostHostBase from "FrostHostBase.lf"
+
+preamble{=
+import glob
+import os
+import shutil
+import tempfile
+import fmpy
+import numpy as np
+from fmpy.fmi1 import FMICallException
+from fmpy.fmi2 import fmi2Discard
+from variables import VariableTable
+from fmi2 import FMU2Frost
+from fmi3 import FMU3Frost
+
+def remove_stale_extractions():
+    '''Remove archives extracted by dead processes; a crashed LF run skips the shutdown reaction.'''
+    for stale in glob.glob(os.path.join(tempfile.gettempdir(), "frost-fmu-*-*")):
+        try:
+            os.kill(int(os.path.basename(stale).split("-")[2]), 0)
+        except ProcessLookupError:
+            shutil.rmtree(stale, ignore_errors=True)
+        except (PermissionError, ValueError):
+            pass
+=}
+
+reactor FrostFmuBase(
+    path = "",
+    start_values = {={}=},
+    structural = {={}=},
+    time_scale = 1.0,
+    event_mode = {=None=}
+) extends FrostHostBase{
+    '''
+    FMU model type: implements the FrostHostBase hooks with fmpy, for FMI 2.0 and 3.0.
+
+    The model is an FMU2Frost/FMU3Frost (fmpy FMU2Slave/FMU3Slave subclass), initialized and in Step Mode once built.
+
+    Args:
+        path (str): FMU archive path.
+        start_values (dict): Values written in Initialization Mode, keyed by variable name.
+        structural (dict): Structural parameters applied in Configuration Mode (FMI 3.0 only).
+        time_scale (float): Model seconds per logical second.
+        event_mode (bool): FMI 3.0 Event Mode; None follows the archive. FMI 2.0 rejects True.
+
+    Attributes:
+        step_size, start_time, stop_time, tolerance:
+            Read from the archive at build; a YAML value is imposed on the model instead.
+    '''
+
+    state step_size
+    state start_time
+    state stop_time
+    state tolerance
+
+    state fmu_time
+    state variables
+    state fmu_inputs
+    state fmu_outputs
+
+    // ===== FrostHostBase hooks =====
+
+    // @override
+    method _build_model(){=
+        '''
+        Extract the archive, instantiate the FMU and run it through initialization into Step Mode.
+
+        Returns:
+            FMU2Frost | FMU3Frost: The initialized FMU.
+        '''
+        remove_stale_extractions()
+        unzipdir = fmpy.extract(self.path, unzipdir=tempfile.mkdtemp(prefix=f"frost-fmu-{os.getpid()}-"))
+        fmu = None
+        try:
+            description = fmpy.read_model_description(unzipdir)
+            if description.coSimulation is None: raise ValueError(f"{self.path} has no Co-Simulation interface")
+            fmu_class = {"2.0": FMU2Frost, "3.0": FMU3Frost}.get(description.fmiVersion)
+            if fmu_class is None: raise ValueError(f"{self.path} declares unsupported fmiVersion {description.fmiVersion!r}")
+            events = description.coSimulation.hasEventMode if self.event_mode is None else self.event_mode
+
+            def declared(value, field):
+                found = getattr(description.defaultExperiment, field, None)
+                return value if value is not None else None if found is None else float(found)
+            self.start_time = declared(self.start_time, "startTime") or 0.0
+            self.stop_time = declared(self.stop_time, "stopTime")
+            self.tolerance = declared(self.tolerance, "tolerance")
+            self.step_size = declared(self.step_size, "stepSize") or description.coSimulation.fixedInternalStepSize
+
+            self.variables = VariableTable.from_model_description(description)
+            self._read_interface()
+            self.variables.check_initialization_writable(self.start_values)
+            fmu = fmu_class(unzipdir, description, self.name, self.variables, events, self.structural)
+            self._initialize(fmu)
+            return fmu
+        except Exception:
+            if fmu is not None:
+                fmu.freeInstance()
+            shutil.rmtree(unzipdir, ignore_errors=True)
+            raise
+    =}
+
+    // @override
+    method _shutdown(){=
+        '''
+        Terminate and free the FMU, then remove the extracted archive.
+        '''
+        if self.model is None:
+            return
+        self.logger.info(f"Shutting down {self.name}")
+        try:
+            self.model.terminate()
+        finally:
+            self.model.freeInstance()
+            shutil.rmtree(self.model.unzipDirectory, ignore_errors=True)
+            self.model = None
+    =}
+
+    // @override
+    method _set_inputs(){=
+        '''
+        Write every assigned value of fmu_inputs into the FMU; unassigned (None) inputs keep the FMU's own value.
+        '''
+        unknown = self.fmu_inputs.keys() - set(self.variables.inputs)
+        if unknown: raise KeyError(f"{self.name} has no inputs {sorted(unknown)}; it exposes {sorted(self.variables.inputs)}")
+        self.variables.write(self.model, {name: value for name, value in self.fmu_inputs.items() if value is not None})
+    =}
+
+    // @override
+    method _get_outputs(){=
+        '''
+        Read every FMU output; arrays come back in their declared shape.
+
+        Returns:
+            dict: Output values keyed by FMU output name.
+        '''
+        outputs = {}
+        for name, type_name in self.fmu_outputs.items():
+            shape = self.variables.shape(name)
+            values = self.model.read(type_name, list(self.variables.value_references([name])), self.variables.size(name))
+            outputs[name] = np.array(values).reshape(shape) if shape else values[0]
+        return outputs
+    =}
+
+    // @override
+    method _do_step(next_target){=
+        '''
+        Advance the FMU to the logical time target.
+
+        Args:
+            next_target (int): Logical elapsed time in ns the FMU must reach.
+
+        Returns:
+            bool: True while the FMU can continue; False once it terminated or discarded the step.
+        '''
+        to = self.start_time + next_target / 1e9 * self.time_scale
+        try:
+            terminate = self.model.step(self.fmu_time, to - self.fmu_time)
+        except FMICallException as error:
+            if error.status != fmi2Discard:
+                raise
+            self.logger.error(f"{self.name} discarded the step from {self.fmu_time} to {to}")
+            return False
+        self.fmu_time = to
+        if terminate:
+            self.logger.info(f"{self.name} requested termination at {to}")
+        return not terminate
+    =}
+
+    // ===== Initialization =====
+
+    method _read_interface(){=
+        '''
+        Read the interface of the FMU and store its inputs and outputs.
+
+        Returns:
+            None
+        '''
+        self.fmu_inputs = dict.fromkeys(self.variables.inputs)
+        self.fmu_outputs = {name: self.variables.access_type(name) for name in self.variables.outputs}
+    =}
+
+    method _initialize(fmu){=
+        '''
+        Configure, initialize and settle the FMU so that it ends in Step Mode at start_time.
+
+        Args:
+            fmu (FMU2Frost | FMU3Frost): Freshly instantiated FMU.
+        '''
+        experiment = {"tolerance": self.tolerance, "startTime": self.start_time, "stopTime": self.stop_time}
+        fmu.enter_initialization(experiment)
+        self.variables.write(fmu, self.start_values)
+        if fmu.exit_initialization():
+            raise ValueError(f"{self.name} terminated during initialization")
+        self.fmu_time = self.start_time
+    =}
+
+}
