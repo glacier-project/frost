@@ -1,58 +1,133 @@
 target Python
 
-import SimModel from "SimModel.lf"
+import FrostFmuBase from "FrostFmuBase.lf"
 
+reactor FrostFmu extends FrostFmuBase{
+    '''Standalone FMU synchronized by LF logical time, with no orchestrator.
 
-reactor FrostFmu(file_path = "") extends SimModel{
+    The FMU commits at every tag k * step_size. An FMU that can roll back then
+    runs ahead to the next tag, and an early return makes the internal event
+    the next tag; any other FMU steps to each tag when LF gets there.
 
-    preamble{=
-        import fmpy
-        import fmpy.fmi3 as fmi
-    =}
+    To change an input at the current tag: set fmu_inputs, then call
+    _set_trigger(), _set_inputs() and _commit().
 
-    state path = file_path
-    state time_step = {=self._time_step=}
-    state fmu
-    state fmu_time = 0.0
-    state unzipdir
-    state model_description
-    state vars = []
+    Attributes:
+        step_ns (int):
+            Logical time between two tags, in ns.
+        stop_ns (int | None):
+            Last tag, in ns, from stop_time; None to run until LF stops.
+        running (bool):
+            False once the FMU terminated or discarded a step.
 
-    method simulate(args){=
-        assert self.fmu != None, "FMU is not present"
-        self.fmu.doStep(currentCommunicationPoint = self.fmu_time, communicationStepSize = self.time_step)
-        self.fmu_time += self.time_step
-        self.logger.info(f"FMU simulated to time {self.fmu_time}")
-        return True
-    =}
+    '''
+    state step_ns
+    state stop_ns
+    state running = True
 
-    // @label _initialize_fmu
-    reaction(startup){=
+    logical action tick
+
+    method _step_past(limit_ns, target_ns){=
+        '''Step towards target_ns while the FMU sits at or before limit_ns.
+
+        An early return only splits the step. The FMU keeps the inputs it
+        already has.
+
+        Args:
+            limit_ns (int):
+                Tag, in ns, the FMU must move past.
+            target_ns (int):
+                Tag, in ns, every step aims at.
+
         '''
-        Initialize the FMU by extracting it, reading the model description and schedule the first step.
-        '''
-        self.simulation_handler.register_handler(Operation.get_enum().SIMULATE, self.simulate)
-        self.unzipdir = self.fmpy.extract(self.path)
-        self.model_description = self.fmpy.read_model_description(self.unzipdir)
-        self.fmu = self.fmpy.instantiate_fmu(self.unzipdir, self.model_description)
-        self.fmu.enterInitializationMode()
-        self.fmu.exitInitializationMode()
-        for variable in self.model_description.modelVariables:
-            self.vars.append(variable.valueReference)
-        self.logger.info(f"Initialized FMU from {self.path} at time {self.fmu_time}")
+        stalls = 0
+        while self.running and self.fmu_ns <= limit_ns:
+            before = self.fmu_ns
+            self.running = self._do_step(target_ns)
+            stalls = stalls + 1 if self.fmu_ns == before else 0
+            if stalls > 3:
+                raise RuntimeError(
+                    f"{self.name} makes no progress past {self.fmu_ns} ns"
+                )
     =}
 
-    // @label _shutdown_fmu
+    method _advance(tick){=
+        '''Bring the FMU to the current tag, commit it, schedule the next.
+
+        Args:
+            tick (logical action):
+                Scheduled for the next tag.
+
+        '''
+        now = lf.time.logical_elapsed()
+        if self.fmu_ns < now:
+            self._set_inputs()
+            self._step_past(now - 1, now)
+        self._commit()
+
+        next_ns = (now // self.step_ns + 1) * self.step_ns
+        if not self.running or (
+            self.stop_ns is not None and next_ns > self.stop_ns
+        ):
+            return
+        if not self.can_rollback:
+            tick.schedule(next_ns - now)
+            return
+        self._set_inputs()
+        self._step_past(now, next_ns)
+        if self.fmu_ns > now:
+            tick.schedule(self.fmu_ns - now)
+    =}
+
+    // @override
+    method _set_trigger(){=
+        '''Bring the FMU to the current tag with the inputs it had before.
+
+        A run-ahead FMU is rolled back and replayed; an FMU on an earlier tag
+        steps forward. fmu_inputs keeps the values the caller set, for
+        _set_inputs() to apply at the current tag.
+
+        Returns:
+            bool:
+                True once the FMU sits on the current tag; False when it ran
+                ahead and cannot roll back.
+
+        '''
+        now = lf.time.logical_elapsed()
+        pending = dict(self.fmu_inputs)
+        if self.fmu_ns > now and self._rollback():
+            self._set_inputs()
+        on_time = self.fmu_ns <= now
+        if on_time:
+            self._step_past(now - 1, now)
+        self.fmu_inputs = pending
+        return on_time
+    =}
+
+    // @label _start_model
+    reaction(startup) -> tick{=
+        '''Commit the initial state and schedule the next tag.'''
+        if not self.step_size:
+            raise ValueError(
+                f"{self.name} has no step size; set step_size in YAML"
+            )
+        self.step_ns = round(self.step_size / self.time_scale * 1e9)
+        if self.stop_time is not None:
+            self.stop_ns = round(
+                (self.stop_time - self.start_time) / self.time_scale * 1e9
+            )
+        self._advance(tick)
+    =}
+
+    // @label _step_model
+    reaction(tick) -> tick{=
+        '''Commit the tag LF has reached and schedule the next one.'''
+        self._advance(tick)
+    =}
+
+    // @label _shutdown_model
     reaction(shutdown){=
-        '''
-        Free the FMU instance and clean up resources.
-        '''
-        if self.fmu is None:
-            return 0
-
-        self.logger.info(f"Shutting down FMU at time {self.fmu_time}")
-        self.fmu.terminate()
-        self.fmu.freeInstance()
-        self.fmu = None          
+        '''Close the model after every other reaction at the final tag.'''
+        self._shutdown()
     =}
 }
