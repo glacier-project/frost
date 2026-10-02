@@ -1,8 +1,0 @@
-time_precision: NSECS
-logging_level: INFO
-reactors:
-  bouncingBall:
-    logging_level: INFO
-    parameters:
-      path: "resources/utils/bouncingBall.fmu"
-      step_size: 100
