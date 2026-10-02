@@ -1,0 +1,33 @@
+time_precision: NSECS
+logging_level: INFO
+reactors:
+  frost_link:
+    logging_level: WARNING
+    parameters:
+      data_model_path: "resources/data_model/test_frost_fmu_data_model/link.yml"
+    reactors:
+      message_filter:
+        logging_level: WARNING
+  machine:
+    logging_level: INFO
+    parameters:
+      data_model_path: "resources/data_model/test_frost_fmu_data_model/machine.yml"
+      step_size: 0.1
+    reactors:
+      message_filter:
+        logging_level: WARNING
+  ball:
+    logging_level: INFO
+    parameters:
+      data_model_path: "resources/data_model/test_frost_fmu_data_model/ball.yml"
+      step_size: 0.03
+    reactors:
+      message_filter:
+        logging_level: WARNING
+  operator:
+    logging_level: INFO
+    parameters:
+      data_model_path: "resources/data_model/test_frost_fmu_data_model/operator.yml"
+    reactors:
+      message_filter:
+        logging_level: WARNING

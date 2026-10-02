@@ -1,0 +1,50 @@
+target Python{
+    timeout: 1 s,
+    fast: true,
+}
+
+import FrostFmuReactor from "../../src/lib/simulation/FrostFmuReactor.lf"
+
+preamble{=
+from frost import *    # FROST_CONFIG and the logging setup that every Frost reactor expects
+=}
+
+// FrostFmuReactor: an FMU published on the data model of a FrostReactor.
+//
+// The data model does not follow the FMU names (see data_model/feedthrough_machine.yml):
+//
+//     data model node           FMU variable
+//     Machine/setpoint    ->    Float64_continuous_input
+//     Machine/measure     <-    Float64_continuous_output
+//
+// so the extension says which node stands for which variable, in the two required hooks:
+// - _bind_inputs(): writes on Machine/setpoint, from any Frost node, reach the FMU input at their tag.
+// - _commit(): at every committed tag, the FMU output is written on Machine/measure.
+//
+// Here a timer writes the setpoint node directly; in a real net the write comes from another Frost node.
+reactor Machine extends FrostFmuReactor{
+    timer operator(250 ms)
+
+    // @override
+    method _bind_inputs(){=
+        self._bind_input("Machine/setpoint", "Float64_continuous_input")
+    =}
+
+    // @override
+    method _commit(){=
+        output = self._get_outputs()["Float64_continuous_output"]
+        self.data_model.get_node("Machine/measure").write(output)
+        print(f"{lf.time.logical_elapsed() // 1000000:>5} ms  Machine/measure = {output}")
+        return True
+    =}
+
+    // A local write on a bound node: the reaction declares tick and applies it.
+    reaction(operator) -> tick{=
+        self.data_model.get_node("Machine/setpoint").write(5.0)
+        self._external_trigger(tick)
+    =}
+}
+
+main reactor{
+    machine = new Machine(name = "machine", path = "../test/resources/fmu/Feedthrough.fmu")
+}

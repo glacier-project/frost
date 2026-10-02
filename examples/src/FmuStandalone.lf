@@ -13,8 +13,9 @@ from frost import *    # FROST_CONFIG and the logging setup that every Frost rea
 //
 // - The FMU commits at every step tag (here every 100 ms, from step_size in the YAML): _commit() is
 //   where the leaf publishes the outputs; here it prints them.
-// - To change an input, set fmu_inputs, then _set_trigger(), _set_inputs() and _commit(): the change takes effect at the
-//   current tag, even between two steps (the FMU rolls back and re-simulates up to now if it ran ahead).
+// - To change an input, from a reaction that declares tick: set fmu_inputs, then _set_trigger(), _set_inputs(),
+//   _commit() and _resume(tick). The change takes effect at the current tag, even between two steps: the FMU rolls
+//   back and re-simulates up to now if it ran ahead, then runs ahead again with the new input.
 //
 // Feedthrough.fmu copies its input to its output, so the printed output shows when the input took effect.
 reactor Feedthrough extends FrostFmu{
@@ -27,11 +28,12 @@ reactor Feedthrough extends FrostFmu{
         return True
     =}
 
-    reaction(change){=
+    reaction(change) -> tick{=
         self.fmu_inputs["Float64_continuous_input"] = 5.0
         if self._set_trigger():
             self._set_inputs()
             self._commit()
+            self._resume(tick)
     =}
 }
 

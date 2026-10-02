@@ -1,0 +1,213 @@
+target Python{
+    fast: true,
+    timeout: 5 s,
+    files: ["../resources/lib/fmu_test_tools.py"]
+}
+import FrostLink from "../../src/lib/FrostLink.lf"
+import FrostReactor from "../../src/lib/FrostReactor.lf"
+import FmuNode from "../resources/lib/FmuNode.lf"
+
+preamble{=
+    from frost import *
+    from fmu_test_tools import ns, log_line, compare
+
+    INPUT = "Float64_continuous_input"
+    OUTPUT = "Float64_continuous_output"
+
+    # What the operator does through the link: (LF time in ms, action, value, why).
+    # A READ entry carries the value the machine's output node must hold at that time.
+    OPERATOR_PLAN = [
+        (3250, "WRITE", 5.0, "inside the step 3200 -> 3300 the machine already simulated"),
+        (3270, "READ",  5.0, "the trigger committed 5.0 at 3250"),
+        (3320, "READ",  5.0, "regular commit at 3300"),
+        (3500, "WRITE", 7.0, "on a step tag, right after the machine committed 3500"),
+        (3550, "READ",  7.0, "the trigger committed 7.0 at 3500"),
+        (3650, "READ",  7.0, "regular commit at 3600"),
+        (3750, "WRITE", 7.0, "same value again, inside the step 3700 -> 3800"),
+        (3770, "READ",  7.0, "the trigger committed 7.0 at 3750"),
+    ]
+
+    def machine_expected():
+        '''Machine commits, (ms, output): the 100 ms grid plus one commit per write, holding the value right after it.'''
+        commits = []
+        for ms in range(0, 5001, 100):
+            if ms < 3250:
+                commits.append((ms, 0.0))
+            elif ms <= 3500:
+                commits.append((ms, 5.0))
+            else:
+                commits.append((ms, 7.0))
+            if ms == 3200:
+                commits.append((3250, 5.0))    # write at 3250, between 3200 and 3300
+            if ms == 3500:
+                commits.append((3500, 7.0))    # write at 3500, after the regular commit at 3500
+            if ms == 3700:
+                commits.append((3750, 7.0))    # write at 3750, between 3700 and 3800
+        return commits
+
+    MACHINE_TRIGGERS = [(ms, INPUT, value, True) for ms, action, value, _ in OPERATOR_PLAN if action == "WRITE"]
+=}
+
+# Feedthrough (output == input): the effect of every write is known to the tag.
+reactor Machine(expected = {=[]=}, expected_triggers = {=[]=}) extends FmuNode{
+    state outputs_seen = {=[]=}
+
+    method _on_commit(snapshot){=
+        self.outputs_seen.append((self._ms(), snapshot[f"outputs/{OUTPUT}"]))
+    =}
+
+    reaction(startup){=
+        assert self.can_rollback, f"{self.path} should declare canGetAndSetFMUstate"
+        expected_mirror = {OUTPUT: "outputs", "Float64_fixed_parameter": "parameters", "Float64_tunable_parameter": "parameters"}
+        assert self.node_folders == expected_mirror, f"the data model should publish {expected_mirror}, got {self.node_folders}"
+    =}
+
+    reaction(shutdown){=
+        mismatches = compare(self.logger, f"machine commits (ms, {OUTPUT})", self.outputs_seen, self.expected)
+        assert not mismatches, f"machine commit rows {mismatches} differ (see the table above)"
+
+        mismatches = compare(self.logger, "machine triggers (ms, input, value, applied)", self.triggers, self.expected_triggers)
+        assert not mismatches, f"machine trigger rows {mismatches} differ (see the table above)"
+
+        assert self._node("inputs", INPUT).read() == 7.0, "the input node must hold the last written value"
+        assert self.fmu_inputs[INPUT] == 7.0, "fmu_inputs must hold the last written value"
+        for _, snapshot in self.published:
+            assert snapshot["parameters/Float64_fixed_parameter"] == 0.0, "a fixed parameter must never change"
+    =}
+}
+
+# BouncingBall (FMI 3.0): no inputs; its whole state is mirrored on the data model.
+# The FMU returns early at each bounce, so bounces are committed on their exact tag, off the 30 ms grid.
+reactor Ball extends FmuNode{
+    state bounces = {=[]=}
+    state early_returns = {=[]=}
+    state last_bounce
+    state rest_tag
+
+    method _check_physics(snapshot){=
+        h, v, g = snapshot["outputs/h"], snapshot["outputs/v"], snapshot["parameters/g"]
+        assert snapshot["locals/der(h)"] == v, f"der(h) = {snapshot['locals/der(h)']} must equal v = {v}"
+        assert snapshot["locals/der(v)"] == g, f"der(v) = {snapshot['locals/der(v)']} must equal g = {g}"
+        assert snapshot["outputs/h_ft"] == h, f"h_ft = {snapshot['outputs/h_ft']} must equal h = {h}"
+        assert h >= 0.0, f"the ball is below the floor: h = {h}"
+        assert snapshot["parameters/e"] == 0.7, "the restitution e must not change"
+        assert snapshot["locals/v_min"] == 0.1, "the constant v_min must not change"
+    =}
+
+    method _check_early_return(snapshot){=
+        # An off-grid commit comes from an early return. The FMU returns early on the bounce itself,
+        # and once more one solver step (1 ms) later, when it re-arms its event indicator.
+        h, v = snapshot["outputs/h"], snapshot["outputs/v"]
+        self.early_returns.append(self._ms())
+        on_the_floor = h <= 1e-9 and v >= 0.0
+        one_ms_after_a_bounce = self.last_bounce == self._ms() - 1
+        if on_the_floor:
+            self.last_bounce = self._ms()
+            self._log("BALL", f"early return on the bounce: h = {h:.1e} m, v = {v:.4f} m/s")
+        elif one_ms_after_a_bounce:
+            self._log("BALL", "early return 1 ms after the bounce: the FMU re-arms its event indicator")
+        assert on_the_floor or one_ms_after_a_bounce, f"an early return must be a bounce or 1 ms after one, got h = {h}, v = {v}"
+    =}
+
+    method _track_motion(previous, snapshot){=
+        if previous["outputs/v"] < 0 < snapshot["outputs/v"]:
+            self.bounces.append(self._ms())
+        if previous["parameters/g"] != snapshot["parameters/g"]:
+            self.rest_tag = self._ms()
+            self._log("BALL", f"the FMU changed its own parameter g: {previous['parameters/g']} -> {snapshot['parameters/g']} (ball at rest)")
+    =}
+
+    method _on_commit(snapshot){=
+        self._check_physics(snapshot)
+        if lf.time.logical_elapsed() % self.step_ns:
+            self._check_early_return(snapshot)
+        if len(self.published) >= 2:
+            self._track_motion(self.published[-2][1], snapshot)
+    =}
+
+    reaction(shutdown){=
+        step_ms = self.step_ns // 1000000
+        tags = [ms for ms, _ in self.published]
+        off_grid = sorted(set(tags) - set(range(0, 5001, step_ms)))
+        first, last = self.published[0][1], self.published[-1][1]
+        self.logger.info(f"=== ball: {len(tags)} commits, {len(off_grid)} off the {step_ms} ms grid (early returns)")
+        self.logger.info(f"    bounces at {self.bounces} ms, at rest from {self.rest_tag} ms")
+
+        assert set(range(0, 5001, step_ms)) <= set(tags), f"every tag of the {step_ms} ms grid must be committed"
+        assert tags == sorted(tags), "commits must be in time order"
+        assert off_grid == self.early_returns, f"every off-grid commit must be an early return: {off_grid} vs {self.early_returns}"
+        assert len(self.bounces) >= 3, f"expected several bounces in 5 s, got {self.bounces}"
+        assert first["outputs/h"] == 1.0 and first["parameters/g"] == -9.81, "the commit at 0 must publish the start values"
+        assert self.rest_tag is not None, "the ball must come to rest"
+        assert last["outputs/v"] == 0.0 and last["parameters/g"] == 0.0, "at rest the FMU sets v and g to 0"
+    =}
+}
+
+# Carries out OPERATOR_PLAN through the FrostLink: writes the machine input node, reads its output node.
+reactor Operator extends FrostReactor{
+    state step = 0
+    state reads = {=[]=}
+    state write_answers = {=[]=}
+
+    logical action next_action
+
+    method _ms(){=
+        return lf.time.logical_elapsed() // 1000000
+    =}
+
+    method _log(kind, text){=
+        self.logger.info(log_line(lf.time.logical_elapsed(), kind, text))
+    =}
+
+    reaction(startup) -> next_action{=
+        next_action.schedule(ns(OPERATOR_PLAN[0][0]))
+    =}
+
+    reaction(next_action) -> channel_out, next_action{=
+        ms, action, value, why = OPERATOR_PLAN[self.step]
+        assert self.connected, f"the operator is not connected to the link at {ms} ms"
+        if action == "WRITE":
+            message = self.message_builder.build_write_variable_message(target="machine", node=f"Machine/inputs/{INPUT}", value=value)
+            self._log("SEND", f"WRITE {INPUT} = {value} ({why})")
+        else:
+            message = self.message_builder.build_read_variable_message(target="machine", node=f"Machine/outputs/{OUTPUT}")
+            self._log("SEND", f"READ {OUTPUT}, expecting {value} ({why})")
+        self._set_channel_out_port(message, channel_out)
+
+        self.step += 1
+        if self.step < len(OPERATOR_PLAN):
+            next_action.schedule(ns(OPERATOR_PLAN[self.step][0] - ms))
+    =}
+
+    reaction(response_messages){=
+        for bank_index, message in response_messages.value:
+            if message.header.namespace != MsgNamespace.VARIABLE:
+                continue
+            if message.header.msg_name == VariableMsgName.READ:
+                self._log("ANSWER", f"READ {message.payload.node} = {message.payload.value}")
+                self.reads.append((self._ms(), message.payload.value))
+            elif message.header.msg_name == VariableMsgName.WRITE:
+                self._log("ANSWER", f"WRITE {message.payload.node} accepted, value {message.payload.value}")
+                self.write_answers.append(self._ms())
+    =}
+
+    reaction(shutdown){=
+        expected_reads = [(ms, value) for ms, action, value, _ in OPERATOR_PLAN if action == "READ"]
+        mismatches = compare(self.logger, "operator reads (ms, value)", self.reads, expected_reads)
+        assert not mismatches, f"operator read rows {mismatches} differ (see the table above)"
+
+        expected_answers = [ms for ms, action, _, _ in OPERATOR_PLAN if action == "WRITE"]
+        assert self.write_answers == expected_answers, f"every write must be answered at its own tag: {self.write_answers}"
+    =}
+}
+
+main reactor{
+    machine = new Machine(name="machine", path="resources/fmu/Feedthrough.fmu",
+        expected = {= machine_expected() =}, expected_triggers = {= MACHINE_TRIGGERS =})
+    ball = new Ball(name="ball", path="resources/fmu/BouncingBall3.fmu", mirror_all=True)
+    operator = new Operator(name="operator")
+    link = new FrostLink(name="frost_link", width=3)
+
+    machine.channel_out, ball.channel_out, operator.channel_out -> link.channel_in after 0
+    link.channel_out -> machine.channel_in, ball.channel_in, operator.channel_in
+}

@@ -1,0 +1,54 @@
+name: "ball"
+machine_category: "unknown"
+machine_type: "unknown"
+machine_model: "unknown"
+description: "BouncingBall FMU (FMI 3.0): every model variable mirrored on the data model"
+root:
+  !!FolderNode
+  name: "Machine"
+  description: ""
+  children:
+    - !!FolderNode
+      name: "outputs"
+      description: "FMU outputs, published at every commit"
+      children:
+        - !!NumericalVariableNode
+          name: "h"
+          description: "height [m]"
+          initial_value: -1
+        - !!NumericalVariableNode
+          name: "v"
+          description: "velocity [m/s]"
+          initial_value: -1
+        - !!NumericalVariableNode
+          name: "h_ft"
+          description: "height, alias of h"
+          initial_value: -1
+    - !!FolderNode
+      name: "locals"
+      description: "FMU local variables, published at every commit"
+      children:
+        - !!NumericalVariableNode
+          name: "der(h)"
+          description: "derivative of h, equals v"
+          initial_value: -1
+        - !!NumericalVariableNode
+          name: "der(v)"
+          description: "derivative of v, equals g"
+          initial_value: -1
+        - !!NumericalVariableNode
+          name: "v_min"
+          description: "rest threshold [m/s], constant"
+          initial_value: -1
+    - !!FolderNode
+      name: "parameters"
+      description: "FMU parameters, published at every commit"
+      children:
+        - !!NumericalVariableNode
+          name: "g"
+          description: "gravity [m/s2]; the FMU sets it to 0 when the ball rests"
+          initial_value: -1
+        - !!NumericalVariableNode
+          name: "e"
+          description: "coefficient of restitution"
+          initial_value: -1
