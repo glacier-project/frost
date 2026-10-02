@@ -1,7 +1,6 @@
 target Python{
     files: [
         "../../python_lib/time_utils.py",
-        "../../python_lib/simulation/sim_time.py",
     ],
 }
 
