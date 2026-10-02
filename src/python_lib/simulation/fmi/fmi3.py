@@ -164,7 +164,7 @@ class FMU3Frost(FMU3Slave):
         time: float,
         size: float,
         may_restore: bool,
-    ) -> tuple[bool, float]:
+    ) -> tuple[bool, float | None]:
         """Perform fmi3DoStep.
 
         On an event with Event Mode, enter Event Mode and leave it pending for
@@ -179,10 +179,10 @@ class FMU3Frost(FMU3Slave):
                 Whether a state saved before this step may still be restored.
 
         Returns:
-            tuple[bool, float]:
-                Whether the FMU requests termination, and the time reached:
-                earlier than time + size on an early return at an internal
-                event.
+            tuple[bool, float | None]:
+                Whether the FMU requests termination, and the time of an early
+                return at an internal event, or None when the step reached
+                time + size.
 
         """
         event, terminate, early, last = self.doStep(
@@ -193,4 +193,4 @@ class FMU3Frost(FMU3Slave):
         if event and self.event_mode_used and not terminate:
             self.enterEventMode()
             self.in_event = True
-        return terminate, last if early else time + size
+        return terminate, last if early else None

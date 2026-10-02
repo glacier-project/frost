@@ -116,7 +116,7 @@ class FMU2Frost(FMU2Slave):
         time: float,
         size: float,
         may_restore: bool,
-    ) -> tuple[bool, float]:
+    ) -> tuple[bool, float | None]:
         """Perform fmi2DoStep.
 
         Args:
@@ -128,9 +128,9 @@ class FMU2Frost(FMU2Slave):
                 Whether a state saved before this step may still be restored.
 
         Returns:
-            tuple[bool, float]:
+            tuple[bool, float | None]:
                 False, since an FMI 2.0 step cannot request termination
-                without a Discard, and time + size, since FMI 2.0 has no early
+                without a Discard, and None, since FMI 2.0 has no early
                 return.
 
         """
@@ -139,4 +139,4 @@ class FMU2Frost(FMU2Slave):
             size,
             noSetFMUStatePriorToCurrentPoint=not may_restore,
         )
-        return False, time + size
+        return False, None
