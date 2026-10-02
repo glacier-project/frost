@@ -7,74 +7,135 @@ target Python{
 import FrostBase from "../FrostBase.lf"
 
 reactor FrostHostBase extends FrostBase{
-    '''
-    Owns the model of a reactor: builds it at startup and shuts it down.
+    '''Own the model of a reactor: build it at startup and shut it down.
 
     Extension:
-        _build_model(): required; return the model object this reactor drives.
-        _shutdown(): required; close the model. Call it from the leaf's last shutdown reaction.
-        _set_inputs(), _get_outputs(), _do_step(next_target): required; the model's I/O and stepping.
+        _build_model():
+            Required; return the model object this reactor drives.
+        _shutdown():
+            Required; close the model. Call it from the last shutdown
+            reaction of the leaf reactor.
+        _set_inputs(), _get_outputs(), _do_step(next_target):
+            Required; the I/O and stepping of the model.
+
+    Attributes:
+        model (Any):
+            The model built by _build_model(); None before startup.
+
     '''
 
     state model
 
     method _build_model(){=
+        '''Build the model this reactor drives.
+
+        Returns:
+            Any:
+                The model object.
+
         '''
-        Build the model this reactor drives.
-        '''
-        raise NotImplementedError(f"{self.name}: extend a model reactor such as FrostFmuBase, or override _build_model()")
+        raise NotImplementedError(
+            f"{self.name}: extend a model reactor such as FrostFmuBase, "
+            "or override _build_model()"
+        )
     =}
 
     method _shutdown(){=
-        '''
-        Close the model and release every resource it holds.
-        '''
-        raise NotImplementedError(f"{self.name}: extend a model reactor such as FrostFmuBase, or override _shutdown()")
+        '''Close the model and release every resource it holds.'''
+        raise NotImplementedError(
+            f"{self.name}: extend a model reactor such as FrostFmuBase, "
+            "or override _shutdown()"
+        )
     =}
 
     method _set_inputs(){=
-        '''
-        Write the model's current input state; call it before _do_step.
-        '''
-        raise NotImplementedError(f"{self.name}: extend a model reactor such as FrostFmuBase, or override _set_inputs()")
+        '''Write the current input state of the model; call before _do_step.'''
+        raise NotImplementedError(
+            f"{self.name}: extend a model reactor such as FrostFmuBase, "
+            "or override _set_inputs()"
+        )
     =}
 
     method _get_outputs(){=
+        '''Read every output of the model.
+
+        Returns:
+            dict:
+                Output values keyed by name.
+
         '''
-        Read every output of the model.
-        '''
-        raise NotImplementedError(f"{self.name}: extend a model reactor such as FrostFmuBase, or override _get_outputs()")
+        raise NotImplementedError(
+            f"{self.name}: extend a model reactor such as FrostFmuBase, "
+            "or override _get_outputs()"
+        )
     =}
 
     method _do_step(next_target){=
+        '''Advance the model to the target tag.
+
+        Args:
+            next_target (int):
+                Logical elapsed time in ns the model must reach.
+
+        Returns:
+            bool:
+                True while the model can continue.
+
         '''
-        Advance the model to the target tag.
-        '''
-        raise NotImplementedError(f"{self.name}: extend a model reactor such as FrostFmuBase, or override _do_step()")
+        raise NotImplementedError(
+            f"{self.name}: extend a model reactor such as FrostFmuBase, "
+            "or override _do_step()"
+        )
     =}
 
     method _rollback(){=
+        '''Roll back the model to the state before the last _do_step.
+
+        Returns:
+            bool:
+                True once restored.
+
         '''
-        Roll back the model to the target tag.
-        '''
-        raise NotImplementedError(f"{self.name}: extend a model reactor such as FrostFmuBase, or override _roll_back()")
+        raise NotImplementedError(
+            f"{self.name}: extend a model reactor such as FrostFmuBase, "
+            "or override _rollback()"
+        )
     =}
 
     method _commit(){=
-        '''
-        Commit the output outside or to the machine data model, if any. This is called after the model has advanced to the current tag and published its outputs. 
+        '''Commit the outputs outside, or to the machine data model, if any.
 
-        Mandatory: LF has to reach the logical tag at which the model has advanced. 
+        Called after the model has advanced to the current tag and published
+        its outputs.
 
-        Notice: if you your reactor extends also FrostReactor you can commit the outputs to the machine data model, if any. 
+        Mandatory: LF has to reach the logical tag at which the model has
+        advanced.
+
+        Notice: if your reactor also extends FrostReactor, you can commit the
+        outputs to the machine data model, if any.
+
+        Returns:
+            bool:
+                True once committed.
+
         '''
         return False
     =}
 
     method _set_trigger(){=
-        '''
-        A trigger has arrived on the model, so the reactor shall rollback to the previous step and advance to the current tag. Once it has done it it shall return True, otherwise False.
-        Notice: In cosimulation you must commit the event to the orchestrator, if any, so that it can propagate the event to the other models. 
+        '''Bring the model to the current tag after a trigger arrived.
+
+        The reactor shall roll back to the previous step and advance to the
+        current tag.
+
+        Notice: in co-simulation you must commit the event to the
+        orchestrator, if any, so that it can propagate the event to the other
+        models.
+
+        Returns:
+            bool:
+                True once the model sits on the current tag, otherwise False.
+
         '''
         return False
     =}

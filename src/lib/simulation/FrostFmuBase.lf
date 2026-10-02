@@ -10,16 +10,18 @@ import FrostHostBase from "FrostHostBase.lf"
 preamble{=
 import shutil
 import threading
+
+from fmi2 import FMU2Frost
+from fmi3 import FMU3Frost
 import fmpy
 from fmpy.fmi1 import FMICallException
 from fmpy.fmi2 import fmi2Discard
 from fmpy.model_description import DefaultExperiment
 from fmpy.simulation import apply_start_values, settable_in_initialization_mode
-from fmi2 import FMU2Frost
-from fmi3 import FMU3Frost
 
-# LF may build several FMUs in parallel at startup: libxml2 schema parsing is not thread-safe,
-# and fmpy changes the process-wide working directory while it loads a library.
+# LF may build several FMUs in parallel at startup: libxml2 schema parsing is
+# not thread-safe, and fmpy changes the process-wide working directory while it
+# loads a library.
 BUILD_LOCK = threading.Lock()
 =}
 
@@ -28,20 +30,31 @@ reactor FrostFmuBase(
     start_values = {={}=},
     time_scale = 1.0
 ) extends FrostHostBase{
-    '''
-    FMU model type: implements the FrostHostBase hooks with fmpy, for FMI 2.0 and 3.0 Co-Simulation.
+    '''Implement the FrostHostBase hooks with fmpy, for FMI 2.0 and 3.0.
+
+    Only the Co-Simulation interface is used.
 
     Args:
-        path (str): FMU archive path.
-        start_values (dict): Values written in Initialization Mode, keyed by variable name.
-        time_scale (float): Model seconds per logical second.
+        path (str):
+            FMU archive path.
+        start_values (dict):
+            Values written in Initialization Mode, keyed by variable name.
+        time_scale (float):
+            Model seconds per logical second.
 
     Attributes:
-        step_size, start_time, tolerance: Read from the archive at build unless set in YAML.
-        stop_time: YAML only; LF decides when to stop.
-        fmu_dictionary (dict): Variable name -> fmpy ModelVariable (type, valueReference, shape, causality); no Clocks.
-        fmu_inputs (dict): Input name -> value; None keeps the FMU's own value.
-        fmu_outputs (list): Output names.
+        step_size, start_time, tolerance (float | None):
+            Read from the archive at build unless set in YAML.
+        stop_time (float | None):
+            YAML only; LF decides when to stop.
+        fmu_dictionary (dict[str, ModelVariable]):
+            Variable name -> fmpy ModelVariable (type, valueReference, shape,
+            causality); no Clocks.
+        fmu_inputs (dict[str, Any]):
+            Input name -> value; None keeps the value of the FMU.
+        fmu_outputs (list[str]):
+            Output names.
+
     '''
 
     state step_size
@@ -60,11 +73,14 @@ reactor FrostFmuBase(
 
     // @override
     method _build_model(){=
-        '''
-        Extract the archive, instantiate the FMU and initialize it into Step Mode.
+        '''Extract the archive, instantiate and initialize the FMU.
+
+        The FMU ends in Step Mode, or in Event Mode when it uses Event Mode.
 
         Returns:
-            FMU2Frost | FMU3Frost: The initialized FMU.
+            FMU2Frost | FMU3Frost:
+                The initialized FMU.
+
         '''
         with BUILD_LOCK:
             unzipdir = fmpy.extract(self.path)
@@ -72,32 +88,71 @@ reactor FrostFmuBase(
             try:
                 description = fmpy.read_model_description(unzipdir)
                 if description.coSimulation is None:
-                    raise ValueError(f"{self.path} has no Co-Simulation interface")
-                fmu_class = {"2.0": FMU2Frost, "3.0": FMU3Frost}.get(description.fmiVersion)
+                    raise ValueError(
+                        f"{self.path} has no Co-Simulation interface"
+                    )
+                fmu_class = {"2.0": FMU2Frost, "3.0": FMU3Frost}.get(
+                    description.fmiVersion
+                )
                 if fmu_class is None:
-                    raise ValueError(f"{self.path} declares unsupported fmiVersion {description.fmiVersion!r}")
+                    raise ValueError(
+                        f"{self.path} declares unsupported fmiVersion "
+                        f"{description.fmiVersion!r}"
+                    )
                 fmu = fmu_class(unzipdir, description, self.name)
 
-                experiment = description.defaultExperiment or DefaultExperiment()
-                if self.start_time is None: self.start_time = float(experiment.startTime or 0)
-                if self.step_size is None and experiment.stepSize: self.step_size = float(experiment.stepSize)
-                if self.tolerance is None and experiment.tolerance: self.tolerance = float(experiment.tolerance)
+                experiment = (
+                    description.defaultExperiment or DefaultExperiment()
+                )
+                if self.start_time is None:
+                    self.start_time = float(experiment.startTime or 0)
+                if self.step_size is None and experiment.stepSize:
+                    self.step_size = float(experiment.stepSize)
+                if self.tolerance is None and experiment.tolerance:
+                    self.tolerance = float(experiment.tolerance)
 
-                fmu.enter_initialization(self.tolerance, self.start_time, self.stop_time)
-                if rejected := apply_start_values(fmu, description, self.start_values, settable_in_initialization_mode):
-                    raise KeyError(f"{self.name} cannot set {sorted(rejected)} in Initialization Mode")
+                fmu.enter_initialization(
+                    self.tolerance, self.start_time, self.stop_time
+                )
+                if rejected := apply_start_values(
+                    fmu,
+                    description,
+                    self.start_values,
+                    settable_in_initialization_mode,
+                ):
+                    raise KeyError(
+                        f"{self.name} cannot set {sorted(rejected)} in "
+                        "Initialization Mode"
+                    )
                 fmu.exitInitializationMode()
 
-                self.fmu_dictionary = {v.name: v for v in description.modelVariables if v.type != "Clock"}
-                self.fmu_inputs = {name: None for name, v in self.fmu_dictionary.items() if v.causality == "input"}
-                self.fmu_outputs = [name for name, v in self.fmu_dictionary.items() if v.causality == "output"]
-                self.can_rollback = description.coSimulation.canGetAndSetFMUstate
+                self.fmu_dictionary = {
+                    v.name: v
+                    for v in description.modelVariables
+                    if v.type != "Clock"
+                }
+                self.fmu_inputs = {
+                    name: None
+                    for name, v in self.fmu_dictionary.items()
+                    if v.causality == "input"
+                }
+                self.fmu_outputs = [
+                    name
+                    for name, v in self.fmu_dictionary.items()
+                    if v.causality == "output"
+                ]
+                self.can_rollback = (
+                    description.coSimulation.canGetAndSetFMUstate
+                )
                 self.fmu_time = self.start_time
                 return fmu
             except Exception:
                 if fmu is not None:
                     fmu.freeInstance()
-                shutil.rmtree(unzipdir, ignore_errors=True)
+                shutil.rmtree(
+                    unzipdir,
+                    ignore_errors=True,
+                )
                 raise
     =}
 
@@ -111,7 +166,10 @@ reactor FrostFmuBase(
             self.model.terminate()
         finally:
             self.model.freeInstance()
-            shutil.rmtree(self.model.unzipDirectory, ignore_errors=True)
+            shutil.rmtree(
+                self.model.unzipDirectory,
+                ignore_errors=True,
+            )
             self.model = None
     =}
 
@@ -125,52 +183,79 @@ reactor FrostFmuBase(
 
     // @override
     method _get_outputs(){=
-        '''
-        Read every FMU output; arrays come back in their declared shape.
+        '''Read every FMU output; arrays come back in their declared shape.
 
         Returns:
-            dict: Output values keyed by name.
+            dict[str, Any]:
+                Output values keyed by name.
+
         '''
-        return {name: self.model.read(self.fmu_dictionary[name]) for name in self.fmu_outputs}
+        return {
+            name: self.model.read(self.fmu_dictionary[name])
+            for name in self.fmu_outputs
+        }
     =}
 
     // @override
     method _do_step(next_target){=
-        '''
-        Advance the FMU to the logical time target.
+        '''Advance the FMU to the logical time target.
+
+        On an early return the FMU stops before next_target, at an internal
+        event; fmu_time tells where. With Event Mode the FMU stays in Event
+        Mode at that event until the next _do_step, so _set_inputs and
+        _get_outputs act at the event instant.
 
         Args:
-            next_target (int): Logical elapsed time in ns the FMU must reach.
+            next_target (int):
+                Logical elapsed time in ns the FMU must reach.
 
         Returns:
-            bool: True while the FMU can continue; False once it terminated or discarded the step.
+            bool:
+                True while the FMU can continue; False once it terminated or
+                discarded the step.
+
         '''
         to = self.start_time + next_target / 1e9 * self.time_scale
+        if self.model.settle():
+            return False
         if self.can_rollback:
             if self.saved_state is not None:
                 self.model.freeFMUState(self.saved_state)
-            self.saved_state, self.saved_time, self.saved_inputs = self.model.getFMUState(), self.fmu_time, dict(self.fmu_inputs)
+            self.saved_state = self.model.getFMUState()
+            self.saved_time = self.fmu_time
+            self.saved_inputs = dict(self.fmu_inputs)
         try:
-            terminate = self.model.step(self.fmu_time, to - self.fmu_time, self.can_rollback)
+            terminate, reached = self.model.step(
+                self.fmu_time,
+                to - self.fmu_time,
+                self.can_rollback,
+            )
+            self.logger.debug(
+                f"{self.name} stepped from {self.fmu_time} to {reached} "
+                f"(target {to}) at {lf.time.logical_elapsed()} ns"
+            )
         except FMICallException as error:
             if error.status != fmi2Discard:
                 raise
-            self.logger.error(f"{self.name} discarded the step from {self.fmu_time} to {to}")
+            self.logger.error(
+                f"{self.name} discarded the step from {self.fmu_time} to {to}"
+            )
             return False
-        self.fmu_time = to
+        self.fmu_time = reached
         if terminate:
-            self.logger.info(f"{self.name} requested termination at {to}")
+            self.logger.debug(f"{self.name} requested termination at {reached}")
             return False
         return True
     =}
 
     // @override
     method _rollback(){=
-        '''
-        Restore the FMU to the state saved before the last _do_step.
+        '''Restore the FMU to the state saved before the last _do_step.
 
         Returns:
-            bool: True once restored; False when no state was saved.
+            bool:
+                True once restored; False when no state was saved.
+
         '''
         if self.saved_state is None:
             return False
