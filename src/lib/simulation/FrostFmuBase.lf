@@ -52,8 +52,10 @@ reactor FrostFmuBase(
         event_mode (bool): FMI 3.0 Event Mode; None follows the archive. FMI 2.0 rejects True.
 
     Attributes:
-        step_size, start_time, stop_time, tolerance:
+        step_size, start_time, tolerance:
             Read from the archive at build; a YAML value is imposed on the model instead.
+        stop_time:
+            YAML only; the archive's stopTime is a suggested run length, not a model limit, so LF decides when to stop.
     '''
 
     state step_size
@@ -87,10 +89,10 @@ reactor FrostFmuBase(
             events = description.coSimulation.hasEventMode if self.event_mode is None else self.event_mode
 
             def declared(value, field):
-                found = getattr(description.defaultExperiment, field, None)
-                return value if value is not None else None if found is None else float(found)
+                found = getattr(description.defaultExperiment, field, None) if value is None else value
+                return None if found is None else float(found)
             self.start_time = declared(self.start_time, "startTime") or 0.0
-            self.stop_time = declared(self.stop_time, "stopTime")
+            self.stop_time = None if self.stop_time is None else float(self.stop_time)
             self.tolerance = declared(self.tolerance, "tolerance")
             self.step_size = declared(self.step_size, "stepSize") or description.coSimulation.fixedInternalStepSize
 
@@ -128,7 +130,7 @@ reactor FrostFmuBase(
         '''
         Write every assigned value of fmu_inputs into the FMU; unassigned (None) inputs keep the FMU's own value.
         '''
-        unknown = self.fmu_inputs.keys() - set(self.variables.inputs)
+        unknown = self.fmu_inputs.keys() - self.variables.inputs
         if unknown: raise KeyError(f"{self.name} has no inputs {sorted(unknown)}; it exposes {sorted(self.variables.inputs)}")
         self.variables.write(self.model, {name: value for name, value in self.fmu_inputs.items() if value is not None})
     =}

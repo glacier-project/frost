@@ -81,14 +81,4 @@ reactor FrostHostBase extends FrostBase{
             self.logger.error(f"{self.name} cannot build its model: {error}")
             raise
     =}
-
-    // @label _shutdown_model
-    reaction(shutdown){=
-        '''Close the model.'''
-        try:
-            self._shutdown()
-        except Exception as error:
-            self.logger.error(f"{self.name} cannot shut down its model: {error}")
-            raise
-    =}
 }
