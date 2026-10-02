@@ -13,6 +13,7 @@ import glob
 import os
 import shutil
 import tempfile
+import threading
 import fmpy
 import numpy as np
 from fmpy.fmi1 import FMICallException
@@ -20,6 +21,10 @@ from fmpy.fmi2 import fmi2Discard
 from variables import VariableTable
 from fmi2 import FMU2Frost
 from fmi3 import FMU3Frost
+
+# LF may build several FMUs in parallel at startup: libxml2 schema parsing is not thread-safe,
+# and fmpy changes the process-wide working directory while it loads a library.
+BUILD_LOCK = threading.Lock()
 
 def remove_stale_extractions():
     '''Remove archives extracted by dead processes; a crashed LF run skips the shutdown reaction.'''
@@ -82,6 +87,12 @@ reactor FrostFmuBase(
         Returns:
             FMU2Frost | FMU3Frost: The initialized FMU.
         '''
+        with BUILD_LOCK:
+            return self._build_fmu()
+    =}
+
+    method _build_fmu(){=
+        '''Build the FMU; _build_model holds BUILD_LOCK around it.'''
         remove_stale_extractions()
         unzipdir = fmpy.extract(self.path, unzipdir=tempfile.mkdtemp(prefix=f"frost-fmu-{os.getpid()}-"))
         fmu = None
@@ -98,13 +109,15 @@ reactor FrostFmuBase(
             self.start_time = declared(self.start_time, "startTime") or 0.0
             self.stop_time = None if self.stop_time is None else float(self.stop_time)
             self.tolerance = declared(self.tolerance, "tolerance")
-            self.step_size = declared(self.step_size, "stepSize") or description.coSimulation.fixedInternalStepSize
+            fixed_step = description.coSimulation.fixedInternalStepSize
+            self.step_size = declared(self.step_size, "stepSize") or (None if fixed_step is None else float(fixed_step))
 
             self.variables = VariableTable.from_model_description(description)
             self._read_interface()
             self.can_rollback = description.coSimulation.canGetAndSetFMUstate
             self.variables.check_initialization_writable(self.start_values)
-            fmu = fmu_class(unzipdir, description, self.name, self.variables, events, self.structural)
+            early_return = self.can_rollback and description.coSimulation.mightReturnEarlyFromDoStep
+            fmu = fmu_class(unzipdir, description, self.name, self.variables, events, self.structural, early_return)
             self._initialize(fmu)
             return fmu
         except Exception:
@@ -181,6 +194,7 @@ reactor FrostFmuBase(
 
         Returns:
             bool: True while the FMU can continue; False once it terminated or discarded the step.
+                An FMU allowed to return early may stop before next_target, at an internal event; fmu_time tells where.
         '''
         to = self.start_time + next_target / 1e9 * self.time_scale
         if self.can_rollback:
@@ -188,15 +202,17 @@ reactor FrostFmuBase(
             self.saved_state, self.saved_time = self.model.getFMUState(), self.fmu_time
         self.logger.debug(f"do_step to {next_target} ns: fmu_time {self.fmu_time} -> {to}")
         try:
-            terminate = self.model.step(self.fmu_time, to - self.fmu_time)
+            terminate, reached = self.model.step(self.fmu_time, to - self.fmu_time, self.can_rollback)
         except FMICallException as error:
             if error.status != fmi2Discard:
                 raise
             self.logger.error(f"{self.name} discarded the step from {self.fmu_time} to {to}")
             return False
-        self.fmu_time = to
+        if reached < to:
+            self.logger.debug(f"early return at fmu_time {reached} instead of {to}")
+        self.fmu_time = reached
         if terminate:
-            self.logger.info(f"{self.name} requested termination at {to}")
+            self.logger.info(f"{self.name} requested termination at {reached}")
         return not terminate
     =}
 
@@ -227,9 +243,10 @@ reactor FrostFmuBase(
         Returns:
             None
         '''
-        self.fmu_inputs = dict.fromkeys(self.variables.inputs)
-        self.fmu_outputs = {name: self.variables.access_type(name) for name in self.variables.outputs}
-        self.fmu_variables = {name: self.variables.access_type(name) for name in self.variables.names()
+        values = [name for name in self.variables.names() if self.variables.access_type(name) != "Clock"]
+        self.fmu_inputs = dict.fromkeys(name for name in values if name in self.variables.inputs)
+        self.fmu_outputs = {name: self.variables.access_type(name) for name in values if name in self.variables.outputs}
+        self.fmu_variables = {name: self.variables.access_type(name) for name in values
                               if self.variables.variable(name).causality not in ("input", "output", "independent")}
     =}
 
