@@ -82,7 +82,7 @@ reactor FrostFmuBase(
     method _build_model(){=
         '''Extract the archive, instantiate and initialize the FMU.
 
-        The FMU ends in Step Mode, or in Event Mode when it uses Event Mode.
+        The FMU ends in Step Mode, with any initial event already settled.
 
         Returns:
             FMU2Frost | FMU3Frost:
@@ -209,9 +209,8 @@ reactor FrostFmuBase(
         '''Advance the FMU to the logical time target.
 
         On an early return the FMU stops before next_target, at an internal
-        event; fmu_ns tells where. With Event Mode the FMU stays in Event
-        Mode at that event until the next _do_step, so _set_inputs and
-        _get_outputs act at the event instant.
+        event; fmu_ns tells where. With Event Mode the event is already
+        settled, so _get_outputs shows the state after it.
 
         Args:
             next_target (int):
