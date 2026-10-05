@@ -13,7 +13,18 @@ from fmpy.model_description import ModelDescription, ModelVariable
 # fmpy picks the C functions to load from the class name, which must start
 # with "FMU2".
 class FMU2Frost(FMU2Slave):
-    """fmpy FMI 2.0 slave plus the version-specific steps of FrostFmuBase."""
+    """fmpy FMI 2.0 slave plus the version-specific steps of FrostFmuBase.
+
+    Attributes:
+        terminated (bool):
+            Always False: FMI 2.0 ends a simulation with a Discard instead.
+        next_event_time (None):
+            Always None: FMI 2.0 Co-Simulation reports no time events.
+
+    """
+
+    terminated = False
+    next_event_time = None
 
     def __init__(
         self,
@@ -100,16 +111,6 @@ class FMU2Frost(FMU2Slave):
             "Integer" if variable.type == "Enumeration" else variable.type
         )
         getattr(self, f"set{type_name}")([variable.valueReference], [value])
-
-    def settle(self) -> bool:
-        """Settle a pending event; FMI 2.0 has no Event Mode.
-
-        Returns:
-            bool:
-                False, since there is never an event to settle.
-
-        """
-        return False
 
     def step(
         self,

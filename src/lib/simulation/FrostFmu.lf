@@ -5,9 +5,10 @@ import FrostFmuBase from "FrostFmuBase.lf"
 reactor FrostFmu extends FrostFmuBase{
     '''Standalone FMU synchronized by LF logical time, with no orchestrator.
 
-    The FMU commits at every tag k * step_size. An FMU that can roll back then
-    runs ahead to the next tag, and an early return makes the internal event
-    the next tag; any other FMU steps to each tag when LF gets there.
+    The FMU commits at every tag k * step_size, and at every time event it
+    announces (FMI 3.0 with Event Mode). An FMU that can roll back then runs
+    ahead to the next tag, and an early return makes the internal event the
+    next tag; any other FMU steps to each tag when LF gets there.
 
     To change an input at the current tag, from a reaction that declares
     tick: set fmu_inputs, then call _set_trigger(), _set_inputs(), _commit()
@@ -55,9 +56,10 @@ reactor FrostFmu extends FrostFmuBase{
     method _schedule_next(tick, now){=
         '''Schedule the tag after now; with rollback, run ahead to it first.
 
-        The FMU must sit on now. With rollback it simulates towards the next
-        step tag with fmu_inputs, and the tag is where it stops: the step tag,
-        or an internal event on an early return.
+        The next tag is the next step tag, or the next time event of the FMU
+        when it comes first. The FMU must sit on now. With rollback it
+        simulates towards that tag with fmu_inputs, and the tag is where it
+        stops: that tag, or an internal event on an early return.
 
         Args:
             tick (logical action):
@@ -67,6 +69,14 @@ reactor FrostFmu extends FrostFmuBase{
 
         '''
         next_ns = (now // self.step_ns + 1) * self.step_ns
+        if self.model.next_event_time is not None:
+            event_ns = round(
+                (self.model.next_event_time - self.start_time)
+                / self.time_scale
+                * 1e9
+            )
+            if now < event_ns < next_ns:
+                next_ns = event_ns
         if not self.running or (
             self.stop_ns is not None and next_ns > self.stop_ns
         ):
@@ -154,7 +164,8 @@ reactor FrostFmu extends FrostFmuBase{
         '''Commit the initial state and schedule the next tag.'''
         if not self.step_size:
             raise ValueError(
-                f"{self.name} has no step size; set step_size in YAML"
+                f"{self.name} has no step size; set step_size in YAML or "
+                "in the DefaultExperiment stepSize in modelDescription.xml"
             )
         self.step_ns = round(self.step_size / self.time_scale * 1e9)
         if self.stop_time is not None:

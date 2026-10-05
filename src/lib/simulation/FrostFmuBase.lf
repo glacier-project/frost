@@ -89,6 +89,9 @@ reactor FrostFmuBase(
                 The initialized FMU.
 
         '''
+        for name in ("step_size", "start_time", "stop_time", "tolerance"):
+            if getattr(self, name) is not None:
+                setattr(self, name, float(getattr(self, name)))
         with BUILD_LOCK:
             unzipdir = fmpy.extract(self.path)
             fmu = None
@@ -223,7 +226,7 @@ reactor FrostFmuBase(
 
         '''
         to = self.start_time + next_target / 1e9 * self.time_scale
-        if self.model.settle():
+        if self.model.terminated:
             return False
         if self.can_rollback:
             if self.saved_state is not None:

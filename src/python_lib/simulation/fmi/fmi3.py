@@ -21,6 +21,11 @@ class FMU3Frost(FMU3Slave):
             Whether the FMU was instantiated with Event Mode.
         in_event (bool):
             Whether the FMU sits in Event Mode, waiting for settle().
+        terminated (bool):
+            Whether the FMU requested termination while settling an event.
+        next_event_time (float | None):
+            Model time of the next time event, from the last settle(); None
+            when the FMU defines none.
 
     """
 
@@ -52,6 +57,8 @@ class FMU3Frost(FMU3Slave):
         )
         self.event_mode_used = co_simulation.hasEventMode
         self.in_event = False
+        self.terminated = False
+        self.next_event_time = None
         self.instantiate(
             eventModeUsed=self.event_mode_used,
             earlyReturnAllowed=co_simulation.mightReturnEarlyFromDoStep,
@@ -81,13 +88,14 @@ class FMU3Frost(FMU3Slave):
         )
 
     def exitInitializationMode(self) -> None:  # noqa: N802
-        """Leave Initialization Mode.
+        """Leave Initialization Mode and settle the initial event, if any.
 
-        With Event Mode the FMU enters Event Mode first, so settle() must run
-        before the first step.
+        With Event Mode the FMU enters Event Mode first; it is settled at once,
+        so that the first commit shows the state after it.
         """
         super().exitInitializationMode()
         self.in_event = self.event_mode_used
+        self.settle()
 
     def setFMUState(self, state: fmi3FMUState) -> None:  # noqa: N802
         """Restore a state; FrostFmuBase saves states only in Step Mode.
@@ -99,6 +107,8 @@ class FMU3Frost(FMU3Slave):
         """
         super().setFMUState(state)
         self.in_event = False
+        self.terminated = False
+        self.next_event_time = None
 
     def read(self, variable: ModelVariable) -> Any:
         """Read one variable.
@@ -144,20 +154,21 @@ class FMU3Frost(FMU3Slave):
 
         Returns:
             bool:
-                True when the FMU requests termination.
+                True when the FMU requested termination.
 
         """
-        if not self.in_event:
-            return False
-        while True:
-            needs_update, terminate, *_ = self.updateDiscreteStates()
+        while self.in_event:
+            needs_update, terminate, _, _, defined, next_time = (
+                self.updateDiscreteStates()
+            )
+            self.next_event_time = next_time if defined else None
             if terminate:
-                return True
-            if not needs_update:
-                break
-        self.enterStepMode()
-        self.in_event = False
-        return False
+                self.terminated = True
+                self.in_event = False
+            elif not needs_update:
+                self.enterStepMode()
+                self.in_event = False
+        return self.terminated
 
     def step(
         self,
@@ -167,8 +178,8 @@ class FMU3Frost(FMU3Slave):
     ) -> tuple[bool, float | None]:
         """Perform fmi3DoStep.
 
-        On an event with Event Mode, enter Event Mode and leave it pending for
-        settle().
+        On an event with Event Mode, enter Event Mode and settle it at once,
+        so that the outputs show the state after the event.
 
         Args:
             time (float):
@@ -193,4 +204,5 @@ class FMU3Frost(FMU3Slave):
         if event and self.event_mode_used and not terminate:
             self.enterEventMode()
             self.in_event = True
+            terminate = self.settle()
         return terminate, last if early else None
