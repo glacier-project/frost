@@ -22,6 +22,12 @@ RUN_PASSED=()
 RUN_FAILED=()
 RUN_SKIPPED=()
 
+# A run fails on a non-zero exit, on a timeout, or when it logged an error without stopping:
+# Frost loggers print "| ERROR |", the LF runtime prints "ERROR:", Python prints a traceback.
+TEST_TIMEOUT="${TEST_TIMEOUT:-600}"
+SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
+ERROR_PATTERN='\| ERROR +\||^ERROR:|Traceback \(most recent call last\)'
+
 # Progress bar function
 show_progress() {
     local current=$1
@@ -59,6 +65,9 @@ OPTIONS:
     --build-only    Only build the specified tests (or all if none specified)
     --run-only      Only run the specified tests (or all if none specified)
     --help, -h      Show this help message
+
+A run fails when the binary exits non-zero, runs longer than TEST_TIMEOUT
+seconds (default 600), or logs an ERROR line even though it exited 0.
 
 FILES:
     Specify individual .lf files to process. If none specified, all .lf files
@@ -149,11 +158,15 @@ run_tests() {
         local basename=$(basename "$file" .lf)
         local is_built=false
         
-        # If BUILD_PASSED is empty (e.g., --run-only mode), check if binary exists
-        if [ ${#BUILD_PASSED[@]} -eq 0 ]; then
-            # In run-only mode, check if the binary exists
-            if [ -f "./bin/${basename}" ]; then
+        # In --run-only mode run the existing binary; a missing one is a failure, not a skip
+        if [ "$run_only" = true ]; then
+            if [ -f "${SCRIPT_DIR}/bin/${basename}" ]; then
                 is_built=true
+            else
+                echo "Error: Binary '${SCRIPT_DIR}/bin/${basename}' not found. Build it first." >&2
+                RUN_FAILED+=("$basename")
+                failed_runs=$((failed_runs + 1))
+                continue
             fi
         else
             # Check if this test was successfully built in this session
@@ -218,28 +231,25 @@ run_tests() {
             continue
         fi
         
-        # Check if config exists (optional warning)
-        if [ ! -f "$config_path" ]; then
-            if run_output=$(cd "$script_dir" && "$binary_path" 2>&1); then
-                RUN_PASSED+=("$basename")
-            else
-                printf "\n"  # New line to preserve progress bar
-                echo "Warning: Config file '$config_path' not found"
-                echo "Error: Failed to run $basename" >&2
-                echo "$run_output" >&2
-                RUN_FAILED+=("$basename")
-                failed_runs=$((failed_runs + 1))
-            fi
+        local status=0
+        run_output=$(cd "$script_dir" && { [ -f "$config_path" ] && export FROST_CONFIG="$config_path"; timeout "$TEST_TIMEOUT" "$binary_path"; } 2>&1) || status=$?
+        local logged_errors=$(printf '%s\n' "$run_output" | sed 's/\x1b\[[0-9;]*m//g' | grep -E "$ERROR_PATTERN")
+        if [ $status -eq 0 ] && [ -z "$logged_errors" ]; then
+            RUN_PASSED+=("$basename")
         else
-            if run_output=$(cd "$script_dir" && export FROST_CONFIG="$config_path" && "$binary_path" 2>&1); then
-                RUN_PASSED+=("$basename")
+            printf "\n"  # New line to preserve progress bar
+            [ -f "$config_path" ] || echo "Warning: Config file '$config_path' not found"
+            if [ $status -eq 124 ]; then
+                echo "Error: $basename timed out after ${TEST_TIMEOUT}s" >&2
+            elif [ $status -ne 0 ]; then
+                echo "Error: Failed to run $basename (exit $status)" >&2
             else
-                printf "\n"  # New line to preserve progress bar
-                echo "Error: Failed to run $basename" >&2
-                echo "$run_output" >&2
-                RUN_FAILED+=("$basename")
-                failed_runs=$((failed_runs + 1))
+                echo "Error: $basename exited 0 but logged errors:" >&2
+                echo "$logged_errors" >&2
             fi
+            [ $status -ne 0 ] && echo "$run_output" >&2
+            RUN_FAILED+=("$basename")
+            failed_runs=$((failed_runs + 1))
         fi
     done
     

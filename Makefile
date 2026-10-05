@@ -7,6 +7,11 @@ SHELL := /bin/bash
 # Test script
 RUN_SCRIPT := test/run_all.sh
 
+# Run with the project's virtual environment when it exists, so the test binaries find fmpy.
+ifneq ($(wildcard .venv/bin/python3),)
+export PATH := $(CURDIR)/.venv/bin:$(PATH)
+endif
+
 # Source directory
 SRC_DIR := test/src
 
@@ -89,6 +94,9 @@ list:
 	@echo "  make run-TestName      # Run specific test only"
 	@echo "  make clean             # Clean generated files"
 	@echo "  make list              # Show this help"
+	@echo ""
+	@echo "A run fails on a non-zero exit, an ERROR line in its output, or after TEST_TIMEOUT seconds (default 600):"
+	@echo "  make test TEST_TIMEOUT=120"
 
 # Help target
 .PHONY: help
