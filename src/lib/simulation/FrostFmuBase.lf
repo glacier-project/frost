@@ -2,27 +2,17 @@ target Python{
     files: [
         "../../python_lib/simulation/fmi/fmi2.py",
         "../../python_lib/simulation/fmi/fmi3.py",
+        "../../python_lib/simulation/fmi/loader.py",
     ],
 }
 
 import FrostHostBase from "FrostHostBase.lf"
 
 preamble{=
-import shutil
-import threading
-
-from fmi2 import FMU2Frost
-from fmi3 import FMU3Frost
-import fmpy
 from fmpy.fmi1 import FMICallException
 from fmpy.fmi2 import fmi2Discard
 from fmpy.model_description import DefaultExperiment
-from fmpy.simulation import apply_start_values, settable_in_initialization_mode
-
-# LF may build several FMUs in parallel at startup: libxml2 schema parsing is
-# not thread-safe, and fmpy changes the process-wide working directory while it
-# loads a library.
-BUILD_LOCK = threading.Lock()
+from loader import BUILD_LOCK, close_fmu, initialize, open_fmu
 =}
 
 reactor FrostFmuBase(
@@ -93,24 +83,8 @@ reactor FrostFmuBase(
             if getattr(self, name) is not None:
                 setattr(self, name, float(getattr(self, name)))
         with BUILD_LOCK:
-            unzipdir = fmpy.extract(self.path)
-            fmu = None
+            fmu, description = open_fmu(self.path, self.name)
             try:
-                description = fmpy.read_model_description(unzipdir)
-                if description.coSimulation is None:
-                    raise ValueError(
-                        f"{self.path} has no Co-Simulation interface"
-                    )
-                fmu_class = {"2.0": FMU2Frost, "3.0": FMU3Frost}.get(
-                    description.fmiVersion
-                )
-                if fmu_class is None:
-                    raise ValueError(
-                        f"{self.path} declares unsupported fmiVersion "
-                        f"{description.fmiVersion!r}"
-                    )
-                fmu = fmu_class(unzipdir, description, self.name)
-
                 experiment = (
                     description.defaultExperiment or DefaultExperiment()
                 )
@@ -121,20 +95,14 @@ reactor FrostFmuBase(
                 if self.tolerance is None and experiment.tolerance:
                     self.tolerance = float(experiment.tolerance)
 
-                fmu.enter_initialization(
-                    self.tolerance, self.start_time, self.stop_time
-                )
-                if rejected := apply_start_values(
+                initialize(
                     fmu,
                     description,
                     self.start_values,
-                    settable_in_initialization_mode,
-                ):
-                    raise KeyError(
-                        f"{self.name} cannot set {sorted(rejected)} in "
-                        "Initialization Mode"
-                    )
-                fmu.exitInitializationMode()
+                    self.tolerance,
+                    self.start_time,
+                    self.stop_time,
+                )
 
                 self.fmu_dictionary = {
                     v.name: v
@@ -158,12 +126,7 @@ reactor FrostFmuBase(
                 self.fmu_ns = 0
                 return fmu
             except Exception:
-                if fmu is not None:
-                    fmu.freeInstance()
-                shutil.rmtree(
-                    unzipdir,
-                    ignore_errors=True,
-                )
+                close_fmu(fmu, terminate=False)
                 raise
     =}
 
@@ -174,13 +137,8 @@ reactor FrostFmuBase(
             return
         self.logger.info(f"Shutting down {self.name}")
         try:
-            self.model.terminate()
+            close_fmu(self.model, terminate=True)
         finally:
-            self.model.freeInstance()
-            shutil.rmtree(
-                self.model.unzipDirectory,
-                ignore_errors=True,
-            )
             self.model = None
     =}
 

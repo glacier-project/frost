@@ -16,3 +16,7 @@ root:
       name: "measure"
       description: "Written at every commit from Float64_continuous_output"
       initial_value: 0
+    - !!NumericalVariableNode
+      name: "fmu_time"
+      description: "Written at every commit from the FMU variable time"
+      initial_value: 0

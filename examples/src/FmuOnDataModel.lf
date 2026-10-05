@@ -16,25 +16,42 @@ from frost import *    # FROST_CONFIG and the logging setup that every Frost rea
 //     data model node           FMU variable
 //     Machine/setpoint    ->    Float64_continuous_input
 //     Machine/measure     <-    Float64_continuous_output
+//     Machine/fmu_time    <-    time
 //
-// so the extension says which node stands for which variable, in the two required hooks:
+// so the extension lists the pairs in bindings() and uses them in the two required hooks:
 // - _bind_inputs(): writes on Machine/setpoint, from any Frost node, reach the FMU input at their tag.
-// - _commit(): at every committed tag, the FMU output is written on Machine/measure.
+// - _commit(): at every committed tag, every other bound FMU variable is written on its node.
 //
 // Here a timer writes the setpoint node directly; in a real net the write comes from another Frost node.
 reactor Machine extends FrostFmuReactor{
     timer operator(250 ms)
 
+    method bindings(){=
+        '''Return data model node path -> FMU variable name.'''
+        return {
+            "Machine/setpoint": "Float64_continuous_input",
+            "Machine/measure": "Float64_continuous_output",
+            "Machine/fmu_time": "time",
+        }
+    =}
+
     // @override
     method _bind_inputs(){=
-        self._bind_input("Machine/setpoint", "Float64_continuous_input")
+        for node_path, name in self.bindings().items():
+            if name in self.fmu_inputs:
+                self._bind_input(node_path, name)
     =}
 
     // @override
     method _commit(){=
-        output = self._get_outputs()["Float64_continuous_output"]
-        self.data_model.get_node("Machine/measure").write(output)
-        print(f"{lf.time.logical_elapsed() // 1000000:>5} ms  Machine/measure = {output}")
+        for node_path, name in self.bindings().items():
+            if name not in self.fmu_inputs:
+                value = self.model.read(self.fmu_dictionary[name])
+                self.data_model.get_node(node_path).write(value)
+        print(
+            f"{lf.time.logical_elapsed() // 1000000:>5} ms  "
+            f"Machine/measure = {self.data_model.get_node('Machine/measure').read()}"
+        )
         return True
     =}
 
