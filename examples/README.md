@@ -5,7 +5,7 @@ Both change the input at 250 ms, between two 100 ms steps, and print the committ
 
 | Example | Reactor | Shows |
 |---|---|---|
-| `src/FmuStandalone.lf` | `FrostFmu` | LF time drives the FMU; `_commit()` publishes, `fmu_inputs` + `_apply_input_now()` change an input at the current tag. |
+| `src/FmuStandalone.lf` | `FrostFmu` | LF time drives the FMU; `_commit()` publishes, `fmu_inputs` + `_set_trigger()`, `_set_inputs()`, `_commit()`, `_resume(tick)` change an input at the current tag. |
 | `src/FmuOnDataModel.lf` | `FrostFmuReactor` | The FMU on a data model whose node names differ from the FMU ones: `_bind_inputs()` maps a node to an input, `_commit()` writes an output on a node. |
 
 Run from this folder:
