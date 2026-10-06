@@ -26,8 +26,9 @@ reactor FrostFmuBase(
 
     Extension: implement the FrostHostBase hooks, and in _build_model() set
     step_size, start_time, fmu_ns, fmu_inputs and can_rollback. The model
-    must expose next_event_time: model time of its next time event, or None.
-    _do_step() and _rollback() keep fmu_ns where the model sits.
+    must expose next_event_time (model time of its next time event, or None)
+    and catch_up() (bring what did not run ahead to the tag, return False once
+    it stops). _do_step() and _rollback() keep fmu_ns where the model sits.
 
     Args:
         start_values (dict):
@@ -82,7 +83,8 @@ reactor FrostFmuBase(
 
         An early return before goal_ns only splits the step: LF has already
         reached goal_ns, so the event cannot get a tag of its own. The model
-        keeps the inputs it already has.
+        keeps the inputs it already has. Then model.catch_up() brings the rest
+        of the model to goal_ns.
 
         Args:
             goal_ns (int):
@@ -98,6 +100,7 @@ reactor FrostFmuBase(
                 raise RuntimeError(
                     f"{self.name} makes no progress past {self.fmu_ns} ns"
                 )
+        self.running = self.model.catch_up() and self.running
     =}
 
     method _schedule_next(tick, now){=
