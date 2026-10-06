@@ -1,189 +1,201 @@
-target Python
+target Python{
+    files: [
+        "../../python_lib/simulation/fmi/group.py",
+    ],
+}
 
 import FrostFmuBase from "FrostFmuBase.lf"
 
-reactor FrostFmu extends FrostFmuBase{
-    '''Standalone FMU synchronized by LF logical time, with no orchestrator.
+preamble{=
+from group import FmuGroup
+import numpy as np
+=}
 
-    The FMU commits at every tag k * step_size, and at every time event it
-    announces (FMI 3.0 with Event Mode). An FMU that can roll back then runs
-    ahead to the next tag, and an early return makes the internal event the
-    next tag; any other FMU steps to each tag when LF gets there.
+reactor FrostFmu(
+    algebraic_loop_policy = "fixed_point",
+    algebraic_abs_tolerance = {=1e-9=},
+    algebraic_rel_tolerance = {=1e-6=},
+    algebraic_relaxation = 1.0,
+    max_algebraic_iterations = 100
+) extends FrostFmuBase{
+    '''One FMU, or several coupled FMUs, synchronized by LF logical time.
 
-    To change an input at the current tag, from a reaction that declares
-    tick: set fmu_inputs, then call _set_trigger(), _set_inputs(), _commit()
-    and _resume(tick). An FMU that can roll back then runs ahead again with
-    the new input.
+    The YAML config of the reactor gives the FMUs. path for one FMU: its
+    variables keep their names. fmus and connections for several: they step
+    together in Python on one model time and exchange their connections at
+    every communication point (see FmuGroup); variables are named
+    "<member>.<variable>" and fmu_inputs holds the inputs no connection drives.
+    Either way LF sees one model; see FrostFmuBase for the tags, the run ahead
+    and how to change an input at the current tag.
+
+    The FMUs that can roll back run ahead: an early return of one of them
+    becomes the next tag, and a trigger rolls them back. The others step only
+    when LF reaches the tag; an early return of theirs just splits their
+    step. start_time, step_size and tolerance default to the DefaultExperiment
+    (several FMUs: the earliest start, the smallest step).
+
+    Args:
+        algebraic_loop_policy (str):
+            "fixed_point" iterates each algebraic loop at the same instant;
+            "delay" cuts it with a one-step delay. See FmuGroup.
+        algebraic_abs_tolerance, algebraic_rel_tolerance (float):
+            Convergence of the fixed-point iteration.
+        algebraic_relaxation (float):
+            In (0, 1]; below 1 damps loops that oscillate.
+        max_algebraic_iterations (int):
+            Iterations per exchange before an error.
 
     Attributes:
-        step_ns (int):
-            Logical time between two tags, in ns.
-        stop_ns (int | None):
-            Last tag, in ns, from stop_time; None to run until LF stops.
-        running (bool):
-            False once the FMU terminated or discarded a step.
+        path (str | None):
+            From the YAML config, for one FMU: FMU archive path.
+        fmus (dict[str, str] | None):
+            From the YAML config, for several FMUs: member name -> FMU archive
+            path; names hold no ".".
+        connections (list[list[str]] | None):
+            From the YAML config: [output, input] pairs of dotted names.
+        fmu_dictionary (dict[str, ModelVariable]):
+            Variable name -> fmpy ModelVariable (type, valueReference, shape,
+            causality); no Clocks.
 
     '''
-    state step_ns
-    state stop_ns
-    state running = True
 
-    logical action tick
+    state path
+    state fmus
+    state connections
+    state fmu_dictionary
+    state written_inputs
 
-    method _step_to(goal_ns){=
-        '''Step the FMU until it reaches goal_ns, or stops.
+    // @override
+    method _build_model(){=
+        '''Open, initialize and couple the FMUs.
 
-        An early return before goal_ns only splits the step: LF has already
-        reached goal_ns, so the event cannot get a tag of its own. The FMU
-        keeps the inputs it already has.
-
-        Args:
-            goal_ns (int):
-                Tag, in ns, not later than now.
+        Returns:
+            FmuGroup:
+                Every FMU in Step Mode, any initial event already settled.
 
         '''
-        stalls = 0
-        while self.running and self.fmu_ns < goal_ns:
-            before = self.fmu_ns
-            self.running = self._do_step(goal_ns)
-            stalls = stalls + 1 if self.fmu_ns == before else 0
-            if stalls > 3:
-                raise RuntimeError(
-                    f"{self.name} makes no progress past {self.fmu_ns} ns"
-                )
-    =}
-
-    method _schedule_next(tick, now){=
-        '''Schedule the tag after now; with rollback, run ahead to it first.
-
-        The next tag is the next step tag, or the next time event of the FMU
-        when it comes first. The FMU must sit on now. With rollback it
-        simulates towards that tag with fmu_inputs, and the tag is where it
-        stops: that tag, or an internal event on an early return.
-
-        Args:
-            tick (logical action):
-                Scheduled for the next tag.
-            now (int):
-                Current tag in ns.
-
-        '''
-        next_ns = (now // self.step_ns + 1) * self.step_ns
-        if self.model.next_event_time is not None:
-            event_ns = round(
-                (self.model.next_event_time - self.start_time)
-                / self.time_scale
-                * 1e9
+        if bool(self.path) == bool(self.fmus):
+            raise ValueError(
+                f"{self.name}: set path (one FMU) or fmus (several) in the "
+                "YAML config"
             )
-            if now < event_ns < next_ns:
-                next_ns = event_ns
-        if not self.running or (
-            self.stop_ns is not None and next_ns > self.stop_ns
-        ):
-            return
-        if not self.can_rollback:
-            tick.schedule(next_ns - now)
-            return
-        self._set_inputs()
-        stalls = 0
-        while self.running and self.fmu_ns <= now:
-            self.running = self._do_step(next_ns)
-            stalls += 1
-            if stalls > 3:
-                raise RuntimeError(
-                    f"{self.name} makes no progress past {now} ns"
-                )
-        if self.fmu_ns > now:
-            tick.schedule(self.fmu_ns - now)
-    =}
-
-    method _advance(tick){=
-        '''Bring the FMU to the current tag, commit it, schedule the next.
-
-        A tick the FMU has already passed is stale: a trigger rolled the FMU
-        back and the run ahead that followed stopped elsewhere.
-
-        Args:
-            tick (logical action):
-                Scheduled for the next tag.
-
-        '''
-        now = lf.time.logical_elapsed()
-        if self.fmu_ns > now:
-            return
-        if self.fmu_ns < now:
-            self._set_inputs()
-            self._step_to(now)
-        self._commit()
-        self._schedule_next(tick, now)
+        for name in ("step_size", "start_time", "stop_time", "tolerance"):
+            if getattr(self, name) is not None:
+                setattr(self, name, float(getattr(self, name)))
+        group = FmuGroup(
+            self.fmus or {self.name: self.path},
+            self.connections or [],
+            self.start_values,
+            self.tolerance,
+            self.start_time,
+            self.stop_time,
+            self.logger,
+            dotted=bool(self.fmus),
+            policy=self.algebraic_loop_policy,
+            abs_tolerance=float(self.algebraic_abs_tolerance),
+            rel_tolerance=float(self.algebraic_rel_tolerance),
+            relaxation=float(self.algebraic_relaxation),
+            max_iterations=int(self.max_algebraic_iterations),
+        )
+        self.start_time, self.tolerance = group.start_time, group.tolerance
+        if self.step_size is None:
+            self.step_size = group.step_size
+        self.fmu_dictionary = {
+            name: variable for name, (_, variable) in group.variables.items()
+        }
+        self.fmu_inputs = dict.fromkeys(group.inputs)
+        self.written_inputs = {}
+        self.fmu_outputs = group.outputs
+        self.can_rollback = bool(group.ahead)
+        self.fmu_ns = 0
+        return group
     =}
 
     // @override
-    method _set_trigger(){=
-        '''Bring the FMU to the current tag with the inputs it had before.
+    method _shutdown(){=
+        '''Terminate and free every member.'''
+        if self.model is None:
+            return
+        self.logger.info(f"Shutting down {self.name}")
+        try:
+            self.model.close()
+        finally:
+            self.model = None
+    =}
 
-        A run-ahead FMU is rolled back and replayed; an FMU on an earlier tag
-        steps forward. fmu_inputs keeps the values the caller set, for
-        _set_inputs() to apply at the current tag.
+    // @override
+    method _set_inputs(){=
+        '''Write the values of fmu_inputs that changed, then exchange.
+
+        A value equal to the last one written is skipped, and without any
+        write so is the exchange: the members already hold the exchanged
+        values of this instant.
+        '''
+        written = False
+        for name, value in self.fmu_inputs.items():
+            if value is None or (
+                name in self.written_inputs
+                and np.array_equal(self.written_inputs[name], value)
+            ):
+                continue
+            self.model.write(name, value)
+            self.written_inputs[name] = value
+            written = True
+        if written:
+            self.model.exchange()
+    =}
+
+    // @override
+    method _get_outputs(){=
+        '''Read every member output.
+
+        Returns:
+            dict[str, Any]:
+                Output values keyed by dotted name.
+
+        '''
+        return {name: self.model.read(name) for name in self.fmu_outputs}
+    =}
+
+    // @override
+    method _do_step(next_target){=
+        '''Step the members that can roll back towards the target.
+
+        Args:
+            next_target (int):
+                Logical elapsed time in ns the group must reach.
 
         Returns:
             bool:
-                True once the FMU sits on the current tag; False when it ran
-                ahead and cannot roll back.
+                True while every such member can continue.
 
         '''
-        now = lf.time.logical_elapsed()
-        pending = dict(self.fmu_inputs)
-        if self.fmu_ns > now and self._rollback():
-            self._set_inputs()
-        on_time = self.fmu_ns <= now
-        if on_time:
-            self._step_to(now)
-        self.fmu_inputs = pending
-        return on_time
+        to = self.start_time + next_target / 1e9 * self.time_scale
+        self.saved_ns, self.saved_inputs = self.fmu_ns, dict(self.fmu_inputs)
+        running = self.model.step(to)
+        self.fmu_ns = (
+            next_target
+            if self.model.time == to
+            else round(
+                (self.model.time - self.start_time) / self.time_scale * 1e9
+            )
+        )
+        return running
     =}
 
-    method _resume(tick){=
-        '''Run ahead again after a trigger, with the inputs just applied.
+    // @override
+    method _rollback(){=
+        '''Restore the members that can roll back to before the last step.
 
-        Call it after _set_trigger(), _set_inputs() and _commit(), from the
-        same reaction, which must declare tick. Without rollback the FMU never
-        runs ahead and the tick already scheduled stays.
-
-        Args:
-            tick (logical action):
-                Scheduled for the tag where the run ahead stops.
+        Returns:
+            bool:
+                True once restored; False when no state was saved.
 
         '''
-        if self.can_rollback:
-            self._schedule_next(tick, lf.time.logical_elapsed())
-    =}
-
-    // @label _start_model
-    reaction(startup) -> tick{=
-        '''Commit the initial state and schedule the next tag.'''
-        if not self.step_size:
-            raise ValueError(
-                f"{self.name} has no step size; set step_size in YAML or "
-                "in the DefaultExperiment stepSize in modelDescription.xml"
-            )
-        self.step_ns = round(self.step_size / self.time_scale * 1e9)
-        if self.stop_time is not None:
-            self.stop_ns = round(
-                (self.stop_time - self.start_time) / self.time_scale * 1e9
-            )
-        self._advance(tick)
-    =}
-
-    // @label _step_model
-    reaction(tick) -> tick{=
-        '''Commit the tag LF has reached and schedule the next one.'''
-        self._advance(tick)
-    =}
-
-    // @label _shutdown_model
-    reaction(shutdown){=
-        '''Close the model after every other reaction at the final tag.'''
-        self._shutdown()
+        if not self.model.rollback():
+            return False
+        self.fmu_ns = self.saved_ns
+        self.fmu_inputs = dict(self.saved_inputs)
+        return True
     =}
 }
