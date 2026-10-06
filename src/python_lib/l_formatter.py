@@ -3,7 +3,6 @@ from time_utils import TimePrecision, convert_time_float
 
 reset_col = '\x1b[0m'
 max_name_l = 10
-max_lt_l = 20
 
 TIME_UNITS = {
     TimePrecision.WEEKS: 'weeks', TimePrecision.DAYS: 'days', TimePrecision.HOURS: 'hours',

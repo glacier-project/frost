@@ -29,8 +29,23 @@ from machine_data_model.nodes.folder_node import FolderNode
 from machine_data_model.utils.timestamp import set_timestamp_provider
 from machine_data_model.nodes.subscription.variable_subscription import VariableSubscription, DataChangeSubscription, RangeSubscription
 
-# load configuration file
-FROST_CONFIG = os.environ.get("FROST_CONFIG", "resources/frost_config.yml")
+def _program_config():
+    '''Return the YAML in resources/, resources/config/ or config/ named after the program, else resources/frost_config.yml.
+
+    Names match without underscores and case: program FmuGroup loads resources/fmu_group.yml.
+    '''
+    program = os.path.splitext(os.path.basename(sys.argv[0]))[0].lower()
+    for folder in ("resources", os.path.join("resources", "config"), "config"):
+        if not os.path.isdir(folder):
+            continue
+        for file in sorted(os.listdir(folder)):
+            name, extension = os.path.splitext(file)
+            if extension == ".yml" and name.replace("_", "").lower() == program:
+                return os.path.join(folder, file)
+    return "resources/frost_config.yml"
+
+# load configuration file: FROST_CONFIG, else the one named after the program
+FROST_CONFIG = os.environ.get("FROST_CONFIG") or _program_config()
 
 # if the file does not exist, use a default configuration
 if not os.path.isfile(FROST_CONFIG):
