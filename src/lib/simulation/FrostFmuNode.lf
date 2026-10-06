@@ -1,0 +1,13 @@
+target Python
+
+import FrostFmuBaseNode from "FrostFmuBaseNode.lf"
+import FrostFmu from "FrostFmu.lf"
+
+// FrostFmu must come last: LF keeps the last definition of a method.
+reactor FrostFmuNode extends FrostFmuBaseNode, FrostFmu{
+    '''FrostFmu, one FMU or several, on the data model of a FrostNode.
+
+    See FrostFmuBaseNode for the hooks; _commit() can read any variable with
+    self.model.read(name), dotted for several FMUs.
+    '''
+}
