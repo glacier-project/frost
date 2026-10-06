@@ -1,0 +1,34 @@
+name: "intersection"
+machine_category: "unknown"
+machine_type: "unknown"
+machine_model: "unknown"
+description: "A traffic intersection whose behaviour is a group of five FMUs: one controller, four lights"
+root:
+  !!FolderNode
+  name: "Intersection"
+  description: ""
+  children:
+    - !!BooleanVariableNode
+      name: "emergency_stop"
+      description: "Written by an operator; drives controller.emergency_stop"
+      initial_value: false
+    - !!NumericalVariableNode
+      name: "phase"
+      description: "Written at every commit from controller.phase"
+      initial_value: 0
+    - !!NumericalVariableNode
+      name: "north"
+      description: "Written at every commit from north.color: 0 off, 1 red, 2 yellow, 3 green"
+      initial_value: 0
+    - !!NumericalVariableNode
+      name: "south"
+      description: "Written at every commit from south.color: 0 off, 1 red, 2 yellow, 3 green"
+      initial_value: 0
+    - !!NumericalVariableNode
+      name: "east"
+      description: "Written at every commit from east.color: 0 off, 1 red, 2 yellow, 3 green"
+      initial_value: 0
+    - !!NumericalVariableNode
+      name: "west"
+      description: "Written at every commit from west.color: 0 off, 1 red, 2 yellow, 3 green"
+      initial_value: 0

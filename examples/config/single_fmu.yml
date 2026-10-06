@@ -2,5 +2,7 @@ time_precision: NSECS
 logging_level: WARNING
 reactors:
   fmu:
+    logging_level: INFO
     parameters:
+      path: "../test/resources/fmu/Feedthrough.fmu"
       step_size: 0.1

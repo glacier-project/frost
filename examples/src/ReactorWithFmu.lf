@@ -1,0 +1,104 @@
+target Python{
+    timeout: 3 s,
+    fast: true,
+}
+
+import FrostLink from "../../src/lib/FrostLink.lf"
+import FrostReactor from "../../src/lib/FrostReactor.lf"
+import FrostFmuNode from "../../src/lib/simulation/FrostFmuNode.lf"
+
+preamble{=
+from frost import *    # FROST_CONFIG and the logging setup that every Frost reactor expects
+
+def ms():
+    '''Current tag in ms, for the log lines.'''
+    return f"{lf.time.logical_elapsed() // 1000000:>5} ms"
+=}
+
+// FrostReactor with one FMU: Feedthrough.fmu on the data model of a Frost node, driven by an operator node
+// through a FrostLink.
+//
+// The data model does not follow the FMU names (see data_model/feedthrough_machine.yml):
+//
+//     data model node           FMU variable
+//     Machine/setpoint    ->    Float64_continuous_input
+//     Machine/measure     <-    Float64_continuous_output
+//     Machine/fmu_time    <-    time
+//
+// - The machine is a FrostReactor and a FrostFmuNode: _bind_inputs() maps the setpoint node to the FMU input,
+//   _commit() writes the other variables on their nodes, and its reaction to request_messages applies the
+//   writes of other nodes at their tag.
+// - The operator is a plain FrostReactor: it writes Machine/setpoint = 5 at 2250 ms, between two 100 ms steps,
+//   and reads Machine/measure at 2300 ms, once the link has connected the nodes (about 1 s). The write takes
+//   effect at 2250 ms: the FMU rolls back and re-simulates up to that tag.
+reactor Machine extends FrostReactor, FrostFmuNode{
+    reaction(request_messages) -> tick{=
+        '''Apply the writes of other Frost nodes at their tag.'''
+        self._external_trigger(tick)
+    =}
+
+    method bindings(){=
+        '''Return data model node path -> FMU variable name.'''
+        return {
+            "Machine/setpoint": "Float64_continuous_input",
+            "Machine/measure": "Float64_continuous_output",
+            "Machine/fmu_time": "time",
+        }
+    =}
+
+    // @override
+    method _bind_inputs(){=
+        for node_path, name in self.bindings().items():
+            if name in self.fmu_inputs:
+                self._bind_input(node_path, name)
+    =}
+
+    // @override
+    method _commit(){=
+        for node_path, name in self.bindings().items():
+            if name not in self.fmu_inputs:
+                self.data_model.get_node(node_path).write(self.model.read(name))
+        self.logger.info(f"{ms()}  Machine/measure = {self.data_model.get_node('Machine/measure').read()}")
+        return True
+    =}
+}
+
+// Writes the setpoint of the machine and reads its measure, through the link.
+reactor Operator extends FrostReactor{
+    timer write(2250 ms)
+    timer check(2300 ms)
+
+    method _send(message, channel_out){=
+        if not self.connected:
+            self.logger.warning(f"{ms()}  not connected to the link yet")
+            return
+        self._set_channel_out_port(message, channel_out)
+    =}
+
+    reaction(write) -> channel_out{=
+        self.logger.info(f"{ms()}  WRITE Machine/setpoint = 5.0")
+        self._send(self.message_builder.build_write_variable_message(
+            target="machine", node="Machine/setpoint", value=5.0), channel_out)
+    =}
+
+    reaction(check) -> channel_out{=
+        self.logger.info(f"{ms()}  READ Machine/measure")
+        self._send(self.message_builder.build_read_variable_message(
+            target="machine", node="Machine/measure"), channel_out)
+    =}
+
+    reaction(response_messages){=
+        for _, message in response_messages.value:
+            if message.header.namespace == MsgNamespace.VARIABLE and message.header.msg_name == VariableMsgName.READ:
+                self.logger.info(f"{ms()}  answer: {message.payload.node} = {message.payload.value}")
+    =}
+}
+
+main reactor{
+    machine = new Machine(name = "machine")
+    operator = new Operator(name = "operator")
+    link = new FrostLink(name = "frost_link", width = 2)
+
+    machine.channel_out, operator.channel_out -> link.channel_in after 0
+    link.channel_out -> machine.channel_in, operator.channel_in
+}

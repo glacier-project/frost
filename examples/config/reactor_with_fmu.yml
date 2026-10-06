@@ -1,0 +1,25 @@
+time_precision: NSECS
+logging_level: WARNING
+reactors:
+  frost_link:
+    parameters:
+      data_model_path: "data_model/link.yml"
+    reactors:
+      message_filter:
+        logging_level: ERROR
+  machine:
+    logging_level: INFO
+    parameters:
+      path: "../test/resources/fmu/Feedthrough.fmu"
+      data_model_path: "data_model/feedthrough_machine.yml"
+      step_size: 0.1
+    reactors:
+      message_filter:
+        logging_level: ERROR
+  operator:
+    logging_level: INFO
+    parameters:
+      data_model_path: "data_model/operator.yml"
+    reactors:
+      message_filter:
+        logging_level: ERROR

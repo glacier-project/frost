@@ -1,0 +1,18 @@
+time_precision: NSECS
+logging_level: WARNING
+reactors:
+  intersection:
+    logging_level: INFO
+    parameters:
+      step_size: 5
+      fmus:
+        controller: ../test/resources/fmu/TrafficController.fmu
+        north: ../test/resources/fmu/TrafficLightNorth.fmu
+        south: ../test/resources/fmu/TrafficLightSouth.fmu
+        east: ../test/resources/fmu/TrafficLightEast.fmu
+        west: ../test/resources/fmu/TrafficLightWest.fmu
+      connections:
+        - [controller.north_command, north.command]
+        - [controller.south_command, south.command]
+        - [controller.east_command, east.command]
+        - [controller.west_command, west.command]

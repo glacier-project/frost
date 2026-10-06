@@ -34,7 +34,7 @@ class FmuGroup:
     connection listed first is the tear: with the "fixed_point" policy the
     exchange is repeated until the tear values settle (Gauss-Seidel, with
     relaxation); with "delay" the tear takes the value its output had at the
-    previous communication point.
+    previous communication point, its own start value at the first one.
 
     The members that can save their state (ahead) step first and may run
     ahead of LF; an early return of one of them stops all of them there. The
@@ -193,6 +193,7 @@ class FmuGroup:
             self.step_size = min(steps, default=None)
             self._check_connections()
             self._plan()
+            self._delay_start = {(s, d): self.read(d) for s, d in self.tears}
             self.exchange()
         except Exception:
             try:
@@ -391,8 +392,8 @@ class FmuGroup:
         Without loops: once, upstream first. With "fixed_point" the copies are
         repeated, starting from the tear inputs as they are, until every tear
         settles. With "delay" the tears are written first, with the value
-        their output had at the last communication point before time (the
-        current one at the first). Exchanging again at the same time, as
+        their output had at the last communication point before time (their
+        start value at the first). Exchanging again at the same time, as
         after a rollback, gives the same values.
 
         Raises:
@@ -423,14 +424,11 @@ class FmuGroup:
         past = max(
             (t for t in self._delay_history if t < self.time), default=None
         )
-        previous = self._delay_history.get(past, {})
+        previous = (
+            self._delay_start if past is None else self._delay_history[past]
+        )
         for src, dst in self.tears:
-            self.write(
-                dst,
-                previous[src, dst]
-                if (src, dst) in previous
-                else self.read(src),
-            )
+            self.write(dst, previous[src, dst])
         for src, dst in self.order:
             self.write(dst, self.read(src))
         self._delay_history = {

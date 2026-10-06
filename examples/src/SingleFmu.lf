@@ -9,22 +9,22 @@ preamble{=
 from frost import *    # FROST_CONFIG and the logging setup that every Frost reactor expects
 =}
 
-// FrostFmu on its own: LF time drives the FMU, no data model, no ports.
+// FrostFmu with one FMU (path in config/single_fmu.yml): LF time drives the FMU, no data model, no ports.
 //
 // - The FMU commits at every step tag (here every 100 ms, from step_size in the YAML): _commit() is
-//   where the leaf publishes the outputs; here it prints them.
+//   where the leaf publishes the outputs; here it logs them.
 // - To change an input, from a reaction that declares tick: set fmu_inputs, then _set_trigger(), _set_inputs(),
 //   _commit() and _resume(tick). The change takes effect at the current tag, even between two steps: the FMU rolls
 //   back and re-simulates up to now if it ran ahead, then runs ahead again with the new input.
 //
-// Feedthrough.fmu copies its input to its output, so the printed output shows when the input took effect.
+// Feedthrough.fmu copies its input to its output, so the logged output shows when the input took effect.
 reactor Feedthrough extends FrostFmu{
     timer change(250 ms)
 
     // @override
     method _commit(){=
         output = self._get_outputs()["Float64_continuous_output"]
-        print(f"{lf.time.logical_elapsed() // 1000000:>5} ms  output = {output}")
+        self.logger.info(f"{lf.time.logical_elapsed() // 1000000:>5} ms  output = {output}")
         return True
     =}
 
@@ -38,5 +38,5 @@ reactor Feedthrough extends FrostFmu{
 }
 
 main reactor{
-    fmu = new Feedthrough(name = "fmu", path = "../test/resources/fmu/Feedthrough.fmu")
+    fmu = new Feedthrough(name = "fmu")
 }

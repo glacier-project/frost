@@ -1,0 +1,77 @@
+target Python{
+    timeout: 35 s,
+    fast: true,
+}
+
+import FrostFmuNode from "../../src/lib/simulation/FrostFmuNode.lf"
+
+preamble{=
+from frost import *    # FROST_CONFIG and the logging setup that every Frost reactor expects
+
+DIRECTIONS = ("north", "south", "east", "west")
+COLOR = {0: "off", 1: "red", 2: "yellow", 3: "green"}
+=}
+
+// FrostFmuNode with several FMUs: the intersection of FmuGroup.lf on the data model of a FrostNode, with no
+// network (see data_model/intersection.yml).
+//
+//     data model node                 group variable
+//     Intersection/emergency_stop ->  controller.emergency_stop
+//     Intersection/phase          <-  controller.phase
+//     Intersection/<direction>    <-  <direction>.color
+//
+// - With dotted names, _bind_inputs() maps the emergency node to the controller input and _commit() writes
+//   the outputs on their nodes.
+// - Timers write Intersection/emergency_stop at 21 s and 28 s; a local write on a bound node is applied by
+//   _external_trigger(tick), from a reaction that declares tick.
+reactor Intersection extends FrostFmuNode{
+    timer emergency(21 s)
+    timer release(28 s)
+
+    method bindings(){=
+        '''Return data model node path -> group variable name.'''
+        return {
+            "Intersection/emergency_stop": "controller.emergency_stop",
+            "Intersection/phase": "controller.phase",
+            **{f"Intersection/{d}": f"{d}.color" for d in DIRECTIONS},
+        }
+    =}
+
+    // @override
+    method _bind_inputs(){=
+        for node_path, name in self.bindings().items():
+            if name in self.fmu_inputs:
+                self._bind_input(node_path, name)
+    =}
+
+    // @override
+    method _commit(){=
+        for node_path, name in self.bindings().items():
+            if name not in self.fmu_inputs:
+                self.data_model.get_node(node_path).write(self.model.read(name))
+        node = self.data_model.get_node
+        lights = "  ".join(f"{d} {COLOR[node(f'Intersection/{d}').read()]:<6}" for d in DIRECTIONS)
+        self.logger.info(
+            f"{lf.time.logical_elapsed() / 1e9:>4.0f} s  phase {node('Intersection/phase').read()}  {lights}"
+        )
+        return True
+    =}
+
+    method _write_emergency(value, tick){=
+        self.logger.info(f"{lf.time.logical_elapsed() / 1e9:>4.0f} s  Intersection/emergency_stop -> {value}")
+        self.data_model.get_node("Intersection/emergency_stop").write(value)
+        self._external_trigger(tick)
+    =}
+
+    reaction(emergency) -> tick{=
+        self._write_emergency(True, tick)
+    =}
+
+    reaction(release) -> tick{=
+        self._write_emergency(False, tick)
+    =}
+}
+
+main reactor{
+    intersection = new Intersection(name = "intersection")
+}

@@ -1,0 +1,64 @@
+target Python{
+    timeout: 35 s,
+    fast: true,
+}
+
+import FrostFmu from "../../src/lib/simulation/FrostFmu.lf"
+
+preamble{=
+from frost import *    # FROST_CONFIG and the logging setup that every Frost reactor expects
+
+DIRECTIONS = ("north", "south", "east", "west")
+COLOR = {0: "off", 1: "red", 2: "yellow", 3: "green"}
+=}
+
+// FrostFmu with several FMUs: a traffic intersection, five FMUs that LF drives as one model.
+//
+//     controller (TrafficController.fmu)          north, south, east, west (TrafficLight*.fmu)
+//     <direction>_command               ------>   command          color follows the command
+//
+// - The YAML config (config/fmu_group.yml) gives the topology: fmus names the members,
+//   connections couples "<member>.<output>" -> "<member>.<input>". fmu_inputs, fmu_outputs
+//   and start_values use the same dotted names.
+// - The step is 5 s, but every phase change is a time event of the controller, so it becomes a
+//   tag of the group: the lights change exactly at 2, 12, 15, 17 s...
+// - Changing an input works as for FrostFmu: emergency_stop at 21 s, released at 28 s. The
+//   controller reacts at its next step, so all lights are red from the next tag on; after the
+//   release the cycle restarts from its 2 s all red.
+// - Each light also logs the time its FMU sits on (@): at every commit all are on the tag.
+reactor Intersection extends FrostFmu{
+    timer emergency(21 s)
+    timer release(28 s)
+
+    // @override
+    method _commit(){=
+        outputs = self._get_outputs()
+        lights = "  ".join(
+            f"{d} {COLOR[outputs[f'{d}.color']]:<6} @{self.model.read(f'{d}.time'):>4.1f} s"
+            for d in DIRECTIONS
+        )
+        self.logger.info(f"{lf.time.logical_elapsed() / 1e9:>4.0f} s  phase {outputs['controller.phase']}  {lights}")
+        return True
+    =}
+
+    method _apply(name, value, tick){=
+        self.logger.info(f"{lf.time.logical_elapsed() / 1e9:>4.0f} s  {name} -> {value}")
+        self.fmu_inputs[name] = value
+        if self._set_trigger():
+            self._set_inputs()
+            self._commit()
+            self._resume(tick)
+    =}
+
+    reaction(emergency) -> tick{=
+        self._apply("controller.emergency_stop", True, tick)
+    =}
+
+    reaction(release) -> tick{=
+        self._apply("controller.emergency_stop", False, tick)
+    =}
+}
+
+main reactor{
+    intersection = new Intersection(name = "intersection")
+}
