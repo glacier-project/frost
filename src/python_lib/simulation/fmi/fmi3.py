@@ -1,22 +1,29 @@
-"""FMI 3.0 Co-Simulation slave for FrostFmuBase.
+"""FMI 3.0 Co-Simulation slave for FrostFmu.
 
-fmi2.FMU2Frost exposes the same methods, so FrostFmuBase never branches on the
+fmi2.FMU2Frost exposes the same methods, so FrostFmu never branches on the
 FMI version.
 """
 
+import shutil
 from typing import Any
 
 from fmpy.fmi3 import FMU3Slave, fmi3FMUState
 from fmpy.model_description import ModelDescription, ModelVariable
+from fmpy.simulation import (
+    apply_start_values,
+    settable_in_initialization_mode,
+)
 import numpy as np
 
 
 # fmpy picks the C functions to load from the class name, which must start
 # with "FMU3".
 class FMU3Frost(FMU3Slave):
-    """fmpy FMI 3.0 slave plus the version-specific steps of FrostFmuBase.
+    """fmpy FMI 3.0 slave plus the version-specific steps of FrostFmu.
 
     Attributes:
+        description (ModelDescription):
+            Parsed model description.
         event_mode_used (bool):
             Whether the FMU was instantiated with Event Mode.
         in_event (bool):
@@ -55,6 +62,7 @@ class FMU3Frost(FMU3Slave):
             unzipDirectory=unzipdir,
             instanceName=instance_name,
         )
+        self.description = description
         self.event_mode_used = co_simulation.hasEventMode
         self.in_event = False
         self.terminated = False
@@ -98,7 +106,7 @@ class FMU3Frost(FMU3Slave):
         self.settle()
 
     def setFMUState(self, state: fmi3FMUState) -> None:  # noqa: N802
-        """Restore a state; FrostFmuBase saves states only in Step Mode.
+        """Restore a state; FrostFmu saves states only in Step Mode.
 
         Args:
             state (fmi3FMUState):
@@ -109,6 +117,54 @@ class FMU3Frost(FMU3Slave):
         self.in_event = False
         self.terminated = False
         self.next_event_time = None
+
+    def initialize(
+        self,
+        start_values: dict[str, Any],
+        tolerance: float | None,
+        start_time: float,
+        stop_time: float | None,
+    ) -> None:
+        """Write the start values in Initialization Mode and enter Step Mode.
+
+        Args:
+            start_values (dict[str, Any]):
+                Values keyed by variable name.
+            tolerance (float | None):
+                Relative tolerance; None leaves the FMU default.
+            start_time (float):
+                Model time the simulation starts at.
+            stop_time (float | None):
+                Model time the simulation stops at; None for no limit.
+
+        """
+        self.enter_initialization(tolerance, start_time, stop_time)
+        if rejected := apply_start_values(
+            self,
+            self.description,
+            start_values,
+            settable_in_initialization_mode,
+        ):
+            raise KeyError(
+                f"{self.instanceName} cannot set {sorted(rejected)} in "
+                "Initialization Mode"
+            )
+        self.exitInitializationMode()
+
+    def close(self, terminate: bool) -> None:
+        """Free the FMU and remove its extracted archive.
+
+        Args:
+            terminate (bool):
+                Whether to terminate it first; only after initialize().
+
+        """
+        try:
+            if terminate:
+                self.terminate()
+        finally:
+            self.freeInstance()
+            shutil.rmtree(self.unzipDirectory, ignore_errors=True)
 
     def read(self, variable: ModelVariable) -> Any:
         """Read one variable.
