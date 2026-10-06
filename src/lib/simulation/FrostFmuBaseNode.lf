@@ -1,0 +1,143 @@
+target Python
+
+import FrostNode from "../FrostNode.lf"
+import FrostFmuBase from "FrostFmuBase.lf"
+
+reactor FrostFmuBaseNode extends FrostNode, FrostFmuBase{
+    '''Base for FMUs published on the data model of a FrostNode.
+
+    Nothing is bound automatically: the data model need not follow the names
+    or the structure of the FMU variables (other names, other units, several
+    FMU variables behind one node, nodes the FMU does not have), so only the
+    extension knows which node stands for which variable.
+
+    Extension:
+        _commit():
+            Required. Called at every committed tag, with the FMU on that tag:
+            write the FMU values you publish on their nodes and return True.
+            Read them with self._get_outputs().
+        _bind_inputs():
+            Required. Called once at startup, after the data model is loaded
+            and the FMU is built: call self._bind_input(node_path, fmu_input)
+            for every node whose writes must reach the FMU. Override it with
+            `pass` when no node drives the FMU.
+        _on_input_write(fmu_input, previous, value):
+            Optional. Called on every write of a bound node; by default it
+            sets fmu_inputs[fmu_input] and marks the write for
+            _external_trigger(tick).
+
+    A reaction of the extension that writes a bound node itself must declare
+    tick and call self._external_trigger(tick) after the write. On a Frost
+    network, extend FrostReactor too, and add a reaction to request_messages
+    that declares tick and calls self._external_trigger(tick): the writes of
+    other nodes then apply at their tag.
+
+    Attributes:
+        input_written (bool):
+            Whether a bound node was written since the last trigger.
+
+    '''
+    state input_written = False
+
+    // @override
+    method _commit(){=
+        '''Publish the FMU state on the data model; see the reactor docstring.
+
+        Returns:
+            bool:
+                True once published.
+
+        '''
+        raise NotImplementedError(
+            f"{self.name}: override _commit()"
+        )
+    =}
+
+    method _bind_inputs(){=
+        '''Bind the data model nodes that drive FMU inputs.'''
+        raise NotImplementedError(
+            f"{self.name}: override _bind_inputs()"
+        )
+    =}
+
+    method _bind_input(node_path, fmu_input){=
+        '''Make every write on a data model node set an FMU input.
+
+        Args:
+            node_path (str):
+                Data model path of the node, such as "Machine/setpoint".
+            fmu_input (str):
+                FMU input it drives.
+
+        '''
+        if fmu_input not in self.fmu_inputs:
+            raise KeyError(
+                f"{self.name} has no input {fmu_input!r}; it exposes "
+                f"{sorted(self.fmu_inputs)}"
+            )
+        node = self.data_model.get_node(node_path)
+        if node is None:
+            raise KeyError(
+                f"{self.name}: the data model has no node {node_path!r}"
+            )
+        node.set_post_update_value_callback(
+            lambda previous, value: self._on_input_write(
+                fmu_input, previous, value
+            )
+        )
+    =}
+
+    method _on_input_write(fmu_input, previous, value){=
+        '''Record a value written on a bound node.
+
+        Args:
+            fmu_input (str):
+                FMU input the node drives.
+            previous (Any):
+                Value the node held before the write.
+            value (Any):
+                Value written.
+
+        Returns:
+            bool:
+                True, so the data model keeps the written value.
+
+        '''
+        self.fmu_inputs[fmu_input] = value
+        self.input_written = True
+        return True
+    =}
+
+    // @label _bind_input_nodes
+    reaction(startup){=
+        '''Bind the input nodes.
+
+        The inherited startups already loaded the data model and built the
+        FMU.
+        '''
+        self._bind_inputs()
+    =}
+
+    method _external_trigger(tick){=
+        '''Apply the writes on bound nodes to the FMU at the current tag.
+
+        Args:
+            tick (logical action):
+                Declared by the calling reaction; scheduled where the FMU runs
+                ahead to after the trigger.
+
+        '''
+        if not self.input_written:
+            return
+        self.input_written = False
+        if self._set_trigger():
+            self._set_inputs()
+            self._commit()
+            self._resume(tick)
+        else:
+            self.logger.warning(
+                f"{self.name}: inputs written at {lf.time.logical_elapsed()} "
+                "ns only enter the next simulated step"
+            )
+    =}
+}
