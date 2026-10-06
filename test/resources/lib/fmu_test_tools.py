@@ -36,16 +36,6 @@ def log_line(time_ns, kind, text):
     return f"{format_time(time_ns)} | {kind:<8} | {text}"
 
 
-def show(value):
-    """
-    Format a value for the logs; floats keep 6 significant digits, the checks still compare the exact value.
-
-    Args:
-        value (Any): Value to show.
-    """
-    return f"{value:.6g}" if isinstance(value, float) else str(value)
-
-
 def describe_trigger(now_ns, model_ns, restart_ns):
     """
     Say what a trigger has to do to bring the FMU to the current tag.
@@ -61,20 +51,6 @@ def describe_trigger(now_ns, model_ns, restart_ns):
     if model_ns < now_ns:
         return f"model was behind at {model_ns // 1000000} ms: stepped up to now"
     return "model already on this tag: inputs applied in place"
-
-
-def describe_changes(previous, current):
-    """
-    Describe how a data-model snapshot differs from the previous one.
-
-    Args:
-        previous (dict | None): Previous snapshot, None for the first one.
-        current (dict): Current snapshot, node path -> value.
-    """
-    if previous is None:
-        return ", ".join(f"{key}={show(value)}" for key, value in current.items())
-    changes = [f"{key} {show(previous[key])} -> {show(value)}" for key, value in current.items() if previous[key] != value]
-    return ", ".join(changes) if changes else "no change"
 
 
 def compare(logger, title, got, expected):

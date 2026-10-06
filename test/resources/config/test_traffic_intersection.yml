@@ -1,0 +1,55 @@
+time_precision: NSECS
+logging_level: INFO
+reactors:
+  frost_link:
+    logging_level: WARNING
+    parameters:
+      data_model_path: "resources/data_model/test_traffic_intersection/link.yml"
+    reactors:
+      message_filter:
+        logging_level: WARNING
+  controller:
+    logging_level: WARNING
+    parameters:
+      path: "resources/fmu/TrafficController.fmu"
+      data_model_path: "resources/data_model/test_traffic_intersection/controller.yml"
+      step_size: 20
+    reactors:
+      message_filter:
+        logging_level: WARNING
+  light_north:
+    logging_level: WARNING
+    parameters:
+      path: "resources/fmu/TrafficLightNorth.fmu"
+      data_model_path: "resources/data_model/test_traffic_intersection/light_north.yml"
+      step_size: 20
+    reactors:
+      message_filter:
+        logging_level: WARNING
+  light_south:
+    logging_level: WARNING
+    parameters:
+      path: "resources/fmu/TrafficLightSouth.fmu"
+      data_model_path: "resources/data_model/test_traffic_intersection/light_south.yml"
+      step_size: 7
+    reactors:
+      message_filter:
+        logging_level: WARNING
+  light_east:
+    logging_level: WARNING
+    parameters:
+      path: "resources/fmu/TrafficLightEast.fmu"
+      data_model_path: "resources/data_model/test_traffic_intersection/light_east.yml"
+      step_size: 0.5
+    reactors:
+      message_filter:
+        logging_level: WARNING
+  light_west:
+    logging_level: WARNING
+    parameters:
+      path: "resources/fmu/TrafficLightWest.fmu"
+      data_model_path: "resources/data_model/test_traffic_intersection/light_west.yml"
+      step_size: 13
+    reactors:
+      message_filter:
+        logging_level: WARNING

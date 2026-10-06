@@ -1,0 +1,80 @@
+time_precision: NSECS
+logging_level: DEBUG
+reactors:
+  traffic:
+    logging_level: INFO
+    parameters:
+      step_size: 20
+      fmus:
+        controller: resources/fmu/TrafficController.fmu
+        north: resources/fmu/TrafficLightNorth.fmu
+        south: resources/fmu/TrafficLightSouth.fmu
+        east: resources/fmu/TrafficLightEast.fmu
+        west: resources/fmu/TrafficLightWest.fmu
+      connections:
+        - [controller.north_command, north.command]
+        - [controller.south_command, south.command]
+        - [controller.east_command, east.command]
+        - [controller.west_command, west.command]
+  pair:
+    logging_level: INFO
+    parameters:
+      step_size: 0.1
+      stop_time: 1.0
+      fmus:
+        slow: resources/fmu/BouncingBall3.fmu
+        fast: resources/fmu/BouncingBall3.fmu
+  chain:
+    logging_level: INFO
+    parameters:
+      step_size: 0.1
+      stop_time: 1.0
+      fmus:
+        a: resources/fmu/Feedthrough.fmu
+        b: resources/fmu/Feedthrough.fmu
+        c: resources/fmu/Feedthrough.fmu
+      connections:
+        - [b.Float64_continuous_output, c.Float64_continuous_input]
+        - [a.Float64_continuous_output, b.Float64_continuous_input]
+  all:
+    logging_level: INFO
+    parameters:
+      step_size: 0.1
+      stop_time: 1.0
+      fmus:
+        feed: resources/fmu/Feedthrough.fmu
+        ball2: resources/fmu/BouncingBall2.fmu
+        early: resources/fmu/EarlyReturnNoRollback.fmu
+        ball3: resources/fmu/BouncingBall3.fmu
+        controller: resources/fmu/TrafficController.fmu
+      connections:
+        - [feed.Float64_continuous_output, early.rate]
+  scaled:
+    logging_level: INFO
+    parameters:
+      start_time: 100
+      step_size: 1.0
+      stop_time: 110
+      fmus:
+        a: resources/fmu/Feedthrough.fmu
+        b: resources/fmu/Feedthrough.fmu
+        c: resources/fmu/Feedthrough.fmu
+      connections:
+        - [b.Float64_continuous_output, c.Float64_continuous_input]
+        - [a.Float64_continuous_output, b.Float64_continuous_input]
+  lazy_trigger:
+    logging_level: INFO
+    parameters:
+      step_size: 0.1
+      stop_time: 1.0
+      fmus:
+        feed: resources/fmu/Feedthrough.fmu
+        early: resources/fmu/EarlyReturnNoRollback.fmu
+  stale:
+    logging_level: INFO
+    parameters:
+      step_size: 20.0
+      stop_time: 100.0
+      fmus:
+        controller: resources/fmu/TrafficController.fmu
+        feed: resources/fmu/Feedthrough.fmu

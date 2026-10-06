@@ -11,6 +11,7 @@ reactors:
   elevator:
     logging_level: WARNING
     parameters:
+      path: "resources/fmu/Elevator5.fmu"
       data_model_path: "resources/data_model/test_elevator/elevator.yml"
       step_size: 0.4
     reactors:

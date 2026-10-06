@@ -1,0 +1,198 @@
+target Python{
+    fast: true,
+    timeout: 61 s,
+    files: ["../resources/lib/fmu_test_tools.py"]
+}
+import FrostLink from "../../src/lib/FrostLink.lf"
+import FrostReactor from "../../src/lib/FrostReactor.lf"
+import FrostFmuNode from "../../src/lib/simulation/FrostFmuNode.lf"
+
+preamble{=
+    import csv
+    from frost import *
+    from fmu_test_tools import compare, story, tell, tell_header, how_the_input_was_applied
+
+    DIRECTIONS = ("north", "south", "east", "west")
+    OFF, RED, YELLOW, GREEN = 0, 1, 2, 3
+    COLOR_NAME = {OFF: "off", RED: "red", YELLOW: "yellow", GREEN: "green"}
+
+    # Commands the controller sends in each phase, in DIRECTIONS order (north, south, east, west).
+    PHASE_COMMANDS = {
+        0: (RED, RED, RED, RED),             # all red
+        1: (GREEN, GREEN, RED, RED),         # north/south green
+        2: (YELLOW, YELLOW, RED, RED),       # north/south yellow
+        3: (RED, RED, RED, RED),             # all red
+        4: (RED, RED, GREEN, GREEN),         # east/west green
+        5: (RED, RED, YELLOW, YELLOW),       # east/west yellow
+    }
+
+    def load_reference(path):
+        '''
+        Read the light changes printed by the ice-fmi master:
+        examples/traffic_intersection.py --stop-time 60 --step-size 20.
+
+        Returns:
+            dict: direction -> [(ms, color name)] with one entry per change of that light.
+            list: tags in ms of every change of the intersection after 0 (the phase changes).
+        '''
+        with open(path) as reference:
+            rows = [(round(float(row["time"]) * 1000), row) for row in csv.DictReader(reference)]
+        changes = {direction: [] for direction in DIRECTIONS}
+        for ms, row in rows:
+            for direction in DIRECTIONS:
+                if not changes[direction] or changes[direction][-1][1] != row[direction]:
+                    changes[direction].append((ms, row[direction]))
+        phase_changes = [ms for ms, _ in rows[1:]]
+        return changes, phase_changes
+
+    REFERENCE, PHASE_CHANGES = load_reference("resources/reference/traffic_intersection.csv")
+
+    def next_phase_change(ms):
+        '''Tag in ms of the first phase change after ms; the cycle restarts at 60 s, so the next one is 62 s.'''
+        return next(tag for tag in PHASE_CHANGES + [62000] if tag > ms)
+
+    tell_header("Traffic intersection: one controller FMU, four light FMUs, coupled only through the data model")
+=}
+
+# TrafficController FMU on a FrostReactor. It runs ahead with rollback: its early return stops it on every
+# phase change, which becomes a commit tag. On a change it writes the four commands on the lights' nodes.
+reactor Controller extends FrostReactor, FrostFmuNode{
+    reaction(request_messages) -> tick{=
+        '''Apply the writes of other Frost nodes at their tag.'''
+        self._external_trigger(tick)
+    =}
+
+    state phase
+    state last_sent
+    state sent_at = {=[]=}
+    state commits = {=[]=}
+    state early_returns = {=[]=}
+
+    method _ms(){=
+        return lf.time.logical_elapsed() // 1000000
+    =}
+
+    method _bind_inputs(){=
+        self._bind_input("Machine/inputs/enabled", "enabled")
+        self._bind_input("Machine/inputs/emergency_stop", "emergency_stop")
+    =}
+
+    method _commit(){=
+        ms = self._ms()
+        values = self._get_outputs()
+        phase = values["phase"]
+        commands = tuple(values[f"{direction}_command"] for direction in DIRECTIONS)
+        remaining = values["phase_remaining"]
+
+        for name in ("phase", "north_command", "south_command", "east_command", "west_command", "phase_remaining", "transition_count"):
+            self.data_model.get_node(f"Machine/outputs/{name}").write(values[name])
+
+        # Checks: the commands follow the phase, phase_remaining points at the next change, every change is counted.
+        assert commands == PHASE_COMMANDS[phase], f"phase {phase} must command {PHASE_COMMANDS[phase]}, got {commands}"
+        assert abs(remaining - (next_phase_change(ms) - ms) / 1000) < 1e-9, f"phase_remaining {remaining} s is wrong at {ms} ms"
+        assert values["transition_count"] == sum(1 for tag in PHASE_CHANGES if tag <= ms), f"transition_count is wrong at {ms} ms"
+
+        early = lf.time.logical_elapsed() % self.step_ns != 0
+        if early:
+            self.early_returns.append(ms)
+        if phase != self.phase:
+            colors = ", ".join(f"{direction} {COLOR_NAME[command]}" for direction, command in zip(DIRECTIONS, commands))
+            reached = "reached by an early return of the FMU" if early else "reached on its 20 s step"
+            tell(lf.time.logical_elapsed(), "controller", f"phase {phase}: {colors}; next change in {remaining:g} s ({reached})")
+        self.phase = phase
+        self.commits.append(ms)
+        return True
+    =}
+
+    reaction(tick) -> channel_out{=
+        # Runs after the inherited tick reaction: the commands of this tag are already committed.
+        commands = {direction: self.data_model.get_node(f"Machine/outputs/{direction}_command").read() for direction in DIRECTIONS}
+        if commands == self.last_sent or not self.connected:
+            return
+        for direction, command in commands.items():
+            message = self.message_builder.build_write_variable_message(target=f"light_{direction}", node="Machine/inputs/command", value=command)
+            self._set_channel_out_port(message, channel_out)
+        self.last_sent = commands
+        self.sent_at.append(self._ms())
+    =}
+
+    reaction(shutdown){=
+        on_grid = set(range(0, 61001, self.step_ns // 1000000))
+        missing = sorted(set(PHASE_CHANGES) - set(self.commits))
+        assert not missing, f"every phase change must be committed, missing {missing}"
+        assert self.early_returns == sorted(set(PHASE_CHANGES) - on_grid), f"early returns must be the phase changes off the grid: {self.early_returns}"
+        assert self.sent_at == PHASE_CHANGES, f"commands must be sent exactly at the phase changes: {self.sent_at}"
+    =}
+}
+
+# TrafficLight FMU on a FrostReactor: color == command as soon as it is written. It runs ahead with rollback,
+# so a command written inside a step it already simulated rolls it back and is committed on the controller's tag.
+reactor Light(direction = "") extends FrostReactor, FrostFmuNode{
+    reaction(request_messages) -> tick{=
+        '''Apply the writes of other Frost nodes at their tag.'''
+        self._external_trigger(tick)
+    =}
+
+    state color
+    state how_applied = ""
+    state color_at = {=dict()=}
+    state writes = {=[]=}
+
+    method _bind_inputs(){=
+        self._bind_input("Machine/inputs/command", "command")
+    =}
+
+    method _on_input_write(fmu_input, previous, value){=
+        self.how_applied = how_the_input_was_applied(lf.time.logical_elapsed(), self.fmu_ns)
+        self.fmu_inputs[fmu_input] = value
+        self.input_written = True
+        self.writes.append(lf.time.logical_elapsed() // 1000000)
+        return True
+    =}
+
+    method _commit(){=
+        values = self._get_outputs()
+        for name in ("color", "red", "yellow", "green", "fault", "power", "energy"):
+            self.data_model.get_node(f"Machine/outputs/{name}").write(values[name])
+
+        # Checks: the color follows the command, one lamp is lit, and the energy is exactly 5 W * t
+        # (a rollback or a replay must never count an interval twice).
+        command = RED if self.fmu_inputs["command"] is None else self.fmu_inputs["command"]
+        color = values["color"]
+        seconds = lf.time.logical_elapsed() / 1e9
+        assert color == command, f"color {color} must follow command {command}"
+        for lamp in ("red", "yellow", "green"):
+            assert values[lamp] == (COLOR_NAME[color] == lamp), f"lamp {lamp} is wrong for color {COLOR_NAME[color]}"
+        assert values["fault"] is False and values["power"] == 5.0, "one 5 W lamp lit, no fault"
+        assert abs(values["energy"] - 5.0 * seconds) < 1e-6, f"energy must be 5 W * {seconds} s, got {values['energy']}"
+
+        if color != self.color and self.color is not None:
+            tell(lf.time.logical_elapsed(), f"{self.direction} light", f"{COLOR_NAME[self.color]} -> {COLOR_NAME[color].upper()}  ({self.how_applied})")
+        self.color = color
+        self.color_at[lf.time.logical_elapsed() // 1000000] = COLOR_NAME[color]
+        return True
+    =}
+
+    reaction(shutdown){=
+        # Several commits can share a tag (tick, then the controller's write): the last one is what the light shows.
+        changes = []
+        for ms in sorted(self.color_at):
+            if ms <= 60000 and (not changes or changes[-1][1] != self.color_at[ms]):
+                changes.append((ms, self.color_at[ms]))
+        mismatches = compare(story(), f"{self.direction} light: color changes (ms, color) vs the ice-fmi master, step {self.step_ns // 1000000} ms", changes, REFERENCE[self.direction])
+        assert not mismatches, f"{self.name}: color change rows {mismatches} differ (see the table above)"
+        assert self.writes == PHASE_CHANGES, f"{self.name}: one command per phase change expected, got {self.writes}"
+    =}
+}
+
+main reactor{
+    controller = new Controller(name="controller")
+    north = new Light(name="light_north", direction="north")
+    south = new Light(name="light_south", direction="south")
+    east = new Light(name="light_east", direction="east")
+    west = new Light(name="light_west", direction="west")
+    link = new FrostLink(name="frost_link", width=5)
+
+    controller.channel_out, north.channel_out, south.channel_out, east.channel_out, west.channel_out -> link.channel_in after 0
+    link.channel_out -> controller.channel_in, north.channel_in, south.channel_in, east.channel_in, west.channel_in
+}

@@ -1,0 +1,47 @@
+time_precision: NSECS
+logging_level: DEBUG
+reactors:
+  contracting:
+    logging_level: INFO
+    parameters:
+      step_size: 0.1
+      stop_time: 0.5
+      fmus:
+        a: resources/fmu/Gain.fmu
+        b: resources/fmu/OffsetGain2.fmu
+      connections:
+        - [a.y, b.u]
+        - [b.y, a.u]
+  relaxed:
+    logging_level: INFO
+    parameters:
+      step_size: 0.1
+      stop_time: 0.5
+      fmus:
+        a: resources/fmu/Gain.fmu
+        b: resources/fmu/Gain.fmu
+      connections:
+        - [a.y, b.u]
+        - [b.y, a.u]
+  diverging:
+    logging_level: INFO
+    parameters:
+      step_size: 0.1
+      stop_time: 0.25
+      fmus:
+        a: resources/fmu/Gain.fmu
+        b: resources/fmu/Gain.fmu
+      connections:
+        - [a.y, b.u]
+        - [b.y, a.u]
+  delayed:
+    logging_level: INFO
+    parameters:
+      step_size: 0.5
+      stop_time: 15.0
+      fmus:
+        a: resources/fmu/Gain.fmu
+        b: resources/fmu/Gain.fmu
+      connections:
+        - [a.y, b.u]
+        - [b.y, a.u]

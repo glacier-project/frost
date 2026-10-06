@@ -4,46 +4,57 @@ reactors:
   rollback:
     logging_level: INFO
     parameters:
+      path: "resources/fmu/Feedthrough.fmu"
       step_size: 0.1
   late:
     logging_level: INFO
     parameters:
+      path: "resources/fmu/Feedthrough.fmu"
       step_size: 0.1
   no_state:
     logging_level: INFO
     parameters:
+      path: "resources/fmu/BouncingBall2.fmu"
       step_size: 0.07
   stop:
     logging_level: INFO
     parameters:
+      path: "resources/fmu/Feedthrough.fmu"
       step_size: 1e-1
       stop_time: 0.35
   half_step:
     logging_level: INFO
     parameters:
+      path: "resources/fmu/Feedthrough.fmu"
       step_size: 1.0
   early_return:
     logging_level: INFO
     parameters:
+      path: "resources/fmu/BouncingBall3.fmu"
       step_size: 0.1
   trigger_event:
     logging_level: INFO
     parameters:
+      path: "resources/fmu/TrafficController.fmu"
       step_size: 20.0
   stale_tick:
     logging_level: INFO
     parameters:
+      path: "resources/fmu/TrafficController.fmu"
       step_size: 20.0
   big_start:
     logging_level: INFO
     parameters:
+      path: "resources/fmu/Feedthrough.fmu"
       step_size: 0.1
       start_time: 1e9
   terminate:
     logging_level: INFO
     parameters:
+      path: "resources/fmu/TrafficController.fmu"
       step_size: 20.0
   no_rollback_early:
     logging_level: INFO
     parameters:
+      path: "resources/fmu/EarlyReturnNoRollback.fmu"
       step_size: 0.5

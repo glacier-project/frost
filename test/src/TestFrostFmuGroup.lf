@@ -1,0 +1,265 @@
+target Python{
+    fast: true,
+    timeout: 61 s,
+    files: [
+        "../resources/lib/fmu_test_tools.py",
+    ]
+}
+import FrostFmu from "../../src/lib/simulation/FrostFmu.lf"
+
+preamble{=
+    import csv
+    from frost import *
+    from fmu_test_tools import ns, compare
+
+    DIRECTIONS = ("north", "south", "east", "west")
+    COLOR_NAME = {0: "off", 1: "red", 2: "yellow", 3: "green"}
+
+    def changes(rows):
+        '''Keep the (ms, colors) rows where the colors change.'''
+        kept = []
+        for ms, colors in rows:
+            if not kept or kept[-1][1] != colors:
+                kept.append((ms, colors))
+        return kept
+
+    OUT, IN = "Float64_continuous_output", "Float64_continuous_input"
+    # (ms, c output): the end of a -> b -> c, written 3 at start and 7 by a trigger at 250 ms.
+    # Two triggers at 250 ms: each one commits again.
+    CHAIN_GROUP_EXPECTED = [(ms, 3.0) for ms in (0, 100, 200)] + [(250, 7.0), (250, 7.0)] + [(ms, 7.0) for ms in range(300, 1001, 100)]
+    # (ms, feed output, early value): rate 1 and input 0 until the trigger at 250 ms, then 2 and 5.
+    LAZY_TRIGGER_EXPECTED = [(ms, 0.0, ms / 1000) for ms in (0, 100, 200)] + [
+        (ms, 5.0, round(0.25 + 2 * (ms - 250) / 1000, 9)) for ms in [250] + list(range(300, 1001, 100))
+    ]
+
+    F, R = "falling", "rising"
+    # (ms, feed output, early value, ball3, controller phase): every tag of the group, the 100 ms
+    # grid plus the trigger at 250 ms, the controller time event at 350 ms and the bounce of ball3.
+    ALL_GROUP_EXPECTED = [
+        (0, 1.0, 0.0, "still", 0), (100, 1.0, 0.1, F, 0), (200, 1.0, 0.2, F, 0),
+        (250, 2.0, 0.25, F, 0), (300, 2.0, 0.35, F, 0), (350, 2.0, 0.45, F, 1),
+        (400, 2.0, 0.55, F, 1), (453, 2.0, 0.66, R, 1), (454, 2.0, 0.66, R, 1),
+        (500, 2.0, 0.75, R, 1), (600, 2.0, 0.95, R, 1), (700, 2.0, 1.15, R, 1),
+        (800, 2.0, 1.35, F, 1), (900, 2.0, 1.55, F, 1), (1000, 2.0, 1.75, F, 1),
+    ]
+    # (ms, slow, fast): each bounce is a tag (and the next ns), as in TestFrostFmu.
+    PAIR_GROUP_EXPECTED = [
+        (0, "still", "still"), (100, F, F), (200, F, F), (300, F, F), (317, F, R), (318, F, R),
+        (400, F, R), (453, R, R), (454, R, R), (500, R, R), (600, R, F), (700, R, F),
+        (762, R, R), (763, R, R), (800, F, R), (900, F, R), (1000, F, F),
+    ]
+
+    with open("resources/reference/traffic_intersection.csv") as reference:
+        REFERENCE = changes(
+            (round(float(row["time"]) * 1000), tuple(row[d] for d in DIRECTIONS))
+            for row in csv.DictReader(reference)
+        )
+=}
+
+# Controller and four lights in one group, 20 s step, all able to roll back. The phase
+# changes are time events of the controller, so they become tags of the group; the lights
+# see each command at the tag it changes, through the exchange at the commit.
+reactor TrafficGroup extends FrostFmu{
+    state rows = {=[]=}
+
+    method _commit(){=
+        values = self._get_outputs()
+        for d in DIRECTIONS:
+            assert values[f"{d}.color"] == values[f"controller.{d}_command"], \
+                f"{d} light must show the command of this tag at {lf.time.logical_elapsed()} ns"
+        colors = tuple(COLOR_NAME[values[f"{d}.color"]] for d in DIRECTIONS)
+        self.rows.append((lf.time.logical_elapsed() // 1000000, colors))
+        return True
+    =}
+
+    reaction(startup){=
+        assert self.can_rollback and not self.model.lazy, "every traffic FMU can roll back"
+        assert "controller.enabled" in self.fmu_inputs and "north.command" not in self.fmu_inputs, \
+            f"fmu_inputs must hold only the inputs no connection drives: {sorted(self.fmu_inputs)}"
+    =}
+
+    reaction(shutdown){=
+        got = changes(row for row in self.rows if row[0] <= 60000)
+        mismatches = compare(self.logger, "traffic group: color changes (ms, colors) vs the ice-fmi master", got, REFERENCE)
+        assert not mismatches, f"rows {mismatches} differ from the reference (see the table above)"
+    =}
+}
+
+# Two BouncingBall3 that can roll back, slow (g = -9.81) listed before fast (g = -20):
+# when fast returns early at its bounce, slow is already past it and is restored. Every
+# bounce of either ball becomes a tag: fast at 317 and 762 ms, slow at 453 ms as alone.
+reactor PairGroup extends FrostFmu{
+    state commits = {=[]=}
+
+    method _direction(v){=
+        return "falling" if v < 0 else "rising" if v > 0 else "still"
+    =}
+
+    method _commit(){=
+        values = self._get_outputs()
+        self.commits.append((lf.time.logical_elapsed() // 1000000,
+                             self._direction(values["slow.v"]), self._direction(values["fast.v"])))
+        return True
+    =}
+
+    reaction(shutdown){=
+        mismatches = compare(self.logger, "pair group: commits (ms, slow, fast)", self.commits, PAIR_GROUP_EXPECTED)
+        assert not mismatches, f"rows {mismatches} differ (see the table above)"
+    =}
+}
+
+# Three Feedthrough a -> b -> c, the connections listed backwards: the order comes from the
+# ModelStructure, so c shows the input of a at the very tag, also after two triggers at the same
+# tag. The FMUs sit on the model time of the tag, start_time and time_scale included, or on their
+# last internal step before it.
+reactor ChainGroup extends FrostFmu{
+    timer change(250 ms)
+    state commits = {=[]=}
+
+    method _commit(){=
+        # Feedthrough has a fixed internal step of 0.1 model s: off its grid it holds its last step.
+        model_time = self.start_time + lf.time.logical_elapsed() / 1e9 * self.time_scale
+        held = round(model_time // 0.1 * 0.1, 9) if round(model_time / 0.1, 6) % 1 else model_time
+        assert abs(self.model.read("a.time") - held) < 1e-6, f"a sits on {self.model.read('a.time')}, not {held}"
+        self.commits.append((lf.time.logical_elapsed() // 1000000, self._get_outputs()[f"c.{OUT}"]))
+        return True
+    =}
+
+    method _trigger(tick){=
+        assert self._set_trigger(), "the trigger must bring the chain to 250 ms"
+        self._set_inputs()
+        self._commit()
+        self._resume(tick)
+    =}
+
+    reaction(startup){=
+        assert self.model.tears == [], f"a chain has no loop to tear: {self.model.tears}"
+        assert self.model.order == [(f"a.{OUT}", f"b.{IN}"), (f"b.{OUT}", f"c.{IN}")], f"upstream first: {self.model.order}"
+    =}
+
+    reaction(change) -> tick{=
+        self.fmu_inputs[f"a.{IN}"] = 7.0
+        self._trigger(tick)
+        self._trigger(tick)
+    =}
+
+    reaction(shutdown){=
+        mismatches = compare(self.logger, f"{self.name} group: commits (ms, c output)", self.commits, CHAIN_GROUP_EXPECTED)
+        assert not mismatches, f"rows {mismatches} differ (see the table above)"
+    =}
+}
+
+# The five FMUs of TestFrostFmu in one group:
+# - feed (Feedthrough, rollback), driving the rate of early; a trigger at 250 ms writes 2 on it.
+# - ball2 (BouncingBall2, FMI 2.0, no rollback, no outputs): only steps when LF reaches a tag.
+# - early (EarlyReturnNoRollback, no rollback, early return every 250 ms): splits its steps only.
+# - ball3 (BouncingBall3, rollback, early return, Event Mode): its bounce becomes a tag.
+# - controller (TrafficController, rollback, Event Mode): all_red_time 0.35 s makes its first
+#   phase change a time event, so a tag at 350 ms.
+reactor AllGroup extends FrostFmu{
+    timer change(250 ms)
+    state commits = {=[]=}
+    state ball2_h = {=[]=}
+
+    method _direction(v){=
+        return "falling" if v < 0 else "rising" if v > 0 else "still"
+    =}
+
+    method _commit(){=
+        assert self.fmu_ns == lf.time.logical_elapsed(), "the group must sit on the LF tag"
+        assert self.model.lazy_time == self.model.time, "ball2 and early must be on the tag at the commit"
+        values = self._get_outputs()
+        ms = lf.time.logical_elapsed() // 1000000
+        self.commits.append((ms, values[f"feed.{OUT}"], round(values["early.value"], 2),
+                             self._direction(values["ball3.v"]), values["controller.phase"]))
+        self.ball2_h.append((ms, self.model.read("ball2.h")))
+        return True
+    =}
+
+    reaction(startup){=
+        assert self.model.ahead == ["feed", "ball3", "controller"] and self.model.lazy == ["ball2", "early"], \
+            f"members split by rollback: ahead {self.model.ahead}, lazy {self.model.lazy}"
+    =}
+
+    reaction(change) -> tick{=
+        assert self.fmu_ns == ns(300), f"the ahead members must have run ahead to 300 ms, got {self.fmu_ns}"
+        self.fmu_inputs[f"feed.{IN}"] = 2.0
+        assert self._set_trigger(), "the trigger must roll back and bring the group to 250 ms"
+        self._set_inputs()
+        self._commit()
+        self._resume(tick)
+    =}
+
+    reaction(shutdown){=
+        mismatches = compare(self.logger, "all group: commits (ms, feed, early, ball3, controller)", self.commits, ALL_GROUP_EXPECTED)
+        assert not mismatches, f"rows {mismatches} differ (see the table above)"
+        falling = [h for ms, h in self.ball2_h if ms <= 400]
+        assert all(a > b for a, b in zip(falling, falling[1:])) and falling[-1] < 1.0, \
+            f"ball2 must fall from 1 m until 400 ms, got {self.ball2_h}"
+    =}
+}
+
+# Feedthrough (can roll back) and EarlyReturnNoRollback (cannot), not connected. The trigger at
+# 250 ms writes an input of each: feed is rolled back from 300 ms, early catches up to 250 ms with
+# its old rate, and both take the new inputs only from 250 ms on.
+reactor LazyTriggerGroup extends FrostFmu{
+    timer change(250 ms)
+    state commits = {=[]=}
+
+    method _commit(){=
+        values = self._get_outputs()
+        self.commits.append((lf.time.logical_elapsed() // 1000000, values[f"feed.{OUT}"], round(values["early.value"], 9)))
+        return True
+    =}
+
+    reaction(change) -> tick{=
+        assert self.fmu_ns == ns(300), f"feed must have run ahead to 300 ms, got {self.fmu_ns}"
+        self.fmu_inputs[f"feed.{IN}"] = 5.0
+        self.fmu_inputs["early.rate"] = 2.0
+        assert self._set_trigger(), "the trigger must bring the group to 250 ms"
+        self._set_inputs()
+        self._commit()
+        self._resume(tick)
+    =}
+
+    reaction(shutdown){=
+        mismatches = compare(self.logger, "lazy trigger group: commits (ms, feed, early)", self.commits, LAZY_TRIGGER_EXPECTED)
+        assert not mismatches, f"rows {mismatches} differ (see the table above)"
+    =}
+}
+
+# TrafficController (enabled, 100 model s per LF s) with a Feedthrough: the run ahead stops at the
+# phase change at 20 ms. The trigger at 10 ms disables the controller, so that event no longer
+# exists and the tick left at 20 ms must not commit, as for StaleTickFmu in TestFrostFmu.
+reactor StaleGroup extends FrostFmu{
+    timer disable(10 ms)
+    state tags = {=[]=}
+
+    method _commit(){=
+        self.tags.append(lf.time.logical_elapsed() // 1000000)
+        return True
+    =}
+
+    reaction(disable) -> tick{=
+        assert self.fmu_ns == ns(20), f"the run ahead must stop at the phase change, 20 ms, got {self.fmu_ns}"
+        self.fmu_inputs["controller.enabled"] = False
+        assert self._set_trigger(), "the trigger must disable the controller at 10 ms"
+        self._set_inputs()
+        self._commit()
+        self._resume(tick)
+    =}
+
+    reaction(shutdown){=
+        assert self.tags == [0, 10, 200, 400, 600, 800, 1000], f"the stale tick at 20 ms must not commit: {self.tags}"
+    =}
+}
+
+main reactor{
+    traffic = new TrafficGroup(name="traffic")
+    pair = new PairGroup(name="pair", start_values = {= {"fast.g": -20.0} =})
+    chain = new ChainGroup(name="chain", start_values = {= {f"a.{IN}": 3.0} =})
+    scaled = new ChainGroup(name="scaled", time_scale = 10.0, start_values = {= {f"a.{IN}": 3.0} =})
+    lazy_trigger = new LazyTriggerGroup(name="lazy_trigger")
+    stale = new StaleGroup(name="stale", time_scale = 100.0)
+    all = new AllGroup(name="all", start_values = {= {f"feed.{IN}": 1.0, "controller.all_red_time": 0.35} =})
+}

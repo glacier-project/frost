@@ -232,7 +232,8 @@ run_tests() {
         fi
         
         local status=0
-        run_output=$(cd "$script_dir" && { [ -f "$config_path" ] && export FROST_CONFIG="$config_path"; timeout "$TEST_TIMEOUT" "$binary_path"; } 2>&1) || status=$?
+        # No FROST_CONFIG: frost.py finds resources/config/<test>.yml by the program name.
+        run_output=$(cd "$script_dir" && env -u FROST_CONFIG timeout "$TEST_TIMEOUT" "$binary_path" 2>&1) || status=$?
         local logged_errors=$(printf '%s\n' "$run_output" | sed 's/\x1b\[[0-9;]*m//g' | grep -E "$ERROR_PATTERN")
         if [ $status -eq 0 ] && [ -z "$logged_errors" ]; then
             RUN_PASSED+=("$basename")

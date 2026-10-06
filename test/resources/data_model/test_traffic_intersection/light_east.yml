@@ -1,0 +1,74 @@
+name: "light_east"
+machine_category: "unknown"
+machine_type: "unknown"
+machine_model: "unknown"
+description: "TrafficLightEast FMU mirrored on the data model"
+root:
+  !!FolderNode
+  name: "Machine"
+  description: ""
+  children:
+    - !!FolderNode
+      name: "inputs"
+      description: ""
+      children:
+        - !!NumericalVariableNode
+          name: "command"
+          description: "Int32 input discrete"
+          initial_value: -1
+        - !!NumericalVariableNode
+          name: "brightness"
+          description: "Float64 input continuous"
+          initial_value: -1
+    - !!FolderNode
+      name: "outputs"
+      description: ""
+      children:
+        - !!NumericalVariableNode
+          name: "color"
+          description: "Int32 output discrete"
+          initial_value: -1
+        - !!BooleanVariableNode
+          name: "red"
+          description: "Boolean output discrete"
+          initial_value: false
+        - !!BooleanVariableNode
+          name: "yellow"
+          description: "Boolean output discrete"
+          initial_value: false
+        - !!BooleanVariableNode
+          name: "green"
+          description: "Boolean output discrete"
+          initial_value: false
+        - !!BooleanVariableNode
+          name: "fault"
+          description: "Boolean output discrete"
+          initial_value: false
+        - !!NumericalVariableNode
+          name: "power"
+          description: "Float64 output continuous"
+          initial_value: -1
+        - !!NumericalVariableNode
+          name: "energy"
+          description: "Float64 output continuous"
+          initial_value: -1
+    - !!FolderNode
+      name: "parameters"
+      description: ""
+      children:
+        - !!NumericalVariableNode
+          name: "history_size"
+          description: "UInt64 structuralParameter tunable"
+          initial_value: -1
+        - !!BooleanVariableNode
+          name: "clocked"
+          description: "Boolean parameter fixed"
+          initial_value: false
+        - !!NumericalVariableNode
+          name: "watchdog_timeout"
+          description: "Float64 parameter fixed"
+          initial_value: -1
+        - !!NumericalVariableNode
+          name: "max_step"
+          description: "Float64 parameter fixed"
+          initial_value: -1

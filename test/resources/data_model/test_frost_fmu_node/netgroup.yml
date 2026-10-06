@@ -1,0 +1,22 @@
+name: "netgroup"
+machine_category: "unknown"
+machine_type: "unknown"
+machine_model: "unknown"
+description: "Feedthrough drives the rate of EarlyReturnNoRollback, on a Frost network"
+root:
+  !!FolderNode
+  name: "Machine"
+  description: ""
+  children:
+    - !!NumericalVariableNode
+      name: "rate"
+      description: "Written by the test; drives feed.Float64_continuous_input"
+      initial_value: 0
+    - !!NumericalVariableNode
+      name: "feed"
+      description: "Written at every commit from feed.Float64_continuous_output"
+      initial_value: 0
+    - !!NumericalVariableNode
+      name: "value"
+      description: "Written at every commit from early.value"
+      initial_value: 0

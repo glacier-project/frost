@@ -1,0 +1,138 @@
+target Python{
+    fast: true,
+    timeout: 2 s,
+    files: [
+        "../resources/lib/fmu_test_tools.py",
+    ]
+}
+import FrostBase from "../../src/lib/FrostBase.lf"
+import FrostFmu from "../../src/lib/simulation/FrostFmu.lf"
+
+preamble{=
+    import os
+    from fmpy.fmi1 import FMICallException
+    from frost import *
+    from fmu_test_tools import compare
+
+    FEED, GAIN, LIGHT = "resources/fmu/Feedthrough.fmu", "resources/fmu/Gain.fmu", "resources/fmu/TrafficLightNorth.fmu"
+    # Connections FmuGroup must reject, and the error each one raises.
+    BAD_CONNECTIONS = [
+        ([["light.powers", "gain.u"]], ValueError, "has shape"),
+        ([["feed.Boolean_output", "gain.u"]], ValueError, "is Boolean but"),
+        ([["feed.Float64_continuous_output", "gain.u"], ["other.y", "gain.u"]], ValueError, "driven by several"),
+        ([["gain.u", "other.u"]], KeyError, "is not an output"),
+        ([["gain.y", "feed.Float64_continuous_output"]], KeyError, "is not an input"),
+    ]
+    GAIN2 = "resources/fmu/OffsetGain2.fmu"
+    # FmuGroup arguments it must reject: (fmus, start_values, keyword arguments, error, text).
+    BAD_ARGUMENTS = [
+        ({"gain": GAIN}, {}, {"policy": "jacobi"}, ValueError, "unknown algebraic loop policy"),
+        ({"gain": GAIN}, {}, {"relaxation": 0.0}, ValueError, "relaxation must be in (0, 1]"),
+        ({"gain": GAIN}, {}, {"max_iterations": 0}, ValueError, "max_iterations >= 1"),
+        ({"a": GAIN, "b": GAIN}, {}, {"dotted": False}, ValueError, "need a single FMU"),
+        ({"gain.x": GAIN}, {}, {}, ValueError, "must not contain '.'"),
+        ({"gain": GAIN}, {"ghost.k": 1.0}, {}, KeyError, "unknown members"),
+        ({"gain": GAIN}, {"gain.y": 1.0}, {}, KeyError, "cannot set ['y'] in Initialization Mode"),
+        ({"gain2": GAIN2}, {"gain2.y": 1.0}, {}, KeyError, "cannot set ['y'] in Initialization Mode"),
+    ]
+    # (ms, controller running, ball v sign): ball bounces at 453 ms, before the termination of the
+    # controller at 480 ms in the same step; the bounce restores the controller, which goes on.
+    UNDONE_EXPECTED = [
+        (0, True, 0), (100, True, -1), (200, True, -1), (300, True, -1), (400, True, -1),
+        (453, True, 1), (454, True, 1), (480, False, 1),
+    ]
+=}
+
+# feed (Feedthrough, FMI 3.0) Float32 -> gain2 (OffsetGain2, FMI 2.0) Real -> gain (Gain, FMI 3.0) Float64
+# is accepted, across types and FMI versions: all are floats, and the value gets through. Every
+# connection in BAD_CONNECTIONS is rejected when the group is built.
+reactor ConnectionChecks extends FrostFmu{
+    method _commit(){=
+        assert self.model.read("gain.y") == 1.5, f"feed -> gain2 -> gain must carry 1.5, got {self.model.read('gain.y')}"
+        return True
+    =}
+
+    reaction(startup){=
+        for connections, error, text in BAD_CONNECTIONS:
+            try:
+                FmuGroup({"feed": FEED, "gain": GAIN, "other": GAIN, "light": LIGHT}, connections, {}, None, None, None, self.logger)
+            except error as raised:
+                assert text in str(raised), f"{connections}: unexpected {error.__name__}: {raised}"
+            else:
+                raise AssertionError(f"{connections} must raise {error.__name__}")
+    =}
+}
+
+# a (Gain, fail_terminate) fails to terminate: close() still frees b (OffsetGain2, FMI 2.0), empties
+# the group and raises the error of a.
+reactor CloseFailure extends FrostFmu{
+    state closed = False
+
+    // @override
+    method _shutdown(){=
+        members = dict(self.model.members)
+        try:
+            self.model.close()
+        except FMICallException as error:
+            assert "fmi3Terminate" in str(error), f"unexpected error: {error}"
+        else:
+            raise AssertionError("the failure of a must be raised")
+        assert self.model.members == {}, "close() must empty the group"
+        for name, fmu in members.items():
+            assert not os.path.exists(fmu.unzipDirectory), f"{name} must be freed"
+        self.model = None
+        self.closed = True
+    =}
+
+    reaction(shutdown){=
+        assert self.closed, "_shutdown() must run before this reaction"
+    =}
+}
+
+# controller (TrafficController, rollback) terminates at terminate_after = 0.48 s, listed before
+# ball (BouncingBall3, rollback), which returns early at its bounce, 0.453 s. In the step 400 ->
+# 480 ms the controller terminates first; the bounce then restores it and steps it to 453 ms
+# again, where it has not terminated: the group goes on, and stops at 480 ms.
+reactor UndoneTermination extends FrostFmu{
+    state commits = {=[]=}
+
+    method _commit(){=
+        v = self.model.read("ball.v")
+        self.commits.append((lf.time.logical_elapsed() // 1000000, self.running, (v > 0) - (v < 0)))
+        return True
+    =}
+
+    reaction(shutdown){=
+        mismatches = compare(self.logger, "undone: commits (ms, running, ball v sign)", self.commits, UNDONE_EXPECTED)
+        assert not mismatches, f"rows {mismatches} differ (see the table above)"
+    =}
+}
+
+# Arguments FmuGroup must reject when it is built (start values an FMU cannot take included,
+# FMI 3.0 and 2.0), and an algebraic loop on Booleans, whose tear settles when it stops changing.
+reactor ArgumentChecks extends FrostBase{
+    reaction(startup){=
+        for fmus, start_values, keywords, error, text in BAD_ARGUMENTS:
+            try:
+                FmuGroup(fmus, [], start_values, None, None, None, self.logger, **keywords)
+            except error as raised:
+                assert text in str(raised), f"{fmus} {start_values} {keywords}: unexpected {error.__name__}: {raised}"
+            else:
+                raise AssertionError(f"{fmus} {start_values} {keywords} must raise {error.__name__}")
+
+        flags = FmuGroup({"a": FEED, "b": FEED}, [["a.Boolean_output", "b.Boolean_input"], ["b.Boolean_output", "a.Boolean_input"]],
+                         {"a.Boolean_input": True}, None, None, None, self.logger)
+        try:
+            assert flags.tears == [("a.Boolean_output", "b.Boolean_input")], f"unexpected tears {flags.tears}"
+            assert flags.read("a.Boolean_input") == flags.read("b.Boolean_input"), "the Boolean loop must settle"
+        finally:
+            flags.close()
+    =}
+}
+
+main reactor{
+    connections = new ConnectionChecks(name="connections", start_values = {= {"feed.Float32_continuous_input": 1.5} =})
+    close = new CloseFailure(name="close", start_values = {= {"a.fail_terminate": True} =})
+    undone = new UndoneTermination(name="undone", start_values = {= {"controller.terminate_after": 0.48} =})
+    arguments = new ArgumentChecks(name="arguments")
+}

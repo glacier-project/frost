@@ -258,23 +258,23 @@ reactor StopFmu extends Probe{
 }
 
 main reactor{
-    rollback = new RollbackFmu(name="rollback", path="resources/fmu/Feedthrough.fmu", expected = {= ROLLBACK_EXPECTED =})
-    half_step = new HalfStepFmu(name="half_step", path="resources/fmu/Feedthrough.fmu", expected = {= HALF_STEP_EXPECTED =})
-    late = new LateFmu(name="late", path="resources/fmu/Feedthrough.fmu", expected = {= LATE_EXPECTED =})
-    no_state = new NoStateFmu(name="no_state", path="resources/fmu/BouncingBall2.fmu", expected = {= NO_STATE_EXPECTED =})
-    no_rollback_early = new NoRollbackEarlyFmu(name="no_rollback_early", path="resources/fmu/EarlyReturnNoRollback.fmu",
+    rollback = new RollbackFmu(name="rollback", expected = {= ROLLBACK_EXPECTED =})
+    half_step = new HalfStepFmu(name="half_step", expected = {= HALF_STEP_EXPECTED =})
+    late = new LateFmu(name="late", expected = {= LATE_EXPECTED =})
+    no_state = new NoStateFmu(name="no_state", expected = {= NO_STATE_EXPECTED =})
+    no_rollback_early = new NoRollbackEarlyFmu(name="no_rollback_early",
         watched_output = "value", expected = {= NO_ROLLBACK_EARLY_EXPECTED =})
-    early_return = new EarlyReturnFmu(name="early_return", path="resources/fmu/BouncingBall3.fmu",
+    early_return = new EarlyReturnFmu(name="early_return",
         watched_output = "v", expected = {= EARLY_RETURN_EXPECTED =})
-    trigger_event = new TriggerEventFmu(name="trigger_event", path="resources/fmu/TrafficController.fmu",
+    trigger_event = new TriggerEventFmu(name="trigger_event",
         time_scale = 100.0, start_values = {= {"enabled": False} =},
         watched_output = "", expected = {= TRIGGER_EVENT_EXPECTED =})
-    stale_tick = new StaleTickFmu(name="stale_tick", path="resources/fmu/TrafficController.fmu",
+    stale_tick = new StaleTickFmu(name="stale_tick",
         time_scale = 100.0, watched_output = "", expected = {= STALE_TICK_EXPECTED =})
-    big_start = new BigStartFmu(name="big_start", path="resources/fmu/Feedthrough.fmu", expected = {= BIG_START_EXPECTED =})
-    terminate = new TerminateFmu(name="terminate", path="resources/fmu/TrafficController.fmu",
+    big_start = new BigStartFmu(name="big_start", expected = {= BIG_START_EXPECTED =})
+    terminate = new TerminateFmu(name="terminate",
         time_scale = 100.0, start_values = {= {"terminate_after": 30.0} =},
         watched_output = "", expected = {= TERMINATE_EXPECTED =})
-    stop = new StopFmu(name="stop", path="resources/fmu/Feedthrough.fmu",
+    stop = new StopFmu(name="stop",
         start_values = {= {"Float64_continuous_input": 1.5} =}, expected = {= STOP_EXPECTED =})
 }

@@ -1,0 +1,82 @@
+name: "controller"
+machine_category: "unknown"
+machine_type: "unknown"
+machine_model: "unknown"
+description: "TrafficController FMU mirrored on the data model"
+root:
+  !!FolderNode
+  name: "Machine"
+  description: ""
+  children:
+    - !!FolderNode
+      name: "inputs"
+      description: ""
+      children:
+        - !!BooleanVariableNode
+          name: "enabled"
+          description: "Boolean input discrete"
+          initial_value: false
+        - !!BooleanVariableNode
+          name: "emergency_stop"
+          description: "Boolean input discrete"
+          initial_value: false
+    - !!FolderNode
+      name: "outputs"
+      description: ""
+      children:
+        - !!NumericalVariableNode
+          name: "phase"
+          description: "Int32 output discrete"
+          initial_value: -1
+        - !!NumericalVariableNode
+          name: "north_command"
+          description: "Int32 output discrete"
+          initial_value: -1
+        - !!NumericalVariableNode
+          name: "south_command"
+          description: "Int32 output discrete"
+          initial_value: -1
+        - !!NumericalVariableNode
+          name: "east_command"
+          description: "Int32 output discrete"
+          initial_value: -1
+        - !!NumericalVariableNode
+          name: "west_command"
+          description: "Int32 output discrete"
+          initial_value: -1
+        - !!NumericalVariableNode
+          name: "phase_remaining"
+          description: "Float64 output continuous"
+          initial_value: -1
+        - !!NumericalVariableNode
+          name: "transition_count"
+          description: "UInt64 output discrete"
+          initial_value: -1
+    - !!FolderNode
+      name: "parameters"
+      description: ""
+      children:
+        - !!NumericalVariableNode
+          name: "ns_green_time"
+          description: "Float64 parameter fixed"
+          initial_value: -1
+        - !!NumericalVariableNode
+          name: "ew_green_time"
+          description: "Float64 parameter fixed"
+          initial_value: -1
+        - !!NumericalVariableNode
+          name: "yellow_time"
+          description: "Float64 parameter fixed"
+          initial_value: -1
+        - !!NumericalVariableNode
+          name: "all_red_time"
+          description: "Float64 parameter fixed"
+          initial_value: -1
+        - !!NumericalVariableNode
+          name: "max_step"
+          description: "Float64 parameter fixed"
+          initial_value: -1
+        - !!NumericalVariableNode
+          name: "terminate_after"
+          description: "Float64 parameter fixed"
+          initial_value: -1

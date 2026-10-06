@@ -2,7 +2,7 @@ name: "operator"
 machine_category: "unknown"
 machine_type: "unknown"
 machine_model: "unknown"
-description: "Writes the machine inputs and reads its outputs through the link"
+description: "Drives the machine through the link"
 root:
   !!FolderNode
   name: "Operator"

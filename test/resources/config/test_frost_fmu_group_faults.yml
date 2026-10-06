@@ -1,0 +1,33 @@
+time_precision: NSECS
+logging_level: DEBUG
+reactors:
+  connections:
+    logging_level: INFO
+    parameters:
+      step_size: 0.1
+      stop_time: 0.2
+      fmus:
+        feed: resources/fmu/Feedthrough.fmu
+        gain2: resources/fmu/OffsetGain2.fmu
+        gain: resources/fmu/Gain.fmu
+      connections:
+        - [feed.Float32_continuous_output, gain2.u]
+        - [gain2.y, gain.u]
+  close:
+    logging_level: INFO
+    parameters:
+      step_size: 0.1
+      stop_time: 0.2
+      fmus:
+        a: resources/fmu/Gain.fmu
+        b: resources/fmu/OffsetGain2.fmu
+  undone:
+    logging_level: INFO
+    parameters:
+      step_size: 0.1
+      stop_time: 1.0
+      fmus:
+        controller: resources/fmu/TrafficController.fmu
+        ball: resources/fmu/BouncingBall3.fmu
+  arguments:
+    logging_level: INFO

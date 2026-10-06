@@ -1,0 +1,57 @@
+time_precision: NSECS
+logging_level: INFO
+reactors:
+  group:
+    logging_level: INFO
+    parameters:
+      data_model_path: "resources/data_model/test_frost_fmu_node/group.yml"
+      step_size: 0.1
+      stop_time: 1.0
+      fmus:
+        feed: resources/fmu/Feedthrough.fmu
+        early: resources/fmu/EarlyReturnNoRollback.fmu
+      connections:
+        - [feed.Float64_continuous_output, early.rate]
+  single:
+    logging_level: INFO
+    parameters:
+      data_model_path: "resources/data_model/test_frost_fmu_node/single.yml"
+      step_size: 0.1
+      stop_time: 1.0
+      path: "resources/fmu/Feedthrough.fmu"
+  machine:
+    logging_level: INFO
+    parameters:
+      data_model_path: "resources/data_model/test_frost_fmu_node/machine.yml"
+      step_size: 0.1
+      path: "resources/fmu/Feedthrough.fmu"
+    reactors:
+      message_filter:
+        logging_level: WARNING
+  operator:
+    logging_level: INFO
+    parameters:
+      data_model_path: "resources/data_model/test_frost_fmu_node/operator.yml"
+    reactors:
+      message_filter:
+        logging_level: WARNING
+  frost_link:
+    logging_level: WARNING
+    parameters:
+      data_model_path: "resources/data_model/test_frost_fmu_node/link.yml"
+    reactors:
+      message_filter:
+        logging_level: WARNING
+  netgroup:
+    logging_level: INFO
+    parameters:
+      data_model_path: "resources/data_model/test_frost_fmu_node/netgroup.yml"
+      step_size: 0.1
+      fmus:
+        feed: resources/fmu/Feedthrough.fmu
+        early: resources/fmu/EarlyReturnNoRollback.fmu
+      connections:
+        - [feed.Float64_continuous_output, early.rate]
+    reactors:
+      message_filter:
+        logging_level: WARNING

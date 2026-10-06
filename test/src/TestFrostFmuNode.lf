@@ -1,0 +1,197 @@
+target Python{
+    fast: true,
+    timeout: 3 s,
+    files: ["../resources/lib/fmu_test_tools.py"]
+}
+import FrostLink from "../../src/lib/FrostLink.lf"
+import FrostReactor from "../../src/lib/FrostReactor.lf"
+import FrostFmuNode from "../../src/lib/simulation/FrostFmuNode.lf"
+
+preamble{=
+    from frost import *
+    from fmu_test_tools import compare
+
+    # (ms, Machine/feed, Machine/value): early integrates the feed output, 1 until the local write
+    # on Machine/rate at 250 ms, 2 after it.
+    GROUP_EXPECTED = [(0, 1.0, 0.0), (100, 1.0, 0.1), (200, 1.0, 0.2), (250, 2.0, 0.25)] + [
+        (ms, 2.0, round(0.25 + 2 * (ms - 250) / 1000, 9)) for ms in range(300, 1001, 100)
+    ]
+    # (ms, Machine/measure): output == input, 5 from the local write at 250 ms.
+    SINGLE_EXPECTED = [(0, 0.0), (100, 0.0), (200, 0.0), (250, 5.0)] + [(ms, 5.0) for ms in range(300, 1001, 100)]
+=}
+
+# FrostFmuNode on its own data model, no network. A reaction writes a bound node and calls
+# _external_trigger(tick), so the write enters the FMUs at its tag; _commit() publishes on nodes.
+reactor Probe(node = "", value = 0.0) extends FrostFmuNode{
+    timer write(250 ms)
+    state commits = {=[]=}
+    state rejected = {=[]=}
+
+    method _try_bind(node_path, fmu_input){=
+        try:
+            self._bind_input(node_path, fmu_input)
+        except KeyError as error:
+            self.rejected.append(fmu_input)
+            self.logger.info(f"rejected as expected: {error}")
+    =}
+
+    reaction(write) -> tick{=
+        self.data_model.get_node(self.node).write(self.value)
+        self._external_trigger(tick)
+    =}
+}
+
+# Two FMUs: names are dotted, an input driven by a connection cannot be bound.
+reactor GroupNode extends Probe{
+    method _bind_inputs(){=
+        self._try_bind("Machine/rate", "early.rate")
+        self._try_bind("Machine/missing", "feed.Float64_continuous_input")
+        self._bind_input("Machine/rate", "feed.Float64_continuous_input")
+    =}
+
+    method _commit(){=
+        node = self.data_model.get_node
+        node("Machine/feed").write(self.model.read("feed.Float64_continuous_output"))
+        node("Machine/value").write(self.model.read("early.value"))
+        self.commits.append((lf.time.logical_elapsed() // 1000000, node("Machine/feed").read(),
+                             round(node("Machine/value").read(), 9)))
+        return True
+    =}
+
+    reaction(shutdown){=
+        assert self.rejected == ["early.rate", "feed.Float64_continuous_input"], \
+            f"a driven input and a missing node must be rejected: {self.rejected}"
+        mismatches = compare(self.logger, "group node: commits (ms, feed, value)", self.commits, GROUP_EXPECTED)
+        assert not mismatches, f"rows {mismatches} differ (see the table above)"
+    =}
+}
+
+# One FMU: names are the FMU ones, an unknown input cannot be bound.
+reactor SingleNode extends Probe{
+    method _bind_inputs(){=
+        self._try_bind("Machine/setpoint", "not_an_input")
+        self._bind_input("Machine/setpoint", "Float64_continuous_input")
+    =}
+
+    method _commit(){=
+        measure = self.data_model.get_node("Machine/measure")
+        measure.write(self._get_outputs()["Float64_continuous_output"])
+        self.commits.append((lf.time.logical_elapsed() // 1000000, measure.read()))
+        return True
+    =}
+
+    reaction(shutdown){=
+        assert self.rejected == ["not_an_input"], f"an unknown input must be rejected: {self.rejected}"
+        mismatches = compare(self.logger, "single node: commits (ms, measure)", self.commits, SINGLE_EXPECTED)
+        assert not mismatches, f"rows {mismatches} differ (see the table above)"
+    =}
+}
+
+# One FMU on a Frost network. The operator writes Machine/setpoint = 5 at 2250 ms, between two
+# steps, and the same value again at 2550 ms: each write is a trigger at its own tag. Its reads
+# answer with the value of the last commit.
+reactor NetMachine extends FrostReactor, FrostFmuNode{
+    state commits = {=[]=}
+
+    reaction(request_messages) -> tick{=
+        self._external_trigger(tick)
+    =}
+
+    method _bind_inputs(){=
+        self._bind_input("Machine/setpoint", "Float64_continuous_input")
+    =}
+
+    method _commit(){=
+        measure = self.data_model.get_node("Machine/measure")
+        measure.write(self._get_outputs()["Float64_continuous_output"])
+        self.commits.append((lf.time.logical_elapsed() // 1000000, measure.read()))
+        return True
+    =}
+
+    reaction(shutdown){=
+        off_grid = [ms for ms, _ in self.commits if ms % 100]
+        assert off_grid == [2250, 2550], f"each remote write must commit at its tag: {off_grid}"
+        assert all(value == (5.0 if ms >= 2250 else 0.0) for ms, value in self.commits), \
+            f"measure must follow the setpoint from 2250 ms: {self.commits}"
+    =}
+}
+
+# Two FMUs on a Frost network: the operator writes Machine/rate, bound to the dotted input
+# feed.Float64_continuous_input, at 2250 ms and with the same value at 2550 ms. early integrates
+# the feed output: 1 until 2250 ms, 2 after it.
+reactor NetGroup extends FrostReactor, FrostFmuNode{
+    state commits = {=[]=}
+
+    reaction(request_messages) -> tick{=
+        self._external_trigger(tick)
+    =}
+
+    method _bind_inputs(){=
+        self._bind_input("Machine/rate", "feed.Float64_continuous_input")
+    =}
+
+    method _commit(){=
+        node = self.data_model.get_node
+        node("Machine/feed").write(self.model.read("feed.Float64_continuous_output"))
+        node("Machine/value").write(self.model.read("early.value"))
+        self.commits.append((lf.time.logical_elapsed() // 1000000, node("Machine/feed").read(), node("Machine/value").read()))
+        return True
+    =}
+
+    reaction(shutdown){=
+        off_grid = [ms for ms, _, _ in self.commits if ms % 100]
+        assert off_grid == [2250, 2550], f"each remote write must commit at its tag: {off_grid}"
+        for ms, feed, value in self.commits:
+            expected = ms / 1000 if ms < 2250 else 2.25 + 2 * (ms - 2250) / 1000
+            assert feed == (1.0 if ms < 2250 else 2.0) and abs(value - expected) < 1e-9, \
+                f"at {ms} ms feed {feed} and value {value}, expected value {expected}"
+    =}
+}
+
+reactor Operator extends FrostReactor{
+    timer write(2250 ms)
+    timer write_again(2550 ms)
+    timer read(2300 ms)
+    timer read_again(2600 ms)
+    state answers = {=[]=}
+
+    method _send(message, channel_out){=
+        assert self.connected, "the operator must be connected to the link"
+        self._set_channel_out_port(message, channel_out)
+    =}
+
+    reaction(write, write_again) -> channel_out{=
+        self._send(self.message_builder.build_write_variable_message(
+            target="machine", node="Machine/setpoint", value=5.0), channel_out)
+        self._send(self.message_builder.build_write_variable_message(
+            target="netgroup", node="Machine/rate", value=2.0), channel_out)
+    =}
+
+    reaction(read, read_again) -> channel_out{=
+        self._send(self.message_builder.build_read_variable_message(
+            target="machine", node="Machine/measure"), channel_out)
+    =}
+
+    reaction(response_messages){=
+        for _, message in response_messages.value:
+            if message.header.namespace == MsgNamespace.VARIABLE and message.header.msg_name == VariableMsgName.READ:
+                self.answers.append((lf.time.logical_elapsed() // 1000000, message.payload.value))
+    =}
+
+    reaction(shutdown){=
+        assert self.answers == [(2300, 5.0), (2600, 5.0)], f"reads must answer the last commit: {self.answers}"
+    =}
+}
+
+main reactor{
+    group = new GroupNode(name="group", node="Machine/rate", value=2.0,
+        start_values = {= {"feed.Float64_continuous_input": 1.0} =})
+    single = new SingleNode(name="single", node="Machine/setpoint", value=5.0)
+    machine = new NetMachine(name="machine")
+    netgroup = new NetGroup(name="netgroup", start_values = {= {"feed.Float64_continuous_input": 1.0} =})
+    operator = new Operator(name="operator")
+    link = new FrostLink(name="frost_link", width=3)
+
+    machine.channel_out, netgroup.channel_out, operator.channel_out -> link.channel_in after 0
+    link.channel_out -> machine.channel_in, netgroup.channel_in, operator.channel_in
+}

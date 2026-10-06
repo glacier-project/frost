@@ -5,7 +5,7 @@ target Python{
 }
 import FrostLink from "../../src/lib/FrostLink.lf"
 import FrostReactor from "../../src/lib/FrostReactor.lf"
-import FrostFmuReactor from "../../src/lib/simulation/FrostFmuReactor.lf"
+import FrostFmuNode from "../../src/lib/simulation/FrostFmuNode.lf"
 
 preamble{=
     from frost import *
@@ -77,7 +77,12 @@ preamble{=
 # Elevator5 FMU (pythonfmu3, cannot roll back) on a FrostReactor: never ahead of LF. A button written mid-step
 # steps the FMU up to the write with the old buttons, then applies it; an internal event (arrival, doors)
 # shows at the next 400 ms tag.
-reactor Elevator extends FrostFmuReactor{
+reactor Elevator extends FrostReactor, FrostFmuNode{
+    reaction(request_messages) -> tick{=
+        '''Apply the writes of other Frost nodes at their tag.'''
+        self._external_trigger(tick)
+    =}
+
     state situation = ""
     state commits = {=[]=}
     state writes = {=[]=}
@@ -94,11 +99,7 @@ reactor Elevator extends FrostFmuReactor{
     method _on_input_write(fmu_input, previous, value){=
         how = how_the_input_was_applied(lf.time.logical_elapsed(), self.fmu_ns)
         self.fmu_inputs[fmu_input] = value
-        applied = self._set_trigger()
-        if applied:
-            self._set_inputs()
-            self._commit()
-        assert applied, f"{fmu_input} = {value} must be applied on the tag of the write"
+        self.input_written = True
         tell(lf.time.logical_elapsed(), "elevator", f"button {fmu_input} = {value} received ({how})")
         self.writes.append((self._ms(), fmu_input, value))
         return True
@@ -179,7 +180,7 @@ reactor Passenger extends FrostReactor{
 }
 
 main reactor{
-    elevator = new Elevator(name="elevator", path="resources/fmu/Elevator5.fmu")
+    elevator = new Elevator(name="elevator")
     passenger = new Passenger(name="passenger")
     link = new FrostLink(name="frost_link", width=2)
 
