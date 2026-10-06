@@ -35,7 +35,7 @@ reactor FrostHostBase extends FrostBase{
 
         '''
         raise NotImplementedError(
-            f"{self.name}: extend a model reactor such as FrostFmuBase, "
+            f"{self.name}: extend a model reactor such as FrostFmu, "
             "or override _build_model()"
         )
     =}
@@ -43,7 +43,7 @@ reactor FrostHostBase extends FrostBase{
     method _shutdown(){=
         '''Close the model and release every resource it holds.'''
         raise NotImplementedError(
-            f"{self.name}: extend a model reactor such as FrostFmuBase, "
+            f"{self.name}: extend a model reactor such as FrostFmu, "
             "or override _shutdown()"
         )
     =}
@@ -51,7 +51,7 @@ reactor FrostHostBase extends FrostBase{
     method _set_inputs(){=
         '''Write the current input state of the model; call before _do_step.'''
         raise NotImplementedError(
-            f"{self.name}: extend a model reactor such as FrostFmuBase, "
+            f"{self.name}: extend a model reactor such as FrostFmu, "
             "or override _set_inputs()"
         )
     =}
@@ -65,7 +65,7 @@ reactor FrostHostBase extends FrostBase{
 
         '''
         raise NotImplementedError(
-            f"{self.name}: extend a model reactor such as FrostFmuBase, "
+            f"{self.name}: extend a model reactor such as FrostFmu, "
             "or override _get_outputs()"
         )
     =}
@@ -83,7 +83,7 @@ reactor FrostHostBase extends FrostBase{
 
         '''
         raise NotImplementedError(
-            f"{self.name}: extend a model reactor such as FrostFmuBase, "
+            f"{self.name}: extend a model reactor such as FrostFmu, "
             "or override _do_step()"
         )
     =}
@@ -97,7 +97,7 @@ reactor FrostHostBase extends FrostBase{
 
         '''
         raise NotImplementedError(
-            f"{self.name}: extend a model reactor such as FrostFmuBase, "
+            f"{self.name}: extend a model reactor such as FrostFmu, "
             "or override _rollback()"
         )
     =}
@@ -127,10 +127,6 @@ reactor FrostHostBase extends FrostBase{
 
         The reactor shall roll back to the previous step and advance to the
         current tag.
-
-        Notice: in co-simulation you must commit the event to the
-        orchestrator, if any, so that it can propagate the event to the other
-        models.
 
         Returns:
             bool:
