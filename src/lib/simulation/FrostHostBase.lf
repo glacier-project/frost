@@ -13,8 +13,10 @@ reactor FrostHostBase extends FrostBase{
         _build_model():
             Required; return the model object this reactor drives.
         _shutdown():
-            Required; close the model. Call it from the last shutdown
-            reaction of the leaf reactor.
+            Required; close the model. A model reactor such as FrostFmu
+            calls it from its own shutdown reaction, which LF runs before the
+            shutdown reactions of the reactors that extend it: those cannot
+            use the model.
         _set_inputs(), _get_outputs(), _do_step(next_target):
             Required; the I/O and stepping of the model.
 

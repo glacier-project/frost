@@ -15,7 +15,8 @@ reactor FrostFmuBase(
     '''Drive FMUs with LF logical time: the time loop of FrostFmu.
 
     The model commits at every tag k * step_size, and at every time event it
-    announces. A model that can roll back then runs ahead to the next tag, and
+    announces. The first commit, at 0, comes one microstep after startup, so
+    every startup reaction, the extension's too, runs before it. A model that can roll back then runs ahead to the next tag, and
     an early return makes the internal event the next tag; any other model
     steps to each tag when LF gets there.
 
@@ -211,7 +212,11 @@ reactor FrostFmuBase(
 
     // @label _start_model
     reaction(startup) -> tick{=
-        '''Commit the initial state and schedule the next tag.'''
+        '''Schedule the commit of the initial state.
+
+        One microstep later, not here: the startup reactions of the extension
+        run after this one, and _commit() may rely on them.
+        '''
         if not self.step_size:
             raise ValueError(
                 f"{self.name} has no step size; set step_size in YAML or "
@@ -222,7 +227,7 @@ reactor FrostFmuBase(
             self.stop_ns = round(
                 (self.stop_time - self.start_time) / self.time_scale * 1e9
             )
-        self._advance(tick)
+        tick.schedule(0)
     =}
 
     // @label _step_model
@@ -233,7 +238,11 @@ reactor FrostFmuBase(
 
     // @label _shutdown_model
     reaction(shutdown){=
-        '''Close the model after every other reaction at the final tag.'''
+        '''Close the model at the final tag.
+
+        LF runs it before the shutdown reactions of the extension, which then
+        find model None: read final values in _commit() instead.
+        '''
         self._shutdown()
     =}
 }

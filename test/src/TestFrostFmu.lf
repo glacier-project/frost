@@ -19,6 +19,11 @@ preamble{=
 # the commits must equal `expected`.
 reactor Probe(expected = {=[]=}, watched_output = "Float64_continuous_output") extends FrostFmu{
     state commits = {=[]=}
+    state started = False
+
+    reaction(startup){=
+        self.started = True
+    =}
 
     method _ms(){=
         return lf.time.logical_elapsed() // 1000000
@@ -35,6 +40,7 @@ reactor Probe(expected = {=[]=}, watched_output = "Float64_continuous_output") e
     method _commit(){=
         now = lf.time.logical_elapsed()
         assert self.fmu_ns == now, f"commit with the FMU at {self.fmu_ns} ns but LF at {now} ns"
+        assert self.started, "the first commit must come after the startup reactions of the extension"
 
         value = self._watched()
         self._log("COMMIT", f"value = {value}")
